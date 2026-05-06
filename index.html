@@ -815,15 +815,15 @@
       <form id="contact-form" name="lead-form" data-netlify="true">
         <div class="field">
           <label>Your Name</label>
-          <input type="text" id="fname" placeholder="John Smith" />
+          <input type="text" id="fname" name="name" placeholder="John Smith" />
         </div>
         <div class="field">
           <label>Phone Number</label>
-          <input type="tel" id="fphone" placeholder="(813) 555-0000" />
+          <input type="tel" id="fphone" name="phone" placeholder="(813) 555-0000" />
         </div>
         <div class="field">
           <label>Your City</label>
-          <select id="fcity">
+          <select id="fcity" name="city">
             <option value="">Select your city...</option>
             <option>Tampa</option>
             <option>Wesley Chapel</option>
@@ -838,7 +838,7 @@
         </div>
         <div class="field">
           <label>Type of Damage</label>
-          <select id="fdamage">
+          <select id="fdamage" name="damage-type">
             <option value="">What happened?</option>
             <option>Flooding / Standing Water</option>
             <option>Burst or Leaking Pipe</option>
@@ -851,7 +851,7 @@
         </div>
         <div class="field">
           <label>Brief Description (optional)</label>
-          <textarea id="fdesc" placeholder="e.g. Pipe burst in kitchen, water in 2 rooms..."></textarea>
+          <textarea id="fdesc" name="description" placeholder="e.g. Pipe burst in kitchen, water in 2 rooms..."></textarea>
         </div>
         <button class="btn-submit" onclick="submitForm()">🚨 Connect Me With a Pro Now</button>
         <p class="form-footer">🔒 Your information is private and never sold. By submitting you agree to be contacted by a local restoration contractor.</p>
@@ -1117,9 +1117,8 @@ function submitForm() {
     return;
   }
 
-  // Netlify Forms handles submission automatically with data-netlify="true"
-  // Just submit the form natively
-  document.getElementById('lead-form').submit();
+  // Netlify Forms handles submission automatically - just submit the form natively
+  document.getElementById('contact-form').submit();
 }
 </script>
 </body>
