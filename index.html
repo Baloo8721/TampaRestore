@@ -812,7 +812,7 @@
     <div class="form-card">
       <h2>Request Help Now</h2>
       <p class="form-intro">We'll match you with a certified local pro and they'll call you back in <strong>under 5 minutes.</strong></p>
-      <div id="contact-form">
+      <form id="contact-form" name="lead-form" data-netlify="true">
         <div class="field">
           <label>Your Name</label>
           <input type="text" id="fname" placeholder="John Smith" />
@@ -855,7 +855,7 @@
         </div>
         <button class="btn-submit" onclick="submitForm()">🚨 Connect Me With a Pro Now</button>
         <p class="form-footer">🔒 Your information is private and never sold. By submitting you agree to be contacted by a local restoration contractor.</p>
-      </div>
+      </form>
       <div class="success-msg" id="success-msg">
         <h3>✅ Request Received!</h3>
         <p>A licensed local technician will call you within <strong>5 minutes</strong>. For immediate help, call <strong>(YOUR NUMBER)</strong> now.</p>
@@ -1117,30 +1117,9 @@ function submitForm() {
     return;
   }
 
-  const leadData = {
-    name,
-    phone,
-    city,
-    damage: document.getElementById('fdamage').value,
-    description: document.getElementById('fdesc').value,
-    timestamp: new Date().toISOString(),
-    source: 'tampaRestore-website'
-  };
-
-  // ── PLUG IN YOUR FORMSPREE ENDPOINT BELOW ──
-  // Replace YOUR_FORM_ID with your Formspree form ID
-  // Sign up free at formspree.io, create a form, copy the ID
-  fetch('https://formspree.io/f/YOUR_FORM_ID', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(leadData)
-  }).catch(() => {});
-  // ── END FORMSPREE BLOCK ──
-
-  document.getElementById('contact-form').style.display = 'none';
-  document.getElementById('success-msg').style.display = 'block';
-
-  console.log('Lead captured:', leadData);
+  // Netlify Forms handles submission automatically with data-netlify="true"
+  // Just submit the form natively
+  document.getElementById('lead-form').submit();
 }
 </script>
 </body>

@@ -15,15 +15,15 @@ TampaRestore is a free referral service connecting Tampa Bay homeowners with lic
 ## 2. Current Build
 
 - **URL:** https://baloo8721.github.io/TampaRestore/ (GitHub Pages)
-- **Type:** Static HTML/CSS/JS
-- **Form Handler:** Formspree (needs YOUR_FORM_ID)
+- **Form Handler:** Netlify Forms (FREE, unlimited, commercial OK)
+- **Note:** To use Netlify Forms, deploy to Netlify instead of GitHub Pages
 
-### Tech Stack (Planned)
+### Tech Stack (Current)
 | Component | Tool | Cost | Status |
 |-----------|------|------|--------|
-| Hosting | GitHub Pages | Free | Ready |
+| Hosting | GitHub Pages | Free | Ready OR Netlify |
 | Phone | Google Voice | Free | Not configured |
-| Form | Formspree | Free | Needs form ID |
+| Form | Netlify Forms | Free | ✅ Configured in index.html |
 | AI Voice | Ollama/Synthflow | $0-50/mo | Future |
 | VPS | Vultr | $6/mo | Future |
 
@@ -34,15 +34,22 @@ TampaRestore is a free referral service connecting Tampa Bay homeowners with lic
 | Placeholder | Line | Action |
 |------------|-----|--------|
 | (YOURNUMBER) | 782, 801, 862, 1085, 1104 | Set phone |
-| YOUR_FORM_ID | 1133 | formspree.io |
-| [YOUR LLC NAME] | 1093, 1106 | Your business |
-| [YOUR EMAIL] | 1093 | Contact email |
+| [YOUR LLC NAME] | 1093, 1106 | Your business name |
+| [YOUR EMAIL] | 1093 | Your contact email |
+
+### Deploy to Netlify (Required for Forms)
+1. Go to netlify.com → Sign up free
+2. Add new site → Import from GitHub
+3. Select TampaRestore repo
+4. Build command: (leave blank for static)
+5. Publish directory: . (root)
+6. Deploy
 
 ---
 
 ## 4. Quick Start
 
-### Deploy
+### Deploy to Netlify
 ```bash
 git init
 git add .
@@ -50,17 +57,21 @@ git commit -m "Initial commit"
 git remote add origin https://github.com/Baloo8721/TampaRestore.git
 git push -u origin main
 ```
-Enable GitHub Pages in repo Settings.
+1. Go to netlify.com → Sign up free (GitHub login)
+2. Add new site → Import from GitHub
+3. Select TampaRestore repo
+4. Configure: Build command (blank), Publish directory: .
+5. Click Deploy
 
-### Get Formspree
-1. formspree.io → Sign up free
-2. Create form → Copy ID
-3. Replace YOUR_FORM_ID line 1133
+### Netlify Forms Setup
+- Already configured in index.html with `data-netlify="true"`
+- After deploy, go to Site settings → Forms
+- Enable email notifications to get leads via email
 
 ### Get Phone
 1. voice.google.com
 2. Get free 813/727 number
-3. Forward to contractor
+3. Forward to contractor partner
 
 ---
 
