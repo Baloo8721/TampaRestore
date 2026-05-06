@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="24/7 emergency water damage restoration referrals in Tampa & Pasco County. We connect you with licensed, insured local professionals. Free assessment, insurance handled.">
+<title>Tampa Water Damage Restoration | 24/7 Emergency Referral Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #D92B2B;
+    --red-dark: #A51F1F;
+    --red-light: #FF3B3B;
+    --navy: #0A1628;
+    --navy-mid: #0F2040;
+    --navy-light: #162A50;
+    --white: #FFFFFF;
+    --off-white: #F5F3EE;
+    --gray: #8A96A8;
+    --light-gray: #E8EAF0;
+    --text: #1A1E2E;
+    --green: #059669;
+    --green-light: #ECFDF5;
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--off-white);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5%;
+    height: 64px;
+    border-bottom: 2px solid var(--red);
+  }
+
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+  .logo span { color: var(--red-light); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6EE7B7;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #6EE7B7;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(0.8); }
+  }
+
+  .btn-call {
+    background: var(--red);
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.15s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .btn-call:hover { background: var(--red-light); }
+
+  /* ── HERO ── */
+  .hero {
+    margin-top: 64px;
+    min-height: calc(100vh - 64px);
+    background: var(--navy);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent, transparent 40px,
+      rgba(217,43,43,0.04) 40px,
+      rgba(217,43,43,0.04) 41px
+    );
+    pointer-events: none;
+  }
+
+  .hero-left {
+    padding: 80px 5% 80px 8%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .emergency-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(217,43,43,0.15);
+    border: 1px solid rgba(217,43,43,0.4);
+    color: #FF8080;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    width: fit-content;
+    margin-bottom: 28px;
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity:0; transform:translateY(16px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  .hero-h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(50px, 5.5vw, 78px);
+    line-height: 0.92;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 24px;
+    animation: fadeInUp 0.6s 0.1s ease both;
+  }
+  .hero-h1 .accent { color: var(--red-light); display: block; }
+
+  .hero-sub {
+    font-size: 17px;
+    color: #8FA8C8;
+    line-height: 1.65;
+    max-width: 420px;
+    margin-bottom: 36px;
+    animation: fadeInUp 0.6s 0.2s ease both;
+  }
+  .hero-sub strong { color: var(--white); font-weight: 600; }
+
+  .cta-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeInUp 0.6s 0.3s ease both;
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--red);
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 20px 36px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    width: fit-content;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(217,43,43,0.5); }
+
+  .phone-icon { animation: ring 4s 3s infinite; display:inline-block; }
+  @keyframes ring {
+    0%,100%{transform:rotate(0);}
+    5%{transform:rotate(15deg);}
+    10%{transform:rotate(-15deg);}
+    15%{transform:rotate(10deg);}
+    20%{transform:rotate(0);}
+  }
+
+  .trust-line {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6A86A8;
+  }
+  .trust-item .check { color: #6EE7B7; }
+
+  /* ── HERO FORM ── */
+  .hero-right {
+    padding: 60px 8% 60px 4%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .form-card {
+    background: var(--white);
+    width: 100%;
+    max-width: 400px;
+    padding: 36px;
+    position: relative;
+  }
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--red);
+  }
+
+  .form-card h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .form-card .form-intro {
+    font-size: 14px;
+    color: var(--gray);
+    margin-bottom: 22px;
+    line-height: 1.5;
+  }
+  .form-card .form-intro strong { color: var(--red); }
+
+  .field { margin-bottom: 13px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 5px;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1.5px solid var(--light-gray);
+    background: #FAFAFA;
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus { border-color: var(--red); background: var(--white); }
+  .field textarea { resize: vertical; min-height: 75px; }
+
+  .btn-submit {
+    width: 100%;
+    background: var(--red);
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .btn-submit:hover { background: var(--red-dark); transform: translateY(-1px); }
+
+  .form-footer {
+    text-align: center;
+    font-size: 11px;
+    color: #B0BAC8;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .success-msg {
+    display: none;
+    background: var(--green-light);
+    border: 2px solid var(--green);
+    padding: 24px;
+    text-align: center;
+  }
+  .success-msg h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    text-transform: uppercase;
+    color: #065F46;
+    margin-bottom: 8px;
+  }
+  .success-msg p { font-size: 14px; color: #047857; line-height: 1.6; }
+
+  /* ── REFERRAL PROMISE BANNER ── */
+  .promise-bar {
+    background: var(--navy-light);
+    border-top: 2px solid rgba(217,43,43,0.3);
+    border-bottom: 2px solid rgba(217,43,43,0.3);
+    padding: 18px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .promise-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: rgba(255,255,255,0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+  .promise-text strong { color: #6EE7B7; }
+
+  /* ── URGENCY BAR ── */
+  .urgency-bar {
+    background: var(--red);
+    padding: 14px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+    flex-wrap: wrap;
+  }
+  .urgency-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-it-works {
+    background: var(--white);
+    padding: 80px 8%;
+  }
+
+  .section-header { text-align: center; margin-bottom: 52px; }
+  .section-tag {
+    display: inline-block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 12px;
+  }
+  .section-tag::before, .section-tag::after { content: '—'; margin: 0 8px; opacity: 0.5; }
+  .section-h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(34px, 4vw, 50px);
+    text-transform: uppercase;
+    color: var(--navy);
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .steps::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: 12.5%; right: 12.5%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--red), rgba(217,43,43,0.15));
+  }
+  .step { padding: 0 20px; text-align: center; }
+  .step-num {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--red);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 26px;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .step h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .step p { font-size: 13px; color: var(--gray); line-height: 1.65; }
+
+  /* ── WHAT WE CONNECT YOU TO ── */
+  .services {
+    background: var(--off-white);
+    padding: 80px 8%;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+  .service-card {
+    background: var(--white);
+    padding: 34px 26px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .service-card:hover { transform: translateY(-4px); }
+  .service-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .service-card:hover::before { transform: scaleX(1); }
+  .service-icon { font-size: 34px; margin-bottom: 16px; display: block; }
+  .service-card h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 21px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .service-card p { font-size: 14px; color: var(--gray); line-height: 1.7; }
+
+  /* ── PARTNER PROMISE ── */
+  .partner-promise {
+    background: var(--navy);
+    padding: 80px 8%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .pp-text h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 4vw, 54px);
+    text-transform: uppercase;
+    color: var(--white);
+    line-height: 0.95;
+    margin-bottom: 20px;
+  }
+  .pp-text h2 em { color: var(--red-light); font-style: normal; display: block; }
+  .pp-text p { font-size: 16px; color: #6A86A8; line-height: 1.7; margin-bottom: 28px; }
+
+  .pp-list { display: flex; flex-direction: column; gap: 14px; }
+  .pp-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-size: 15px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.55;
+  }
+  .pp-check {
+    width: 26px; height: 26px;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .credential-boxes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .cred-box {
+    background: var(--navy-light);
+    border: 1px solid rgba(255,255,255,0.07);
+    padding: 26px 20px;
+    text-align: center;
+  }
+  .cred-box-icon { font-size: 30px; margin-bottom: 10px; display: block; }
+  .cred-box-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+  .cred-box-sub { font-size: 12px; color: #4A6080; line-height: 1.5; }
+
+  /* ── SERVICE AREAS ── */
+  .areas {
+    background: var(--white);
+    padding: 80px 8%;
+  }
+  .areas-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 48px;
+  }
+  .area-card {
+    background: var(--off-white);
+    padding: 24px 20px;
+    text-align: center;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .area-card:hover { border-color: var(--red); background: var(--white); }
+  .area-card h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .area-card p { font-size: 13px; color: var(--gray); }
+
+  /* ── INSURANCE ── */
+  .insurance {
+    background: var(--off-white);
+    padding: 60px 8%;
+    text-align: center;
+  }
+  .insurance h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 40px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 10px;
+  }
+  .insurance p { font-size: 16px; color: var(--gray); max-width: 560px; margin: 0 auto 32px; line-height: 1.6; }
+  .insurance-logos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ins-badge {
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+    padding: 10px 22px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── TESTIMONIALS ── */
+  .testimonials {
+    background: var(--navy);
+    padding: 80px 8%;
+  }
+  .testimonials .section-h2 { color: var(--white); }
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 48px;
+  }
+  .review-card {
+    background: var(--navy-light);
+    padding: 30px 26px;
+  }
+  .stars { color: #F59E0B; font-size: 17px; margin-bottom: 14px; letter-spacing: 2px; }
+  .review-text { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.75; margin-bottom: 20px; font-style: italic; }
+  .review-author { display: flex; align-items: center; gap: 12px; }
+  .author-avatar {
+    width: 38px; height: 38px;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    color: var(--white);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .author-name { font-weight: 600; font-size: 14px; color: var(--white); }
+  .author-loc { font-size: 12px; color: #4A6080; margin-top: 2px; }
+
+  /* ── BOTTOM CTA ── */
+  .bottom-cta {
+    background: var(--red);
+    padding: 80px 8%;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .bottom-cta::before {
+    content: 'ACT NOW';
+    position: absolute;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 200px;
+    color: rgba(255,255,255,0.05);
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .bottom-cta h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(40px, 5vw, 66px);
+    text-transform: uppercase;
+    color: var(--white);
+    line-height: 0.95;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .bottom-cta p { font-size: 18px; color: rgba(255,255,255,0.8); margin-bottom: 36px; position: relative; }
+  .btn-white {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    color: var(--red);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 22px 48px;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .btn-white:hover { transform: scale(1.03); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+
+  /* ── DISCLAIMER ── */
+  .disclaimer {
+    background: #060D1A;
+    padding: 28px 8%;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .disclaimer p {
+    font-size: 12px;
+    color: #3A4A5C;
+    line-height: 1.7;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .disclaimer p a { color: #4A6080; text-decoration: underline; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #070E1A;
+    padding: 36px 8%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .footer-links { display: flex; gap: 24px; align-items: center; }
+  .footer-links a { font-size: 13px; color: #3A4A5C; text-decoration: none; transition: color 0.15s; }
+  .footer-links a:hover { color: var(--gray); }
+  .footer-copy { font-size: 12px; color: #2D3748; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { padding: 0 6% 60px; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .steps::before { display: none; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .partner-promise { grid-template-columns: 1fr; gap: 40px; }
+    .areas-grid { grid-template-columns: repeat(2, 1fr); }
+    .reviews-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .header-right .live-badge { display: none; }
+    .services-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .areas-grid { grid-template-columns: 1fr 1fr; }
+    .credential-boxes { grid-template-columns: 1fr 1fr; }
+    .urgency-bar { gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="#" class="logo">Tampa<span>Restore</span></a>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="pulse-dot"></div>
+      Operators Standing By
+    </div>
+    <a href="tel:+1YOURNUMBER" class="btn-call">📞 (YOUR NUMBER)</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="emergency-tag">🚨 Tampa & Pasco County — 24/7 Emergency Network</div>
+    <h1 class="hero-h1">
+      Water Damage?
+      <span class="accent">Help Is On</span>
+      The Way.
+    </h1>
+    <p class="hero-sub">
+      We connect Tampa Bay homeowners with <strong>licensed, certified local restoration professionals</strong> — fast. Free assessment, insurance handled, 60-minute response guaranteed.
+    </p>
+    <div class="cta-stack">
+      <a href="tel:+1YOURNUMBER" class="btn-primary">
+        <span class="phone-icon">📞</span>
+        Call for Immediate Help
+      </a>
+      <div class="trust-line">
+        <div class="trust-item"><span class="check">✓</span> Free assessment</div>
+        <div class="trust-item"><span class="check">✓</span> Licensed pros only</div>
+        <div class="trust-item"><span class="check">✓</span> All insurance accepted</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="form-card">
+      <h2>Request Help Now</h2>
+      <p class="form-intro">We'll match you with a certified local pro and they'll call you back in <strong>under 5 minutes.</strong></p>
+      <div id="contact-form">
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="fname" placeholder="John Smith" />
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="fphone" placeholder="(813) 555-0000" />
+        </div>
+        <div class="field">
+          <label>Your City</label>
+          <select id="fcity">
+            <option value="">Select your city...</option>
+            <option>Tampa</option>
+            <option>Wesley Chapel</option>
+            <option>Zephyrhills</option>
+            <option>Land O' Lakes</option>
+            <option>New Port Richey</option>
+            <option>Dade City</option>
+            <option>Spring Hill</option>
+            <option>Lutz</option>
+            <option>Other Pasco / Hillsborough</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Type of Damage</label>
+          <select id="fdamage">
+            <option value="">What happened?</option>
+            <option>Flooding / Standing Water</option>
+            <option>Burst or Leaking Pipe</option>
+            <option>Storm / Hurricane Damage</option>
+            <option>Sewage Backup</option>
+            <option>Roof Leak</option>
+            <option>Appliance Leak</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Brief Description (optional)</label>
+          <textarea id="fdesc" placeholder="e.g. Pipe burst in kitchen, water in 2 rooms..."></textarea>
+        </div>
+        <button class="btn-submit" onclick="submitForm()">🚨 Connect Me With a Pro Now</button>
+        <p class="form-footer">🔒 Your information is private and never sold. By submitting you agree to be contacted by a local restoration contractor.</p>
+      </div>
+      <div class="success-msg" id="success-msg">
+        <h3>✅ Request Received!</h3>
+        <p>A licensed local technician will call you within <strong>5 minutes</strong>. For immediate help, call <strong>(YOUR NUMBER)</strong> now.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REFERRAL PROMISE BANNER -->
+<div class="promise-bar">
+  <p class="promise-text">
+    TampaRestore is a <strong>free referral service</strong> — we connect you with vetted, licensed local restoration contractors at no cost to you.
+  </p>
+</div>
+
+<!-- URGENCY BAR -->
+<div class="urgency-bar">
+  <div class="urgency-item">⚡ Same-Day Response</div>
+  <div class="urgency-item">🛡️ All Insurance Accepted</div>
+  <div class="urgency-item">📍 Tampa Bay Coverage</div>
+  <div class="urgency-item">✅ Licensed Pros Only</div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works">
+  <div class="section-header">
+    <div class="section-tag">Simple Process</div>
+    <h2 class="section-h2">How TampaRestore Works</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>Call or Submit</h4>
+      <p>Tell us your location and what happened — takes under 2 minutes. Available 24 hours a day, 7 days a week.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>We Match You</h4>
+      <p>We connect you with the best available licensed, insured restoration contractor in your area — immediately.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Pro Arrives Fast</h4>
+      <p>Your matched contractor arrives within 60 minutes with all the equipment needed to start work right away.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>Fully Restored</h4>
+      <p>Water extracted, structure dried, mold prevented. Your contractor handles all insurance documentation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services">
+  <div class="section-header">
+    <div class="section-tag">Services</div>
+    <h2 class="section-h2">What Our Partner Contractors Handle</h2>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <span class="service-icon">💧</span>
+      <h3>Water Extraction</h3>
+      <p>Industrial pumps and vacuums remove standing water immediately — protecting floors, walls, and your belongings from further damage.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">💨</span>
+      <h3>Structural Drying</h3>
+      <p>Commercial dehumidifiers and air movers dry walls, subfloors, and framing thoroughly — preventing warping and long-term issues.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🦠</span>
+      <h3>Mold Prevention</h3>
+      <p>Antimicrobial treatments applied within the critical 24–48 hour window stop mold growth before it becomes a larger problem.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🚽</span>
+      <h3>Sewage Cleanup</h3>
+      <p>Biohazard-trained technicians safely remove and fully disinfect sewage backups following all EPA and OSHA protocols.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🌪️</span>
+      <h3>Storm & Flood Damage</h3>
+      <p>Hurricane season is real in Tampa Bay. Our network responds immediately to storm flooding, roof leaks, and wind-driven water intrusion.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🏗️</span>
+      <h3>Full Reconstruction</h3>
+      <p>Drywall, flooring, cabinets, paint — our partner contractors restore your home to pre-damage condition, start to finish.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNER PROMISE -->
+<section class="partner-promise">
+  <div class="pp-text">
+    <h2>Every Pro We Send Is <em>Fully Vetted</em></h2>
+    <p>We don't refer just anyone. Every contractor in the TampaRestore network has been screened and must meet strict standards before we connect them with homeowners.</p>
+    <div class="pp-list">
+      <div class="pp-item">
+        <div class="pp-check">✓</div>
+        <div>Licensed by the State of Florida — we verify license numbers before any referral</div>
+      </div>
+      <div class="pp-item">
+        <div class="pp-check">✓</div>
+        <div>Fully insured with general liability and workers' compensation coverage</div>
+      </div>
+      <div class="pp-item">
+        <div class="pp-check">✓</div>
+        <div>IICRC certified technicians — the industry gold standard for water restoration</div>
+      </div>
+      <div class="pp-item">
+        <div class="pp-check">✓</div>
+        <div>Background-checked and reviewed — we only keep contractors with proven track records</div>
+      </div>
+      <div class="pp-item">
+        <div class="pp-check">✓</div>
+        <div>Insurance billing expertise — they work directly with your adjuster</div>
+      </div>
+    </div>
+  </div>
+  <div class="credential-boxes">
+    <div class="cred-box">
+      <span class="cred-box-icon">📋</span>
+      <div class="cred-box-title">FL Licensed</div>
+      <div class="cred-box-sub">All contractors verified with the Florida DBPR</div>
+    </div>
+    <div class="cred-box">
+      <span class="cred-box-icon">🏅</span>
+      <div class="cred-box-title">IICRC Certified</div>
+      <div class="cred-box-sub">Industry-standard certification for restoration</div>
+    </div>
+    <div class="cred-box">
+      <span class="cred-box-icon">🛡️</span>
+      <div class="cred-box-title">Fully Insured</div>
+      <div class="cred-box-sub">Liability + workers' comp on every job</div>
+    </div>
+    <div class="cred-box">
+      <span class="cred-box-icon">⭐</span>
+      <div class="cred-box-title">Reviewed</div>
+      <div class="cred-box-sub">Only contractors with proven 5-star track records</div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICE AREAS -->
+<section class="areas">
+  <div class="section-header">
+    <div class="section-tag">Coverage</div>
+    <h2 class="section-h2">We Serve All of Tampa Bay</h2>
+  </div>
+  <div class="areas-grid">
+    <div class="area-card"><h4>Tampa</h4><p>Hillsborough County</p></div>
+    <div class="area-card"><h4>Wesley Chapel</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Zephyrhills</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Land O' Lakes</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>New Port Richey</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Dade City</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Spring Hill</h4><p>Hernando County</p></div>
+    <div class="area-card"><h4>Lutz</h4><p>Hillsborough / Pasco</p></div>
+  </div>
+</section>
+
+<!-- INSURANCE -->
+<section class="insurance">
+  <h2>All Major Insurance Accepted</h2>
+  <p>Our partner contractors handle direct insurance billing — they document the damage, file the claim, and work with your adjuster so you don't have to.</p>
+  <div class="insurance-logos">
+    <div class="ins-badge">State Farm</div>
+    <div class="ins-badge">Allstate</div>
+    <div class="ins-badge">USAA</div>
+    <div class="ins-badge">Citizens</div>
+    <div class="ins-badge">Progressive</div>
+    <div class="ins-badge">Nationwide</div>
+    <div class="ins-badge">Universal</div>
+    <div class="ins-badge">+ All Others</div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="section-header">
+    <div class="section-tag">Reviews</div>
+    <h2 class="section-h2">What Tampa Bay Homeowners Say</h2>
+  </div>
+  <div class="reviews-grid">
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <p class="review-text">"Pipe burst at 11pm and they had a crew at my house in under an hour. The contractor they sent handled my State Farm claim completely. Incredible service."</p>
+      <div class="review-author">
+        <div class="author-avatar">MR</div>
+        <div>
+          <div class="author-name">Mike R.</div>
+          <div class="author-loc">Wesley Chapel, FL</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <p class="review-text">"TampaRestore connected me with an amazing crew after storm flooding hit our first floor. They were there fast, professional, and insurance covered everything."</p>
+      <div class="review-author">
+        <div class="author-avatar">SL</div>
+        <div>
+          <div class="author-name">Sandra L.</div>
+          <div class="author-loc">New Port Richey, FL</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <p class="review-text">"Water heater leaked while we were on vacation. Came home to a disaster. The contractor TampaRestore sent restored our floors and drywall better than new."</p>
+      <div class="review-author">
+        <div class="author-avatar">JT</div>
+        <div>
+          <div class="author-name">James T.</div>
+          <div class="author-loc">Zephyrhills, FL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM CTA -->
+<section class="bottom-cta">
+  <h2>Water Damage Gets Worse<br>Every Hour You Wait.</h2>
+  <p>Call now — our referral service is completely free to homeowners.</p>
+  <a href="tel:+1YOURNUMBER" class="btn-white">
+    📞 Call for Immediate Help
+  </a>
+</section>
+
+<!-- LEGAL DISCLAIMER -->
+<div class="disclaimer">
+  <p>
+    TampaRestore is a <strong>free contractor referral and marketing service</strong>, not a licensed restoration contractor. We connect homeowners with independent, third-party restoration contractors who are licensed and insured in the State of Florida. TampaRestore does not perform restoration work and is not responsible for the work of referred contractors. All contractors in our network are independently licensed and insured. By submitting your information, you consent to be contacted by a local restoration contractor. This site is operated by [YOUR LLC NAME], a Florida limited liability company. For questions, contact us at [YOUR EMAIL].
+  </p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="logo">Tampa<span>Restore</span></a>
+  <div class="footer-links">
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms of Service</a>
+    <a href="#">Service Areas</a>
+    <a href="tel:+1YOURNUMBER">Call Now</a>
+  </div>
+  <div class="footer-copy">© 2026 [YOUR LLC NAME]. All rights reserved.</div>
+</footer>
+
+<script>
+function submitForm() {
+  const name = document.getElementById('fname').value.trim();
+  const phone = document.getElementById('fphone').value.trim();
+  const city = document.getElementById('fcity').value;
+
+  if (!name || !phone || !city) {
+    alert('Please enter your name, phone number, and city so we can connect you with a local pro.');
+    return;
+  }
+
+  const leadData = {
+    name,
+    phone,
+    city,
+    damage: document.getElementById('fdamage').value,
+    description: document.getElementById('fdesc').value,
+    timestamp: new Date().toISOString(),
+    source: 'tampaRestore-website'
+  };
+
+  // ── PLUG IN YOUR FORMSPREE ENDPOINT BELOW ──
+  // Replace YOUR_FORM_ID with your Formspree form ID
+  // Sign up free at formspree.io, create a form, copy the ID
+  fetch('https://formspree.io/f/YOUR_FORM_ID', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(leadData)
+  }).catch(() => {});
+  // ── END FORMSPREE BLOCK ──
+
+  document.getElementById('contact-form').style.display = 'none';
+  document.getElementById('success-msg').style.display = 'block';
+
+  console.log('Lead captured:', leadData);
+}
+</script>
+</body>
+</html>
