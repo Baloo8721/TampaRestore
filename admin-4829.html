@@ -250,9 +250,21 @@ function loadLeads() {
   tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
   
   try {
-    // Load from localStorage (set by form submission)
-    const stored = localStorage.getItem('tampaLeads');
-    allLeads = stored ? JSON.parse(stored) : [];
+    // Load from localStorage with error handling
+    let stored = localStorage.getItem('tampaLeads');
+    let leads = [];
+    
+    if (stored) {
+      try {
+        leads = JSON.parse(stored);
+      } catch (e) {
+        console.log('localStorage corrupted, clearing...');
+        localStorage.removeItem('tampaLeads');
+        leads = [];
+      }
+    }
+    
+    allLeads = Array.isArray(leads) ? leads : [];
     
     renderLeads();
     updateStats();
@@ -260,6 +272,7 @@ function loadLeads() {
     document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleString();
   } catch (err) {
     console.error('Error:', err);
+    allLeads = [];
     tbody.innerHTML = '<tr><td colspan="7" class="error-state">Error loading data</td></tr>';
   }
 }
