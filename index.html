@@ -1157,20 +1157,7 @@ function sendToSheets() {
   const lat = document.getElementById('flat')?.value || '';
   const lng = document.getElementById('flng')?.value || '';
   
-  // Add to localStorage for dashboard
-  const lead = {
-    id: Date.now().toString(),
-    name, phone, email, city, damage_type, description, lat, lng,
-    status: 'new',
-    created_at: new Date().toISOString()
-  };
-  
-  // Get existing leads
-  let leads = JSON.parse(localStorage.getItem('tampaLeads') || '[]');
-  leads.push(lead);
-  localStorage.setItem('tampaLeads', JSON.stringify(leads));
-  
-  // Build form data matching Apps Script EXACTLY
+  // Build form data
   const formData = new URLSearchParams();
   formData.append('name', name);
   formData.append('phone', phone);
