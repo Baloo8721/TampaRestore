@@ -1109,6 +1109,9 @@
 </footer>
 
 <script>
+// Google Apps Script URL - gets lead data to Google Sheets
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxE0VwW_xtIXNicL3jPgD8IVo_3hQfCFCk14zMXbL8XpEUxqtvemK660XyIp-nm7Bai/exec';
+
 function submitForm() {
   const name = document.getElementById('fname').value.trim();
   const phone = document.getElementById('fphone').value.trim();
@@ -1125,16 +1128,54 @@ function submitForm() {
       function(position) {
         document.getElementById('flat').value = position.coords.latitude;
         document.getElementById('flng').value = position.coords.longitude;
+        
+        // Submit to Google Sheets (background)
+        submitToSheets(name, phone, city);
+        
+        // Submit main form to Netlify
         document.getElementById('contact-form').submit();
       },
       function() {
-        // If geolocation fails, submit anyway
+        // Submit to Google Sheets (without location)
+        submitToSheets(name, phone, city);
+        
+        // Submit main form to Netlify
         document.getElementById('contact-form').submit();
       }
     );
   } else {
+    // Submit to Google Sheets (no geolocation support)
+    submitToSheets(name, phone, city);
+    
+    // Submit main form to Netlify
     document.getElementById('contact-form').submit();
   }
+}
+
+function submitToSheets(name, phone, city) {
+  // Get additional form data
+  const damageType = document.getElementById('fdamage')?.value || '';
+  const description = document.getElementById('fdesc')?.value || '';
+  const lat = document.getElementById('flat')?.value || '';
+  const lng = document.getElementById('flng')?.value || '';
+  
+  // Send to Google Apps Script (background, non-blocking)
+  const formData = new URLSearchParams();
+  formData.append('name', name);
+  formData.append('phone', phone);
+  formData.append('city', city);
+  formData.append('damage_type', damageType);
+  formData.append('description', description);
+  formData.append('lat', lat);
+  formData.append('lng', lng);
+  
+  // Fire and forget - don't wait for response
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: formData
+  }).catch(() => {
+    // Silently fail - Netlify Forms is backup
+  });
 }
 </script>
 </body>
