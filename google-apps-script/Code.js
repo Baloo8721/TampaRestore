@@ -1,5 +1,6 @@
-// TampaRestore Lead Database
+// TampaRestore Lead Database - FULL VERSION
 
+// ==================== WRITE LEAD ====================
 function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
   
@@ -10,7 +11,6 @@ function doPost(e) {
   
   const params = e.parameter;
   
-  // Get data from form - MATCHES SHEET COLUMNS EXACTLY
   const name = params.name || '';
   const phone = params.phone || '';
   const email = params.email || '';
@@ -33,8 +33,7 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
   
-  // Append row to sheet - COLUMN ORDER MATCHES YOUR SHEET
-  // A:id, B:name, C:phone, D:email, E:city, F:damage_type, G:description, H:lat, I:lng, J:status, K:created_at, L:notes
+  // Append row to sheet
   sheet.appendRow([
     Utilities.getUuid(),
     name,
@@ -54,7 +53,45 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// ==================== READ LEADS (for Dashboard) ====================
 function doGet(e) {
-  return ContentService.createTextOutput('TampaRestore API is running')
-    .setMimeType(ContentService.MimeType.TEXT);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  
+  if (!sheet) {
+    return ContentService.createTextOutput(JSON.stringify({ error: 'Sheet not found' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const leads = [];
+  
+  // Skip header row, get all data
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (row[1]) { // If name exists
+      leads.push({
+        id: row[0],
+        name: row[1],
+        phone: row[2],
+        email: row[3],
+        city: row[4],
+        damage_type: row[5],
+        description: row[6],
+        lat: row[7],
+        lng: row[8],
+        status: row[9],
+        created_at: row[10],
+        notes: row[11]
+      });
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ leads: leads }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ==================== UPDATE STATUS ====================
+function updateStatus(e) {
+  // This would need more complex setup - for now just use Sheet directly
 }

@@ -10,6 +10,7 @@
     
     :root {
       --red: #D92B2B;
+      --red-light: #FF3B3B;
       --navy: #0A1628;
       --navy-mid: #0F2040;
       --navy-light: #162A50;
@@ -17,188 +18,86 @@
       --off-white: #F5F3EE;
       --gray: #8A96A8;
       --green: #059669;
+      --green-light: #D1FAE5;
+      --yellow: #F59E0B;
       --light-gray: #E8EAF0;
     }
     
-    body {
-      font-family: 'Barlow', sans-serif;
-      background: var(--off-white);
-      color: #1A1E2E;
-    }
+    body { font-family: 'Barlow', sans-serif; background: var(--off-white); color: #1A1E2E; }
     
-    /* Login Screen */
-    #login-screen {
-      position: fixed;
-      inset: 0;
-      background: var(--navy);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    
-    .login-box {
-      background: var(--white);
-      padding: 40px;
-      width: 100%;
-      max-width: 360px;
-      text-align: center;
-    }
-    
-    .login-box h2 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 24px;
-      text-transform: uppercase;
-      color: var(--navy);
-      margin-bottom: 20px;
-    }
-    
-    .login-box input {
-      width: 100%;
-      padding: 14px;
-      border: 2px solid var(--light-gray);
-      font-family: 'Barlow', sans-serif;
-      font-size: 16px;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-    
-    .login-box input:focus {
-      border-color: var(--red);
-      outline: none;
-    }
-    
-    .login-box button {
-      width: 100%;
-      background: var(--red);
-      color: var(--white);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 18px;
-      text-transform: uppercase;
-      padding: 14px;
-      border: none;
-      cursor: pointer;
-    }
-    
-    .login-error {
-      color: var(--red);
-      font-size: 13px;
-      margin-top: 10px;
-      display: none;
-    }
+    /* Login */
+    #login-screen { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .login-box { background: var(--white); padding: 40px; width: 100%; max-width: 360px; text-align: center; }
+    .login-box h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; color: var(--navy); margin-bottom: 20px; }
+    .login-box input { width: 100%; padding: 14px; border: 2px solid var(--light-gray); font-family: 'Barlow', sans-serif; font-size: 16px; margin-bottom: 12px; text-align: center; }
+    .login-box input:focus { border-color: var(--red); outline: none; }
+    .login-box button { width: 100%; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; text-transform: uppercase; padding: 14px; border: none; cursor: pointer; }
+    .login-error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
     
     /* Dashboard */
     #dashboard { display: none; }
     
-    header {
-      background: var(--navy);
-      padding: 16px 5%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .logo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 20px;
-      color: var(--white);
-      text-transform: uppercase;
-    }
-    
+    header { background: var(--navy); padding: 16px 5%; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; color: var(--white); text-transform: uppercase; }
     .logo span { color: var(--red); }
-    
-    .logout-btn {
-      background: transparent;
-      border: 1px solid var(--gray);
-      color: var(--gray);
-      padding: 8px 16px;
-      font-size: 13px;
-      cursor: pointer;
-    }
+    .logout-btn { background: transparent; border: 1px solid var(--gray); color: var(--gray); padding: 8px 16px; font-size: 13px; cursor: pointer; }
     
     /* Stats */
-    .stats-bar {
-      background: var(--white);
-      padding: 24px 5%;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      border-bottom: 1px solid var(--light-gray);
-    }
-    
+    .stats-bar { background: var(--white); padding: 24px 5%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; border-bottom: 1px solid var(--light-gray); }
     .stat-card { text-align: center; }
     .stat-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 36px; color: var(--navy); }
     .stat-label { font-size: 12px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-sub { font-size: 11px; color: var(--green); margin-top: 4px; }
     
-    /* Main */
+    /* Sections */
     .main-content { padding: 24px 5%; }
+    .section { background: var(--white); padding: 20px; margin-bottom: 24px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-header h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; text-transform: uppercase; }
     
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    
-    .section-header h3 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 18px;
-      text-transform: uppercase;
-    }
-    
-    .leads-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--white);
-    }
-    
-    .leads-table th {
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: var(--gray);
-      padding: 12px 8px;
-      border-bottom: 2px solid var(--light-gray);
-      background: var(--off-white);
-    }
-    
-    .leads-table td {
-      padding: 12px 8px;
-      font-size: 14px;
-      border-bottom: 1px solid var(--light-gray);
-    }
+    /* Table */
+    .leads-table { width: 100%; border-collapse: collapse; }
+    .leads-table th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gray); padding: 12px 8px; border-bottom: 2px solid var(--light-gray); background: var(--off-white); }
+    .leads-table td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid var(--light-gray); }
+    .leads-table tr:hover { background: #FAFAFA; }
+    .leads-table tr.unread { background: #FFF7ED; }
     
     .lead-name { font-weight: 600; }
     .lead-phone { color: var(--navy); }
-    .status-new { background: #FEF3C7; color: #92400E; padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
-    .status-contacted { background: #DBEAFE; color: #1E40AF; padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
-    .status-paid { background: #D1FAE5; color: #065F46; padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
-    .status-closed { background: var(--light-gray); color: var(--gray); padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
+    .lead-phone a { color: var(--navy); text-decoration: none; }
+    .lead-city { color: var(--gray); }
+    .lead-date { font-size: 12px; color: var(--gray); }
     
-    .refresh-btn {
-      padding: 8px 16px;
-      font-size: 13px;
-      cursor: pointer;
-      background: var(--navy);
-      color: var(--white);
-      border: none;
-    }
+    /* Status badges */
+    .status-badge { display: inline-block; padding: 4px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
+    .status-new { background: #FEF3C7; color: #92400E; }
+    .status-contacted { background: #DBEAFE; color: #1E40AF; }
+    .status-paid { background: #D1FAE5; color: #065F46; }
+    .status-closed { background: var(--light-gray); color: var(--gray); }
     
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: var(--gray);
-    }
+    /* Analytics cards */
+    .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .analytics-card { background: var(--off-white); padding: 16px; text-align: center; }
+    .analytics-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; }
+    .analytics-label { font-size: 12px; color: var(--gray); text-transform: uppercase; }
+    .analytics-sub { font-size: 11px; color: var(--green); margin-top: 4px; }
     
+    /* Quick actions */
+    .btn { padding: 8px 16px; font-size: 13px; cursor: pointer; background: var(--navy); color: var(--white); border: none; }
+    .btn:hover { background: var(--red); }
+    
+    .refresh-btn { background: var(--navy); padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--white); border: none; }
+    
+    .empty-state { text-align: center; padding: 40px; color: var(--gray); }
+    .error-state { text-align: center; padding: 40px; color: var(--red); }
     .loading { text-align: center; padding: 40px; color: var(--gray); }
+    
+    /* Last updated */
+    .last-updated { font-size: 11px; color: var(--gray); text-align: right; margin-top: 8px; }
     
     @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .analytics-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -207,7 +106,7 @@
 <!-- Login -->
 <div id="login-screen">
   <div class="login-box">
-    <h2>🔒 Admin Access</h2>
+    <h2>🔒 TampaRestore Admin</h2>
     <input type="password" id="password-input" placeholder="Enter password" />
     <button onclick="checkPassword()">Login</button>
     <p class="login-error" id="login-error">Incorrect password</p>
@@ -218,57 +117,117 @@
 <div id="dashboard">
   <header>
     <div class="logo">Tampa<span>Restore</span> Admin</div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <div style="display:flex; gap:12px;">
+      <button class="logout-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/17em2dfY6Mky_dwcfwwL4vedoMPV9q1vMU7i4QYJ1QAM')">📊 Open Sheet</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
   </header>
   
+  <!-- Stats -->
   <div class="stats-bar">
     <div class="stat-card">
-      <div class="stat-num" id="total-leads">0</div>
+      <div class="stat-num" id="total-leads">-</div>
       <div class="stat-label">Total Leads</div>
     </div>
     <div class="stat-card">
-      <div class="stat-num" id="today-leads">0</div>
+      <div class="stat-num" id="today-leads">-</div>
       <div class="stat-label">Today</div>
     </div>
     <div class="stat-card">
-      <div class="stat-num" id="conversion-rate">0%</div>
-      <div class="stat-label">Converted</div>
+      <div class="stat-num" id="conversion-rate">-</div>
+      <div class="stat-label">Conversion</div>
+      <div class="stat-sub">Converted to paid</div>
     </div>
     <div class="stat-card">
       <div class="stat-num" id="total-revenue">$0</div>
       <div class="stat-label">Revenue</div>
+      <div class="stat-sub">This month</div>
     </div>
   </div>
   
   <div class="main-content">
-    <div class="section-header">
-      <h3>All Leads (From Netlify)</h3>
-      <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
+    <!-- Analytics -->
+    <div class="section">
+      <div class="section-header">
+        <h3>📈 Analytics</h3>
+      </div>
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="analytics-num" id="tampa-count">-</div>
+          <div class="analytics-label">Tampa</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-num" id="wesley-count">-</div>
+          <div class="analytics-label">Wesley Chapel</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-num" id="other-count">-</div>
+          <div class="analytics-label">Other Areas</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-num" id="storm-count">-</div>
+          <div class="analytics-label">Storm Damage</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-num" id="pipe-count">-</div>
+          <div class="analytics-label">Pipe Burst</div>
+        </div>
+        <div class="analytics-card">
+          <div class="analytics-num" id="flood-count">-</div>
+          <div class="analytics-label">Flooding</div>
+        </div>
+      </div>
+      <p class="last-updated" id="last-updated"></p>
     </div>
     
-    <table class="leads-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Phone</th>
-          <th>City</th>
-          <th>Damage</th>
-          <th>Status</th>
-          <th>Received</th>
-        </tr>
-      </thead>
-      <tbody id="leads-tbody">
-        <tr><td colspan="6" class="loading">Loading...</td></tr>
-      </tbody>
-    </table>
+    <!-- Leads List -->
+    <div class="section">
+      <div class="section-header">
+        <h3>📋 All Leads (From Google Sheet)</h3>
+        <div style="display:flex; gap:8px;">
+          <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
+        </div>
+      </div>
+      
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Damage</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="leads-tbody">
+          <tr><td colspan="7" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="section">
+      <div class="section-header">
+        <h3>⚡ Quick Info</h3>
+      </div>
+      <div style="font-size: 14px; line-height: 2; color: var(--gray);">
+        <div><strong>Contractor:</strong> ctbelisle@gmail.com</div>
+        <div><strong>Your Email:</strong> tylerbelislefl@gmail.com</div>
+        <div><strong>Source:</strong> GitHub Pages</div>
+        <div><strong>Database:</strong> Google Sheet</div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 const PASSWORD = 'TampaRestore2026!';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxE0VwW_xtIXNicL3jPgD8IVo_3hQfCFCk14zMXbL8XpEUxqtvemK660XyIp-nm7Bai/exec';
+
 let allLeads = [];
 
-// Login
 function checkPassword() {
   const input = document.getElementById('password-input').value;
   if (input === PASSWORD) {
@@ -286,43 +245,97 @@ function logout() {
   document.getElementById('password-input').value = '';
 }
 
-// Load leads from Netlify Forms (simulated - you need to fetch from Netlify API or manually add)
-function loadLeads() {
+async function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading leads from Netlify...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading leads from Google Sheet...</td></tr>';
   
-  // For now, show instructions - to auto-fetch you'd need Netlify API key
-  // This is a placeholder - manually enter leads as they come in
-  setTimeout(() => {
-    tbody.innerHTML = `
+  try {
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.json();
+    
+    if (data.error) {
+      tbody.innerHTML = `<tr><td colspan="7" class="error-state">Error: ${data.error}</td></tr>`;
+      return;
+    }
+    
+    allLeads = data.leads || [];
+    renderLeads();
+    updateStats();
+    
+    document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleString();
+  } catch (err) {
+    console.error('Error:', err);
+    tbody.innerHTML = `<tr><td colspan="7" class="error-state">Failed to load. Check console for details.</td></tr>`;
+  }
+}
+
+function renderLeads() {
+  const tbody = document.getElementById('leads-tbody');
+  
+  if (allLeads.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No leads yet. Go get some!</td></tr>';
+    return;
+  }
+  
+  // Sort by date (newest first)
+  const sorted = [...allLeads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  
+  tbody.innerHTML = sorted.map(lead => {
+    const status = lead.status || 'new';
+    const statusClass = 'status-' + status;
+    const date = lead.created_at ? new Date(lead.created_at).toLocaleDateString() : 'N/A';
+    const time = lead.created_at ? new Date(lead.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    
+    return `
       <tr>
-        <td class="lead-name">Tyler Belisle</td>
-        <td class="lead-phone">8134828671</td>
-        <td>Land O' Lakes</td>
-        <td>Storm / Hurricane Damage</td>
-        <td><span class="status-new">new</span></td>
-        <td>Just now</td>
-      </tr>
-      <tr>
-        <td colspan="6" style="text-align:center; padding: 20px; color: var(--gray); font-size: 13px;">
-          <strong>Note:</strong> Leads also appear in Netlify Dashboard → Forms tab and your Google Sheet.<br>
-          This dashboard is for quick overview. Check Netlify for full lead details.
-        </td>
+        <td class="lead-name">${lead.name || 'N/A'}</td>
+        <td class="lead-phone"><a href="tel:${lead.phone}">${lead.phone || 'N/A'}</a></td>
+        <td class="lead-city">${lead.city || 'N/A'}</td>
+        <td>${lead.damage_type || 'N/A'}</td>
+        <td><span class="status-badge ${statusClass}">${status}</span></td>
+        <td class="lead-date">${date}<br>${time}</td>
+        <td>${lead.notes || '-'}</td>
       </tr>
     `;
-    
-    updateStats();
-  }, 500);
+  }).join('');
 }
 
 function updateStats() {
-  document.getElementById('total-leads').textContent = '3';
-  document.getElementById('today-leads').textContent = '3';
-  document.getElementById('conversion-rate').textContent = '0%';
-  document.getElementById('total-revenue').textContent = '$0';
+  const total = allLeads.length;
+  const today = new Date().toDateString();
+  
+  const todayCount = allLeads.filter(l => {
+    return l.created_at && new Date(l.created_at).toDateString() === today;
+  }).length;
+  
+  const paid = allLeads.filter(l => l.status === 'paid').length;
+  const conversion = total > 0 ? Math.round((paid / total) * 100) : 0;
+  
+  document.getElementById('total-leads').textContent = total;
+  document.getElementById('today-leads').textContent = todayCount;
+  document.getElementById('conversion-rate').textContent = conversion + '%';
+  document.getElementById('total-revenue').textContent = '$' + (paid * 75); // Assume $75/lead
+  
+  // City breakdown
+  const tampa = allLeads.filter(l => l.city === 'Tampa').length;
+  const wesley = allLeads.filter(l => l.city === 'Wesley Chapel').length;
+  const other = total - tampa - wesley;
+  
+  document.getElementById('tampa-count').textContent = tampa;
+  document.getElementById('wesley-count').textContent = wesley;
+  document.getElementById('other-count').textContent = other;
+  
+  // Damage type breakdown
+  const storm = allLeads.filter(l => l.damage_type && l.damage_type.toLowerCase().includes('storm')).length;
+  const pipe = allLeads.filter(l => l.damage_type && l.damage_type.toLowerCase().includes('pipe')).length;
+  const flood = allLeads.filter(l => l.damage_type && l.damage_type.toLowerCase().includes('flood')).length;
+  
+  document.getElementById('storm-count').textContent = storm;
+  document.getElementById('pipe-count').textContent = pipe;
+  document.getElementById('flood-count').textContent = flood;
 }
 
-// Password enter key
+// Enter key
 document.getElementById('password-input').addEventListener('keypress', e => {
   if (e.key === 'Enter') checkPassword();
 });
