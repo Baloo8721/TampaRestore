@@ -813,6 +813,8 @@
       <h2>Request Help Now</h2>
       <p class="form-intro">We'll match you with a certified local pro and they'll call you back in <strong>under 5 minutes.</strong></p>
       <form id="contact-form" name="lead-form" data-netlify="true">
+        <input type="hidden" id="flat" name="lat" value="" />
+        <input type="hidden" id="flng" name="lng" value="" />
         <div class="field">
           <label>Your Name</label>
           <input type="text" id="fname" name="name" placeholder="John Smith" />
@@ -1117,8 +1119,22 @@ function submitForm() {
     return;
   }
 
-  // Netlify Forms handles submission automatically - just submit the form natively
-  document.getElementById('contact-form').submit();
+  // Get geolocation
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        document.getElementById('flat').value = position.coords.latitude;
+        document.getElementById('flng').value = position.coords.longitude;
+        document.getElementById('contact-form').submit();
+      },
+      function() {
+        // If geolocation fails, submit anyway
+        document.getElementById('contact-form').submit();
+      }
+    );
+  } else {
+    document.getElementById('contact-form').submit();
+  }
 }
 </script>
 </body>

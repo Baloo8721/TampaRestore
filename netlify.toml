@@ -1,0 +1,18 @@
+[build]
+  command = "npm install && npm run build"
+  functions = "netlify/functions"
+  publish = "."
+
+[dev]
+  command = "npm run dev"
+  targetPort = 8888
+
+[[redirects]]
+  from = "/admin-4829"
+  to = "/admin-4829.html"
+  status = 200
+
+[[headers]]
+  for = "/admin-4829.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"

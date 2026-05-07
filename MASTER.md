@@ -1,105 +1,121 @@
 # TampaRestore — Master Operations Guide
 
-Last Updated: May 2026
+Last Updated: May 6, 2026
 Owner: Tyler B.
-Repo: github.com/Baloo8721/TampaRestore
 
 ---
 
-## 1. What This Business Does
+## WHAT THIS BUSINESS DOES
 
-TampaRestore is a free referral service connecting Tampa Bay homeowners with licensed, insured water damage restoration contractors. We generate leads and route them to contractor partners who pay us $75/lead or $500/mo retainer.
+TampaRestore is a free referral service connecting Tampa Bay homeowners with licensed, insured water damage restoration contractors. Leads are generated via the website, captured, and routed to contractor partners who pay $75/lead or $500/mo.
 
 ---
 
-## 2. Current Build
+## CURRENT TECH STACK (100% FREE)
 
-- **URL:** https://baloo8721.github.io/TampaRestore/ (GitHub Pages)
-- **Form Handler:** Netlify Forms (FREE, unlimited, commercial OK)
-- **Note:** To use Netlify Forms, deploy to Netlify instead of GitHub Pages
-
-### Tech Stack (Current)
 | Component | Tool | Cost | Status |
 |-----------|------|------|--------|
-| Hosting | GitHub Pages | Free | Ready OR Netlify |
-| Phone | Google Voice | Free | Not configured |
-| Form | Netlify Forms | Free | ✅ Configured in index.html |
-| AI Voice | Ollama/Synthflow | $0-50/mo | Future |
-| VPS | Vultr | $6/mo | Future |
+| Website | GitHub Pages / Netlify | Free | ✅ Ready |
+| Form Lead Capture | Netlify Forms | Free | ✅ Ready |
+| Admin Email | tylerbelislefl@gmail.com | You get lead notifications |
+| Contractor Email | ctbelisle@gmail.com | Gets forwarded leads |
+| Database | Google Apps Script | Free | ⚠️ Setup |
+| Auto-forward | Gmail Filter | Free | ⚠️ Enable |
+| Dashboard | admin-4829.html | Free | ✅ Ready |
+| Phone | Google Voice | Free | ⏳ Later |
 
 ---
 
-## 3. Configuration Required Before Going Live
+## COMPLETE SETUP STEPS
 
-| Placeholder | Line | Action |
-|------------|-----|--------|
-| (YOURNUMBER) | 782, 801, 862, 1085, 1104 | Set phone |
-| [YOUR LLC NAME] | 1093, 1106 | Your business name |
-| [YOUR EMAIL] | 1093 | Your contact email |
+### STEP 1: ENABLE NETLIFY EMAIL NOTIFICATIONS
 
-### Deploy to Netlify (Required for Forms)
-1. Go to netlify.com → Sign up free
-2. Add new site → Import from GitHub
-3. Select TampaRestore repo
-4. Build command: (leave blank for static)
-5. Publish directory: . (root)
-6. Deploy
+1. Go to Netlify Dashboard → Your site → Forms
+2. Click "Form Notifications" → Add Email Notification
+3. Enter: tylerbelislefl@gmail.com
+4. Save
+
+Now every form submission emails you instantly.
+
+### STEP 2: SETUP GMAIL AUTO-FORWARD
+
+You get the email. To auto-forward to contractor:
+
+1. Go to Gmail → Settings → Filters
+2. Create filter:
+   - Subject: contains "[Netlify]"
+3. Add action: Forward to ctbelisle@gmail.com
+
+Or manual forward:
+
+1. Go to Gmail → Settings → Filters
+2. Create filter:
+   - Subject: contains "[Netlify]"
+3. Add action: Forward to ctbelisle@gmail.com
+
+### STEP 4: UPDATE FORM (Optional)
+
+After Apps Script is deployed, update form to also submit to Google Sheet.
 
 ---
 
-## 4. Quick Start
+## FILES IN PROJECT
 
-### Deploy to Netlify
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/Baloo8721/TampaRestore.git
-git push -u origin main
 ```
-1. Go to netlify.com → Sign up free (GitHub login)
-2. Add new site → Import from GitHub
-3. Select TampaRestore repo
-4. Configure: Build command (blank), Publish directory: .
-5. Click Deploy
-
-### Netlify Forms Setup
-- Already configured in index.html with `data-netlify="true"`
-- After deploy, go to Site settings → Forms
-- Enable email notifications to get leads via email
-
-### Get Phone
-1. voice.google.com
-2. Get free 813/727 number
-3. Forward to contractor partner
+/Users/tylerbelisle/TampaRestore/
+├── index.html                      ← Main site
+├── admin-4829.html               ← Admin dashboard
+├── MASTER.md                    ← This file
+├── APPS_SCRIPT_SETUP.md         ← Database setup guide
+├── status.md                   ← Current status
+└── google-apps-script/
+    └── Code.js                 ← Apps Script code
+```
 
 ---
 
-## 5. Credentials Template (FILL IN)
+## LEAD FLOW
 
-- GitHub: ________ / ________
-- Formspree: ________ / ________
-- Google Voice: ________ / ________
-- Business Phone: ________
-- LLC Name: ________
-
----
-
-## 6. Costs
-
-| Phase | Cost/mo |
-|-------|--------|
-| GitHub Pages only | $0 |
-| + Phone forward | $0 |
-| Full VPS + AI | $20-60 |
+```
+Homeowner submits form
+         ↓
+1. Netlify Forms captures → Dashboard shows
+2. Netlify emails YOU → ctbelisle@gmail.com
+3. Gmail auto-forward (if set) → contractor
+4. Contractor calls homeowner
+5. 💰 Get paid
+```
 
 ---
 
-## 7. Daily Operations (when live)
+## DASHBOARD
 
-1. Check email for form leads
-2. Text/email lead to contractor partner
-3. End of month: collect payment
+- URL: /admin-4829.html
+- Password: TampaRestore2026!
+- Features: Leads list, Revenue tracking, Analytics
+
+---
+
+## COSTS
+
+| Service | Cost |
+|---------|------|
+| Netlify | $0 |
+| Google Sheets | $0 |
+| Gmail | $0 |
+| Google Voice | $0 |
+| **Total** | **$0** |
+
+---
+
+## WHAT'S READY TO DEPLOY
+
+- ✅ index.html (updated with geolocation)
+- ✅ admin-4829.html (dashboard)
+- ✅ Netlify config
+- ⚠️ Need: Netlify email setup
+- ⚠️ Need: Apps Script deployment
+- ⚠️ Need: Gmail filter
 
 ---
 
