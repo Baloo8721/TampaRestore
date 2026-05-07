@@ -246,28 +246,53 @@ async function loadLeads() {
   statusMsg.innerHTML = '';
   
   try {
-    // Fetch ALL form submissions from Netlify API
-    // Get all submissions (limit 100)
-    const response = await fetch('https://api.netlify.com/api/v1/forms/submissions', {
+    // First get the user's sites
+    const sitesRes = await fetch('https://api.netlify.com/api/v1/sites', {
       headers: {
-        'Authorization': 'Bearer ' + NETLIFY_API_KEY,
-        'Content-Type': 'application/json'
+        'Authorization': 'Bearer ' + NETLIFY_API_KEY
       }
     });
     
-    if (!response.ok) {
-      throw new Error('API error: ' + response.status);
+    if (!sitesRes.ok) throw new Error('Failed to get sites: ' + sitesRes.status);
+    
+    const sites = await sitesRes.json();
+    if (!sites || sites.length === 0) {
+      throw new Error('No Netlify sites found');
     }
     
-    const data = await response.json();
+    // Get the first site (your TampaRestore site)
+    const site = sites[0];
+    const siteId = site.id;
     
-    // Filter to only water damage related submissions
-    allLeads = data.filter(sub => sub.form_id || true).map(sub => ({
+    // Now get forms for this site
+    const formsRes = await fetch('https://api.netlify.com/api/v1/sites/' + siteId + '/forms', {
+      headers: {
+        'Authorization': 'Bearer ' + NETLIFY_API_KEY
+      }
+    });
+    
+    const forms = await formsRes.json();
+    const form = forms && forms[0]; // Get first form
+    
+    if (!form) {
+      throw new Error('No form found');
+    }
+    
+    // Get submissions for this form
+    const subRes = await fetch('https://api.netlify.com/api/v1/sites/' + siteId + '/forms/' + form.id + '/submissions', {
+      headers: {
+        'Authorization': 'Bearer ' + NETLIFY_API_KEY
+      }
+    });
+    
+    const submissions = await subRes.json();
+    
+    allLeads = (submissions || []).map(sub => ({
       id: sub.id,
       name: sub.name || sub.payload?.name || 'Unknown',
       phone: sub.phone || sub.payload?.phone || 'N/A',
       city: sub.city || sub.payload?.city || 'N/A',
-      damage_type: sub.damage_type || sub.payload?.['damage-type'] || sub.payload?.damage_type || 'N/A',
+      damage_type: sub['damage-type'] || sub.payload?.['damage-type'] || sub.payload?.damage_type || 'N/A',
       description: sub.description || sub.payload?.description || '',
       created_at: sub.created_at,
       status: 'new'
