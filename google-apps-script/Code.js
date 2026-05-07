@@ -1,12 +1,10 @@
-// TampaRestore Lead Database - FULL VERSION
+// TampaRestore Lead Database - WITH CORS FIX
 
-// ==================== WRITE LEAD ====================
 function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
   
   if (!sheet) {
-    return ContentService.createTextOutput(JSON.stringify({ error: 'Sheet not found' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ error: 'Sheet not found' });
   }
   
   const params = e.parameter;
@@ -21,19 +19,14 @@ function doPost(e) {
   const lng = params.lng || '';
   const timestamp = new Date().toISOString();
   
-  // Honeypot check
   if (params.bot_field) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ status: 'ok' });
   }
   
-  // Validation
   if (!name || !phone || !city) {
-    return ContentService.createTextOutput(JSON.stringify({ error: 'Missing required fields' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ error: 'Missing required fields' });
   }
   
-  // Append row to sheet
   sheet.appendRow([
     Utilities.getUuid(),
     name,
@@ -49,27 +42,22 @@ function doPost(e) {
     ''
   ]);
   
-  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', lead: name }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return jsonResponse({ status: 'ok', lead: name });
 }
 
-// ==================== READ LEADS (for Dashboard) ====================
 function doGet(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
   
   if (!sheet) {
-    return ContentService.createTextOutput(JSON.stringify({ error: 'Sheet not found' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ error: 'Sheet not found' });
   }
   
   const data = sheet.getDataRange().getValues();
-  const headers = data[0];
   const leads = [];
   
-  // Skip header row, get all data
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (row[1]) { // If name exists
+    if (row[1]) {
       leads.push({
         id: row[0],
         name: row[1],
@@ -87,11 +75,10 @@ function doGet(e) {
     }
   }
   
-  return ContentService.createTextOutput(JSON.stringify({ leads: leads }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return jsonResponse({ leads: leads });
 }
 
-// ==================== UPDATE STATUS ====================
-function updateStatus(e) {
-  // This would need more complex setup - for now just use Sheet directly
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }

@@ -245,27 +245,22 @@ function logout() {
   document.getElementById('password-input').value = '';
 }
 
-async function loadLeads() {
+function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
-  tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading leads from Google Sheet...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
   
   try {
-    const response = await fetch(APPS_SCRIPT_URL);
-    const data = await response.json();
+    // Load from localStorage (set by form submission)
+    const stored = localStorage.getItem('tampaLeads');
+    allLeads = stored ? JSON.parse(stored) : [];
     
-    if (data.error) {
-      tbody.innerHTML = `<tr><td colspan="7" class="error-state">Error: ${data.error}</td></tr>`;
-      return;
-    }
-    
-    allLeads = data.leads || [];
     renderLeads();
     updateStats();
     
     document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleString();
   } catch (err) {
     console.error('Error:', err);
-    tbody.innerHTML = `<tr><td colspan="7" class="error-state">Failed to load. Check console for details.</td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="7" class="error-state">Error loading data</td></tr>';
   }
 }
 

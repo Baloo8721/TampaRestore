@@ -1157,6 +1157,19 @@ function sendToSheets() {
   const lat = document.getElementById('flat')?.value || '';
   const lng = document.getElementById('flng')?.value || '';
   
+  // Add to localStorage for dashboard
+  const lead = {
+    id: Date.now().toString(),
+    name, phone, email, city, damage_type, description, lat, lng,
+    status: 'new',
+    created_at: new Date().toISOString()
+  };
+  
+  // Get existing leads
+  let leads = JSON.parse(localStorage.getItem('tampaLeads') || '[]');
+  leads.push(lead);
+  localStorage.setItem('tampaLeads', JSON.stringify(leads));
+  
   // Build form data matching Apps Script EXACTLY
   const formData = new URLSearchParams();
   formData.append('name', name);
@@ -1168,19 +1181,15 @@ function sendToSheets() {
   formData.append('lat', lat);
   formData.append('lng', lng);
   
-  // Log for debugging
-  console.log('Sending to Sheets:', Object.fromEntries(formData));
-  
   // Send to Google Apps Script
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     mode: 'no-cors',
     body: formData
   }).then(() => {
-    console.log('✓ Lead sent to Google Sheets');
+    console.log('✓ Lead sent to Google Sheet');
   }).catch(err => {
-    console.log('✗ Sheets error:', err);
-    // Netlify Forms is backup - form still submits
+    console.log('Sheet error:', err);
   });
 }
 </script>
