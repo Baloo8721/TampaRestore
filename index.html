@@ -822,6 +822,10 @@
           <input type="tel" id="fphone" name="phone" placeholder="(813) 555-0000" />
         </div>
         <div class="field">
+          <label>Email (optional)</label>
+          <input type="email" id="femail" name="email" placeholder="you@email.com" />
+        </div>
+        <div class="field">
           <label>Your City</label>
           <select id="fcity" name="city">
             <option value="">Select your city...</option>
@@ -1107,6 +1111,9 @@
 </footer>
 
 <script>
+// Google Apps Script URL - gets lead data to Google Sheets
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxE0VwW_xtIXNicL3jPgD8IVo_3hQfCFCk14zMXbL8XpEUxqtvemK660XyIp-nm7Bai/exec';
+
 function submitForm() {
   const name = document.getElementById('fname').value.trim();
   const phone = document.getElementById('fphone').value.trim();
@@ -1117,8 +1124,40 @@ function submitForm() {
     return;
   }
 
-  // Netlify Forms handles submission automatically - just submit the form natively
+  // Send to Google Sheets (for database)
+  sendToSheets();
+  
+  // Netlify Forms handles email - just submit the form
   document.getElementById('contact-form').submit();
+}
+
+function sendToSheets() {
+  // Get form values
+  const name = document.getElementById('fname')?.value || '';
+  const phone = document.getElementById('fphone')?.value || '';
+  const email = document.getElementById('femail')?.value || '';
+  const city = document.getElementById('fcity')?.value || '';
+  const damage_type = document.getElementById('fdamage')?.value || '';
+  const description = document.getElementById('fdesc')?.value || '';
+  
+  const formData = new URLSearchParams();
+  formData.append('name', name);
+  formData.append('phone', phone);
+  formData.append('email', email);
+  formData.append('city', city);
+  formData.append('damage_type', damage_type);
+  formData.append('description', description);
+  
+  // Send to Google Apps Script
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: formData
+  }).then(() => {
+    console.log('Lead saved to Google Sheet');
+  }).catch(() => {
+    // Silent fail - Netlify has the data
+  });
 }
 </script>
 </body>
