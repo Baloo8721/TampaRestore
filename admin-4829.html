@@ -262,9 +262,9 @@ async function loadLeads() {
     
     // Get the first site (your TampaRestore site)
     const site = sites[0];
-    const siteId = site.id;
+    const siteId = site.site_id; // Use site_id not id
     
-    // Now get forms for this site
+    // Now get forms for this site - different endpoint
     const formsRes = await fetch('https://api.netlify.com/api/v1/sites/' + siteId + '/forms', {
       headers: {
         'Authorization': 'Bearer ' + NETLIFY_API_KEY
@@ -272,11 +272,35 @@ async function loadLeads() {
     });
     
     const forms = await formsRes.json();
-    const form = forms && forms[0]; // Get first form
     
-    if (!form) {
-      throw new Error('No form found');
+    if (!forms || forms.length === 0) {
+      // Try alternative - get all submissions without form_id filter
+      const subRes = await fetch('https://api.netlify.com/api/v1/sites/' + siteId + '/submissions', {
+        headers: {
+          'Authorization': 'Bearer ' + NETLIFY_API_KEY
+        }
+      });
+      
+      const submissions = await subRes.json();
+      allLeads = (submissions || []).map(sub => ({
+        id: sub.id,
+        name: sub.name || 'Unknown',
+        phone: sub.phone || 'N/A',
+        city: sub.city || 'N/A',
+        damage_type: sub['damage-type'] || 'N/A',
+        description: sub.description || '',
+        created_at: sub.created_at,
+        status: 'new'
+      }));
+      
+      renderLeads();
+      updateStats();
+      document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleString();
+      statusMsg.innerHTML = '<p class="success-state">✓ Loaded ' + allLeads.length + ' leads</p>';
+      return;
     }
+    
+    const form = forms[0];
     
     // Get submissions for this form
     const subRes = await fetch('https://api.netlify.com/api/v1/sites/' + siteId + '/forms/' + form.id + '/submissions', {
@@ -289,11 +313,11 @@ async function loadLeads() {
     
     allLeads = (submissions || []).map(sub => ({
       id: sub.id,
-      name: sub.name || sub.payload?.name || 'Unknown',
-      phone: sub.phone || sub.payload?.phone || 'N/A',
-      city: sub.city || sub.payload?.city || 'N/A',
-      damage_type: sub['damage-type'] || sub.payload?.['damage-type'] || sub.payload?.damage_type || 'N/A',
-      description: sub.description || sub.payload?.description || '',
+      name: sub.name || 'Unknown',
+      phone: sub.phone || 'N/A',
+      city: sub.city || 'N/A',
+      damage_type: sub['damage-type'] || 'N/A',
+      description: sub.description || '',
       created_at: sub.created_at,
       status: 'new'
     }));
