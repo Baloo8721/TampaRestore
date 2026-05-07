@@ -79,11 +79,13 @@ After Apps Script is deployed, update form to also submit to Google Sheet.
 ```
 Homeowner submits form
          ↓
-1. Netlify Forms captures → Dashboard shows
-2. Netlify emails YOU → ctbelisle@gmail.com
-3. Gmail auto-forward (if set) → contractor
+1. Netlify Forms captures → Primary source (ALWAYS WORKS)
+2. Netlify emails YOU → tylerbelislefl@gmail.com
+3. YOU forward to contractor → ctbelisle@gmail.com
 4. Contractor calls homeowner
 5. 💰 Get paid
+
+Google Sheet integration is optional backup.
 ```
 
 ---

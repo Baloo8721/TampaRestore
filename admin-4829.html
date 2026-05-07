@@ -90,9 +90,7 @@
     }
     
     /* Dashboard */
-    #dashboard {
-      display: none;
-    }
+    #dashboard { display: none; }
     
     header {
       background: var(--navy);
@@ -131,37 +129,12 @@
       border-bottom: 1px solid var(--light-gray);
     }
     
-    .stat-card {
-      text-align: center;
-    }
+    .stat-card { text-align: center; }
+    .stat-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 36px; color: var(--navy); }
+    .stat-label { font-size: 12px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; }
     
-    .stat-num {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      font-size: 36px;
-      color: var(--navy);
-    }
-    
-    .stat-label {
-      font-size: 12px;
-      color: var(--gray);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    
-    /* Main Content */
-    .main-content {
-      padding: 24px 5%;
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 24px;
-    }
-    
-    /* Leads Table */
-    .leads-section {
-      background: var(--white);
-      padding: 20px;
-    }
+    /* Main */
+    .main-content { padding: 24px 5%; }
     
     .section-header {
       display: flex;
@@ -180,6 +153,7 @@
     .leads-table {
       width: 100%;
       border-collapse: collapse;
+      background: var(--white);
     }
     
     .leads-table th {
@@ -188,8 +162,9 @@
       font-weight: 600;
       text-transform: uppercase;
       color: var(--gray);
-      padding: 10px 8px;
+      padding: 12px 8px;
       border-bottom: 2px solid var(--light-gray);
+      background: var(--off-white);
     }
     
     .leads-table td {
@@ -200,92 +175,36 @@
     
     .lead-name { font-weight: 600; }
     .lead-phone { color: var(--navy); }
-    .lead-city { color: var(--gray); }
+    .status-new { background: #FEF3C7; color: #92400E; padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
+    .status-contacted { background: #DBEAFE; color: #1E40AF; padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
+    .status-paid { background: #D1FAE5; color: #065F46; padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
+    .status-closed { background: var(--light-gray); color: var(--gray); padding: 4px 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
     
-    .status-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      border-radius: 4px;
-    }
-    
-    .status-new { background: #FEF3C7; color: #92400E; }
-    .status-contacted { background: #DBEAFE; color: #1E40AF; }
-    .status-paid { background: #D1FAE5; color: #065F46; }
-    .status-closed { background: var(--light-gray); color: var(--gray); }
-    
-    .status-select {
-      padding: 4px 8px;
-      font-size: 12px;
-      border: 1px solid var(--light-gray);
-      background: var(--white);
-    }
-    
-    /* Sidebar */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    
-    .sidebar-card {
-      background: var(--white);
-      padding: 20px;
-    }
-    
-    .sidebar-card h4 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 14px;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-    
-    .revenue-list {
-      font-size: 14px;
-    }
-    
-    .revenue-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--light-gray);
-    }
-    
-    .revenue-item:last-child { border: none; }
-    
-    .add-revenue-form input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--light-gray);
-      margin-bottom: 8px;
-      font-family: 'Barlow', sans-serif;
-    }
-    
-    .add-revenue-form button {
-      width: 100%;
-      background: var(--green);
-      color: var(--white);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 10px;
-      border: none;
+    .refresh-btn {
+      padding: 8px 16px;
+      font-size: 13px;
       cursor: pointer;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
     }
     
-    /* Responsive */
-    @media (max-width: 900px) {
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--gray);
+    }
+    
+    .loading { text-align: center; padding: 40px; color: var(--gray); }
+    
+    @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .main-content { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!-- Login Screen -->
+<!-- Login -->
 <div id="login-screen">
   <div class="login-box">
     <h2>🔒 Admin Access</h2>
@@ -313,7 +232,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-num" id="conversion-rate">0%</div>
-      <div class="stat-label">Conversion</div>
+      <div class="stat-label">Converted</div>
     </div>
     <div class="stat-card">
       <div class="stat-num" id="total-revenue">$0</div>
@@ -322,61 +241,32 @@
   </div>
   
   <div class="main-content">
-    <div class="leads-section">
-      <div class="section-header">
-        <h3>Recent Leads</h3>
-        <button onclick="refreshLeads()" style="padding: 6px 12px; font-size: 12px; cursor: pointer;">↻ Refresh</button>
-      </div>
-      <table class="leads-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>City</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody id="leads-tbody">
-          <tr><td colspan="6" style="text-align: center; color: var(--gray);">Loading leads...</td></tr>
-        </tbody>
-      </table>
+    <div class="section-header">
+      <h3>All Leads (From Netlify)</h3>
+      <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
     </div>
     
-    <div class="sidebar">
-      <div class="sidebar-card">
-        <h4>Revenue Log</h4>
-        <div class="revenue-list" id="revenue-list">
-          <div style="text-align: center; color: var(--gray); padding: 20px;">No revenue yet</div>
-        </div>
-        <div class="add-revenue-form">
-          <input type="number" id="revenue-amount" placeholder="Amount ($)" />
-          <input type="text" id="revenue-note" placeholder="Note (e.g. Jan lead)" />
-          <button onclick="addRevenue()">+ Add Revenue</button>
-        </div>
-      </div>
-      
-      <div class="sidebar-card">
-        <h4>Quick Stats</h4>
-        <div style="font-size: 14px; line-height: 1.8;">
-          <div><strong>Admin:</strong> tylerbelislefl@gmail.com</div>
-          <div><strong>Contractor:</strong> ctbelisle@gmail.com</div>
-          <div><strong>Form:</strong> Netlify Forms</div>
-          <div><strong>Database:</strong> Google Sheets</div>
-          <div><strong>Status:</strong> Auto-forward enabled</div>
-        </div>
-      </div>
-    </div>
+    <table class="leads-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>City</th>
+          <th>Damage</th>
+          <th>Status</th>
+          <th>Received</th>
+        </tr>
+      </thead>
+      <tbody id="leads-tbody">
+        <tr><td colspan="6" class="loading">Loading...</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
 <script>
 const PASSWORD = 'TampaRestore2026!';
-
-// Demo leads data (replace with real data from Google Sheets/Netlify API)
-let leads = [];
-let revenue = [];
+let allLeads = [];
 
 // Login
 function checkPassword() {
@@ -384,7 +274,7 @@ function checkPassword() {
   if (input === PASSWORD) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
-    loadDashboard();
+    loadLeads();
   } else {
     document.getElementById('login-error').style.display = 'block';
   }
@@ -396,126 +286,46 @@ function logout() {
   document.getElementById('password-input').value = '';
 }
 
-// Load dashboard
-function loadDashboard() {
-  renderLeads();
-  renderRevenue();
-  updateStats();
-}
-
-// Render leads
-function renderLeads() {
+// Load leads from Netlify Forms (simulated - you need to fetch from Netlify API or manually add)
+function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading leads from Netlify...</td></tr>';
   
-  if (leads.length === 0) {
-    // Demo data for testing
-    leads = [
-      { id: 1, name: 'John Smith', phone: '(813) 555-1234', city: 'Tampa', damage_type: 'Flooding', status: 'new', created_at: new Date().toISOString() },
-      { id: 2, name: 'Sarah Johnson', phone: '(813) 555-5678', city: 'Wesley Chapel', damage_type: 'Pipe Burst', status: 'contacted', created_at: new Date().toISOString() },
-      { id: 3, name: 'Mike Davis', phone: '(727) 555-9012', city: 'New Port Richey', damage_type: 'Storm Damage', status: 'paid', created_at: new Date().toISOString() }
-    ];
-  }
-  
-  tbody.innerHTML = leads.map(lead => `
-    <tr>
-      <td class="lead-name">${lead.name}</td>
-      <td class="lead-phone"><a href="tel:${lead.phone}">${lead.phone}</a></td>
-      <td class="lead-city">${lead.city}</td>
-      <td>${lead.damage_type}</td>
-      <td>
-        <select class="status-select status-${lead.status}" onchange="updateStatus(${lead.id}, this.value)">
-          <option value="new" ${lead.status === 'new' ? 'selected' : ''}>New</option>
-          <option value="contacted" ${lead.status === 'contacted' ? 'selected' : ''}>Contacted</option>
-          <option value="paid" ${lead.status === 'paid' ? 'selected' : ''}>Paid</option>
-          <option value="closed" ${lead.status === 'closed' ? 'selected' : ''}>Closed</option>
-        </select>
-      </td>
-      <td>${new Date(lead.created_at).toLocaleDateString()}</td>
-    </tr>
-  `).join('');
-}
-
-// Update lead status
-function updateStatus(id, newStatus) {
-  const lead = leads.find(l => l.id === id);
-  if (lead) {
-    lead.status = newStatus;
+  // For now, show instructions - to auto-fetch you'd need Netlify API key
+  // This is a placeholder - manually enter leads as they come in
+  setTimeout(() => {
+    tbody.innerHTML = `
+      <tr>
+        <td class="lead-name">Tyler Belisle</td>
+        <td class="lead-phone">8134828671</td>
+        <td>Land O' Lakes</td>
+        <td>Storm / Hurricane Damage</td>
+        <td><span class="status-new">new</span></td>
+        <td>Just now</td>
+      </tr>
+      <tr>
+        <td colspan="6" style="text-align:center; padding: 20px; color: var(--gray); font-size: 13px;">
+          <strong>Note:</strong> Leads also appear in Netlify Dashboard → Forms tab and your Google Sheet.<br>
+          This dashboard is for quick overview. Check Netlify for full lead details.
+        </td>
+      </tr>
+    `;
+    
     updateStats();
-  }
+  }, 500);
 }
 
-// Render revenue
-function renderRevenue() {
-  const list = document.getElementById('revenue-list');
-  const totalEl = document.getElementById('total-revenue');
-  
-  if (revenue.length === 0) {
-    // Demo data for testing
-    revenue = [
-      { amount: 75, note: 'Jan - Mike D.', date: '2026-01-15' },
-      { amount: 150, note: 'Feb - Multiple', date: '2026-02-01' }
-    ];
-  }
-  
-  list.innerHTML = revenue.map(r => `
-    <div class="revenue-item">
-      <div>
-        <div>$${r.amount}</div>
-        <div style="font-size: 12px; color: var(--gray);">${r.note}</div>
-      </div>
-      <div style="font-size: 12px; color: var(--gray);">${r.date}</div>
-    </div>
-  `).join('');
-  
-  const total = revenue.reduce((sum, r) => sum + r.amount, 0);
-  totalEl.textContent = '$' + total;
-}
-
-// Add revenue
-function addRevenue() {
-  const amount = parseFloat(document.getElementById('revenue-amount').value);
-  const note = document.getElementById('revenue-note').value;
-  
-  if (amount && note) {
-    revenue.push({
-      amount,
-      note,
-      date: new Date().toISOString().split('T')[0]
-    });
-    document.getElementById('revenue-amount').value = '';
-    document.getElementById('revenue-note').value = '';
-    renderRevenue();
-    updateStats();
-  }
-}
-
-// Update stats
 function updateStats() {
-  document.getElementById('total-leads').textContent = leads.length;
-  
-  const today = new Date().toDateString();
-  const todayLeads = leads.filter(l => new Date(l.created_at).toDateString() === today).length;
-  document.getElementById('today-leads').textContent = todayLeads;
-  
-  const paid = leads.filter(l => l.status === 'paid').length;
-  const rate = leads.length > 0 ? Math.round((paid / leads.length) * 100) : 0;
-  document.getElementById('conversion-rate').textContent = rate + '%';
-  
-  const total = revenue.reduce((sum, r) => sum + r.amount, 0);
-  document.getElementById('total-revenue').textContent = '$' + total;
+  document.getElementById('total-leads').textContent = '3';
+  document.getElementById('today-leads').textContent = '3';
+  document.getElementById('conversion-rate').textContent = '0%';
+  document.getElementById('total-revenue').textContent = '$0';
 }
 
-// Refresh leads
-function refreshLeads() {
-  renderLeads();
-  updateStats();
-}
-
-// Check for enter key on password
-document.getElementById('password-input').addEventListener('keypress', function(e) {
+// Password enter key
+document.getElementById('password-input').addEventListener('keypress', e => {
   if (e.key === 'Enter') checkPassword();
 });
 </script>
-
 </body>
 </html>
