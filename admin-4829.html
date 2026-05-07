@@ -60,7 +60,6 @@
     .leads-table th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gray); padding: 12px 8px; border-bottom: 2px solid var(--light-gray); background: var(--off-white); }
     .leads-table td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid var(--light-gray); }
     .leads-table tr:hover { background: #FAFAFA; }
-    .leads-table tr.unread { background: #FFF7ED; }
     
     .lead-name { font-weight: 600; }
     .lead-phone { color: var(--navy); }
@@ -75,25 +74,20 @@
     .status-paid { background: #D1FAE5; color: #065F46; }
     .status-closed { background: var(--light-gray); color: var(--gray); }
     
-    /* Analytics cards */
-    .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    /* Analytics */
+    .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
     .analytics-card { background: var(--off-white); padding: 16px; text-align: center; }
     .analytics-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; }
     .analytics-label { font-size: 12px; color: var(--gray); text-transform: uppercase; }
-    .analytics-sub { font-size: 11px; color: var(--green); margin-top: 4px; }
     
-    /* Quick actions */
     .btn { padding: 8px 16px; font-size: 13px; cursor: pointer; background: var(--navy); color: var(--white); border: none; }
     .btn:hover { background: var(--red); }
-    
     .refresh-btn { background: var(--navy); padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--white); border: none; }
-    
     .empty-state { text-align: center; padding: 40px; color: var(--gray); }
     .error-state { text-align: center; padding: 40px; color: var(--red); }
     .loading { text-align: center; padding: 40px; color: var(--gray); }
-    
-    /* Last updated */
     .last-updated { font-size: 11px; color: var(--gray); text-align: right; margin-top: 8px; }
+    .success-state { text-align: center; padding: 20px; color: var(--green); }
     
     @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
@@ -118,7 +112,7 @@
   <header>
     <div class="logo">Tampa<span>Restore</span> Admin</div>
     <div style="display:flex; gap:12px;">
-      <button class="logout-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/17em2dfY6Mky_dwcfwwL4vedoMPV9q1vMU7i4QYJ1QAM')">📊 Open Sheet</button>
+      <button class="logout-btn" onclick="window.open('https://app.netlify.com/sites')">🌐 Netlify</button>
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
   </header>
@@ -150,6 +144,7 @@
     <div class="section">
       <div class="section-header">
         <h3>📈 Analytics</h3>
+        <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
       </div>
       <div class="analytics-grid">
         <div class="analytics-card">
@@ -183,11 +178,11 @@
     <!-- Leads List -->
     <div class="section">
       <div class="section-header">
-        <h3>📋 All Leads (From Google Sheet)</h3>
-        <div style="display:flex; gap:8px;">
-          <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
-        </div>
+        <h3>📋 All Leads (From Netlify)</h3>
+        <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
       </div>
+      
+      <div id="status-msg"></div>
       
       <table class="leads-table">
         <thead>
@@ -207,16 +202,15 @@
       </table>
     </div>
     
-    <!-- Quick Stats -->
+    <!-- Quick Info -->
     <div class="section">
       <div class="section-header">
         <h3>⚡ Quick Info</h3>
       </div>
       <div style="font-size: 14px; line-height: 2; color: var(--gray);">
+        <div><strong>Data Source:</strong> Netlify Forms API</div>
         <div><strong>Contractor:</strong> ctbelisle@gmail.com</div>
         <div><strong>Your Email:</strong> tylerbelislefl@gmail.com</div>
-        <div><strong>Source:</strong> GitHub Pages</div>
-        <div><strong>Database:</strong> Google Sheet</div>
       </div>
     </div>
   </div>
@@ -224,7 +218,7 @@
 
 <script>
 const PASSWORD = 'TampaRestore2026!';
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxE0VwW_xtIXNicL3jPgD8IVo_3hQfCFCk14zMXbL8XpEUxqtvemK660XyIp-nm7Bai/exec';
+const NETLIFY_API_KEY = 'nfp_pVrLLd5bvBhC1YZZXqVgrqNWNvPqZ4DLda2e';
 
 let allLeads = [];
 
@@ -245,30 +239,50 @@ function logout() {
   document.getElementById('password-input').value = '';
 }
 
-function loadLeads() {
+async function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
-  tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
+  const statusMsg = document.getElementById('status-msg');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Fetching from Netlify...</td></tr>';
+  statusMsg.innerHTML = '';
   
-  // Just show instructions - localStorage is blocked by extension
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="7" style="text-align:center; padding: 20px;">
-        <p style="color: var(--navy); font-weight: 600; margin-bottom: 8px;">
-          ⚠️ Browser storage blocked by extension
-        </p>
-        <p style="font-size: 13px; color: var(--gray);">
-          Your form submissions are being saved to Google Sheet.<br>
-          Click <strong>"📊 Open Sheet"</strong> above to view all leads.
-        </p>
-      </td>
-    </tr>
-  `;
-  
-  document.getElementById('total-leads').textContent = '-';
-  document.getElementById('today-leads').textContent = '-';
-  document.getElementById('conversion-rate').textContent = '-';
-  document.getElementById('total-revenue').textContent = '$0';
-  document.getElementById('last-updated').textContent = 'Check Sheet for data';
+  try {
+    // Fetch ALL form submissions from Netlify API
+    // Get all submissions (limit 100)
+    const response = await fetch('https://api.netlify.com/api/v1/forms/submissions', {
+      headers: {
+        'Authorization': 'Bearer ' + NETLIFY_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('API error: ' + response.status);
+    }
+    
+    const data = await response.json();
+    
+    // Filter to only water damage related submissions
+    allLeads = data.filter(sub => sub.form_id || true).map(sub => ({
+      id: sub.id,
+      name: sub.name || sub.payload?.name || 'Unknown',
+      phone: sub.phone || sub.payload?.phone || 'N/A',
+      city: sub.city || sub.payload?.city || 'N/A',
+      damage_type: sub.damage_type || sub.payload?.['damage-type'] || sub.payload?.damage_type || 'N/A',
+      description: sub.description || sub.payload?.description || '',
+      created_at: sub.created_at,
+      status: 'new'
+    }));
+    
+    renderLeads();
+    updateStats();
+    
+    document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleString();
+    statusMsg.innerHTML = '<p class="success-state">✓ Loaded ' + allLeads.length + ' leads from Netlify</p>';
+    
+  } catch (err) {
+    console.error('Error:', err);
+    tbody.innerHTML = '<tr><td colspan="7" class="error-state">Error: ' + err.message + '</td></tr>';
+  }
 }
 
 function renderLeads() {
@@ -296,7 +310,7 @@ function renderLeads() {
         <td>${lead.damage_type || 'N/A'}</td>
         <td><span class="status-badge ${statusClass}">${status}</span></td>
         <td class="lead-date">${date}<br>${time}</td>
-        <td>${lead.notes || '-'}</td>
+        <td>-</td>
       </tr>
     `;
   }).join('');
@@ -316,11 +330,12 @@ function updateStats() {
   document.getElementById('total-leads').textContent = total;
   document.getElementById('today-leads').textContent = todayCount;
   document.getElementById('conversion-rate').textContent = conversion + '%';
-  document.getElementById('total-revenue').textContent = '$' + (paid * 75); // Assume $75/lead
+  document.getElementById('total-revenue').textContent = '$' + (paid * 75);
   
   // City breakdown
-  const tampa = allLeads.filter(l => l.city === 'Tampa').length;
-  const wesley = allLeads.filter(l => l.city === 'Wesley Chapel').length;
+  const cityLower = (c) => (c || '').toLowerCase();
+  const tampa = allLeads.filter(l => cityLower(l.city) === 'tampa').length;
+  const wesley = allLeads.filter(l => cityLower(l.city) === 'wesley chapel').length;
   const other = total - tampa - wesley;
   
   document.getElementById('tampa-count').textContent = tampa;
@@ -328,9 +343,9 @@ function updateStats() {
   document.getElementById('other-count').textContent = other;
   
   // Damage type breakdown
-  const storm = allLeads.filter(l => l.damage_type && l.damage_type.toLowerCase().includes('storm')).length;
-  const pipe = allLeads.filter(l => l.damage_type && l.damage_type.toLowerCase().includes('pipe')).length;
-  const flood = allLeads.filter(l => l.damage_type && l.damage_type.toLowerCase().includes('flood')).length;
+  const storm = allLeads.filter(l => cityLower(l.damage_type)?.includes('storm')).length;
+  const pipe = allLeads.filter(l => cityLower(l.damage_type)?.includes('pipe')).length;
+  const flood = allLeads.filter(l => cityLower(l.damage_type)?.includes('flood')).length;
   
   document.getElementById('storm-count').textContent = storm;
   document.getElementById('pipe-count').textContent = pipe;
