@@ -1186,7 +1186,7 @@ function sendToSupabase() {
     assigned_contractor_email: 'ctbelisle@gmail.com'
   };
   
-  // Save lead and get ID
+  // Save lead 
   const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
@@ -1200,22 +1200,26 @@ function sendToSupabase() {
   .then(res => res.json())
   .then(data => {
     const leadId = data && data[0] ? data[0].id : '';
+    console.log('Lead saved, ID:', leadId);
     
-    // Send email with lead ID for buttons
+    // Always send email (with or without lead ID for buttons)
+    const emailBody = 'name=' + encodeURIComponent(name) + 
+          '&phone=' + encodeURIComponent(phone) + 
+          '&email=' + encodeURIComponent(email) + 
+          '&city=' + encodeURIComponent(city) + 
+          '&damage-type=' + encodeURIComponent(damage_type) + 
+          '&description=' + encodeURIComponent(description) +
+          '&lead_id=' + encodeURIComponent(leadId);
+    
     return fetch(SUPABASE_URL + '/functions/v1/send-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: 'name=' + encodeURIComponent(name) + 
-            '&phone=' + encodeURIComponent(phone) + 
-            '&email=' + encodeURIComponent(email) + 
-            '&city=' + encodeURIComponent(city) + 
-            '&damage-type=' + encodeURIComponent(damage_type) + 
-            '&description=' + encodeURIComponent(description) +
-            '&lead_id=' + encodeURIComponent(leadId)
+      body: emailBody
     });
   })
+  .then(res => console.log('Email sent:', res.status))
   .catch(err => console.error('Error:', err))
   .finally(() => {
     document.querySelector('.success-msg').style.display = 'block';
