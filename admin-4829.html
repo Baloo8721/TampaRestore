@@ -80,10 +80,10 @@
     .status-junk { background: #FEE2E2; border-color: #FCA5A5; }
     
     /* Analytics */
-    .analytics-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
-    .analytics-card { background: var(--off-white); padding: 12px; text-align: center; border-radius: 6px; }
-    .analytics-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 24px; color: var(--navy); }
-    .analytics-label { font-size: 11px; color: var(--gray); text-transform: uppercase; margin-top: 4px; }
+    .analytics-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .analytics-card { background: var(--off-white); padding: 8px 14px; text-align: center; border-radius: 6px; min-width: 80px; }
+    .analytics-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 20px; color: var(--navy); }
+    .analytics-label { font-size: 10px; color: var(--gray); text-transform: uppercase; margin-top: 2px; white-space: nowrap; }
     
     .btn { padding: 8px 16px; font-size: 13px; cursor: pointer; background: var(--navy); color: var(--white); border: none; border-radius: 4px; }
     .btn:hover { background: var(--red); }
@@ -196,51 +196,27 @@
   </div>
   
   <div class="main-content">
-<!-- Analytics -->
+    <!-- Analytics -->
     <div class="section">
       <div class="section-header">
         <h3>📈 Analytics</h3>
         <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
       </div>
       
-      <h4 style="font-size: 13px; color: var(--gray); text-transform: uppercase; margin-bottom: 12px;">🏙️ By City</h4>
-      <div class="analytics-grid" id="city-analytics">
-        <!-- Dynamic city cards -->
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; margin-bottom: 10px;">🏙️ By City</div>
+        <div class="analytics-grid" id="city-analytics">
+          <div class="analytics-card"><div class="analytics-num">-</div><div class="analytics-label">Loading...</div></div>
+        </div>
       </div>
       
-      <h4 style="font-size: 13px; color: var(--gray); text-transform: uppercase; margin: 20px 0 12px;">💥 By Damage Type</h4>
-      <div class="analytics-grid" id="damage-analytics">
-        <!-- Dynamic damage type cards -->
+      <div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; margin-bottom: 10px;">💥 By Damage Type</div>
+        <div class="analytics-grid" id="damage-analytics">
+          <div class="analytics-card"><div class="analytics-num">-</div><div class="analytics-label">Loading...</div></div>
+        </div>
       </div>
       
-      <p class="last-updated" id="last-updated"></p>
-    </div>
-      <div class="analytics-grid">
-        <div class="analytics-card">
-          <div class="analytics-num" id="tampa-count">-</div>
-          <div class="analytics-label">Tampa</div>
-        </div>
-        <div class="analytics-card">
-          <div class="analytics-num" id="wesley-count">-</div>
-          <div class="analytics-label">Wesley Chapel</div>
-        </div>
-        <div class="analytics-card">
-          <div class="analytics-num" id="other-count">-</div>
-          <div class="analytics-label">Other Areas</div>
-        </div>
-        <div class="analytics-card">
-          <div class="analytics-num" id="storm-count">-</div>
-          <div class="analytics-label">Storm</div>
-        </div>
-        <div class="analytics-card">
-          <div class="analytics-num" id="pipe-count">-</div>
-          <div class="analytics-label">Pipe Burst</div>
-        </div>
-        <div class="analytics-card">
-          <div class="analytics-num" id="flood-count">-</div>
-          <div class="analytics-label">Flooding</div>
-        </div>
-      </div>
       <p class="last-updated" id="last-updated"></p>
     </div>
     
