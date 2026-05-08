@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     // Get service role key for full access
-    const supabaseUrl = Deno.env.get('DB_URL') || ''
+    const supabaseUrl = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
 
     if (!supabaseUrl || !supabaseKey) {

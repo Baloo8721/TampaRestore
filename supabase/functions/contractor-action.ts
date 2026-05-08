@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const leadId = url.searchParams.get('lead_id')
     const contractorEmail = url.searchParams.get('email')
 
-    const supabaseUrl = Deno.env.get('DB_URL') || ''
+    const supabaseUrl = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''

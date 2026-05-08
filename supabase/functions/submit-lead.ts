@@ -32,10 +32,10 @@ Deno.serve(async (req) => {
 
     const timestamp = new Date().toISOString()
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
-    const supabaseUrl = Deno.env.get('DB_URL') || ''
+    const supabaseUrl = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
-    const edgeFunctionUrl = Deno.env.get('EDGE_FUNCTION_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1'
+    const edgeFunctionUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1'
 
     // Get next available contractor from DB
     let contractorEmail = ''
