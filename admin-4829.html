@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TampaRestore — Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,6 +12,7 @@
     :root {
       --red: #D92B2B;
       --red-light: #FF3B3B;
+      --red-dark: #A51F1F;
       --navy: #0A1628;
       --navy-mid: #0F2040;
       --navy-light: #162A50;
@@ -29,10 +31,12 @@
     #login-screen { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .login-box { background: var(--white); padding: 40px; width: 100%; max-width: 360px; text-align: center; border-radius: 8px; }
     .login-box h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; color: var(--navy); margin-bottom: 20px; }
+    .login-box h3 { font-size: 14px; color: var(--gray); font-weight: 400; margin-bottom: 20px; }
     .login-box input { width: 100%; padding: 14px; border: 2px solid var(--light-gray); font-family: 'Barlow', sans-serif; font-size: 16px; margin-bottom: 12px; text-align: center; border-radius: 4px; }
     .login-box input:focus { border-color: var(--red); outline: none; }
     .login-box button { width: 100%; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; text-transform: uppercase; padding: 14px; border: none; cursor: pointer; border-radius: 4px; }
     .login-box button:hover { background: var(--red-dark); }
+    .login-box button:disabled { background: var(--gray); cursor: not-allowed; }
     .login-error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
     
     /* Dashboard */
@@ -41,6 +45,7 @@
     header { background: var(--navy); padding: 16px 5%; display: flex; align-items: center; justify-content: space-between; }
     .logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; color: var(--white); text-transform: uppercase; }
     .logo span { color: var(--red); }
+    .user-info { color: var(--gray); font-size: 13px; }
     .logout-btn { background: transparent; border: 1px solid var(--gray); color: var(--gray); padding: 8px 16px; font-size: 13px; cursor: pointer; border-radius: 4px; }
     .logout-btn:hover { background: var(--navy-light); color: var(--white); }
     
@@ -64,8 +69,6 @@
     .leads-table tr:hover { background: #FAFAFA; }
     
     .lead-name { font-weight: 600; }
-    .lead-phone { color: var(--navy); }
-    .lead-phone a { color: var(--navy); text-decoration: none; }
     .lead-city { color: var(--gray); }
     .lead-date { font-size: 12px; color: var(--gray); }
     
@@ -128,16 +131,6 @@
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--navy); outline: none; }
     .form-group textarea { min-height: 80px; resize: vertical; }
     
-    .detail-row { display: flex; padding: 10px 0; border-bottom: 1px solid var(--light-gray); }
-    .detail-label { width: 120px; font-weight: 600; color: var(--gray); font-size: 13px; text-transform: uppercase; }
-    .detail-value { flex: 1; color: var(--navy); }
-    .detail-value a { color: var(--navy); text-decoration: none; }
-    
-    .btn-call-phone { display: inline-flex; align-items: center; gap: 6px; background: var(--green); color: var(--white); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; }
-    .btn-call-phone:hover { background: #047857; }
-    .btn-email { display: inline-flex; align-items: center; gap: 6px; background: var(--navy); color: var(--white); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; }
-    .btn-email:hover { background: var(--navy-light); }
-    
     /* Filter buttons */
     .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
     .filter-btn { padding: 6px 14px; font-size: 12px; cursor: pointer; background: var(--light-gray); color: var(--gray); border: none; border-radius: 20px; }
@@ -146,7 +139,6 @@
     
     @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .analytics-grid { grid-template-columns: repeat(3, 1fr); }
       .leads-table { display: block; overflow-x: auto; }
     }
   </style>
@@ -155,11 +147,13 @@
 
 <!-- Login -->
 <div id="login-screen">
-  <div class="login-box" id="login-box">
+  <div class="login-box">
     <h2>🔒 TampaRestore Admin</h2>
-    <input type="password" id="password-input" placeholder="Enter password" />
-    <button onclick="checkPassword()">Login</button>
-    <p class="login-error" id="login-error">Incorrect password</p>
+    <h3>Sign in with your credentials</h3>
+    <input type="email" id="email-input" placeholder="Your email" />
+    <input type="password" id="password-input" placeholder="Your password" />
+    <button id="login-btn" onclick="login()">Login</button>
+    <p class="login-error" id="login-error">Invalid email or password</p>
   </div>
 </div>
 
@@ -167,7 +161,8 @@
 <div id="dashboard">
   <header>
     <div class="logo">Tampa<span>Restore</span> Admin</div>
-    <div style="display:flex; gap:12px;">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span class="user-info" id="user-email"></span>
       <button class="logout-btn" onclick="window.open('https://supabase.com/dashboard')">📊 Supabase</button>
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
@@ -266,10 +261,10 @@
         <h3>⚡ System Info</h3>
       </div>
       <div style="font-size: 14px; line-height: 2; color: var(--gray);">
-        <div><strong>Database:</strong> Supabase (aqafvfzsybcqfxqklqsd)</div>
+        <div><strong>Database:</strong> Supabase</div>
         <div><strong>Contractor:</strong> ctbelisle@gmail.com</div>
         <div><strong>Admin:</strong> tylerbelislefl@gmail.com</div>
-        <div><strong>Email:</strong> Gmail SMTP (App Password)</div>
+        <div><strong>Auth:</strong> Supabase Auth (secure)</div>
       </div>
     </div>
   </div>
@@ -282,42 +277,92 @@
       <h3 id="modal-title">Lead Details</h3>
       <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
-    <div class="modal-body" id="modal-body">
-      <!-- Dynamic content -->
-    </div>
-    <div class="modal-footer" id="modal-footer">
-      <!-- Dynamic buttons -->
-    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
   </div>
 </div>
 
 <script>
-// CONFIGURATION
-const PASSWORD = 'TampaRestore2026!';
-
-// Supabase config - using anon key (safe for client-side)
+// Supabase config
 const SUPABASE_URL = 'https://aqafvfzsybcqfxqklqsd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWZ2ZnpzeWJjcWZ4cWtscXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU1ODAsImV4cCI6MjA5MzgzMTU4MH0.VUO2Uaf6IlM_cr-UwJ5YdQuinjasQehfoxe6dxqLecg';
+
+// Initialize Supabase client
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let allLeads = [];
 let currentFilter = 'all';
 
-function checkPassword() {
-  const input = document.getElementById('password-input').value;
-  if (input === PASSWORD) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    loadLeads();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
+// Check if user is already logged in on page load
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    showDashboard(session.user);
+  }
+});
+
+async function login() {
+  const email = document.getElementById('email-input').value.trim();
+  const password = document.getElementById('password-input').value;
+  const loginBtn = document.getElementById('login-btn');
+  const loginError = document.getElementById('login-error');
+  
+  if (!email || !password) {
+    loginError.textContent = 'Please enter email and password';
+    loginError.style.display = 'block';
+    return;
+  }
+  
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Signing in...';
+  loginError.style.display = 'none';
+  
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (data.session) {
+      showDashboard(data.user);
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    loginError.textContent = 'Invalid email or password';
+    loginError.style.display = 'block';
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Login';
   }
 }
 
-function logout() {
+function showDashboard(user) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('user-email').textContent = user.email;
+  loadLeads();
+}
+
+async function logout() {
+  await supabase.auth.signOut();
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('email-input').value = '';
   document.getElementById('password-input').value = '';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Login';
 }
+
+// Listen for auth changes
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT') {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+  }
+});
 
 async function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
@@ -413,7 +458,7 @@ function renderLeads() {
     return `
       <tr>
         <td class="lead-name">${lead.name || 'N/A'}</td>
-        <td class="lead-phone">${lead.phone || 'N/A'}</td>
+        <td>${lead.phone || 'N/A'}</td>
         <td class="lead-city">${lead.city || 'N/A'}</td>
         <td>${lead.damage_type || 'N/A'}</td>
         <td>
@@ -435,15 +480,12 @@ function renderLeads() {
 
 function setFilter(filter) {
   currentFilter = filter;
-  
-  // Update active state
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.remove('active');
     if (btn.textContent.toLowerCase() === filter || (filter === 'all' && btn.textContent === 'All')) {
       btn.classList.add('active');
     }
   });
-  
   renderLeads();
 }
 
@@ -474,7 +516,6 @@ async function updateLeadStatus(leadId, newStatus) {
 }
 
 function callPhone(phone) {
-  // Use direct tel: link - on iPhone this will prompt to call
   window.location.href = 'tel:' + phone.replace(/\D/g, '');
 }
 
@@ -574,16 +615,11 @@ async function saveLead(leadId) {
     });
     
     if (response.ok) {
-      // Update local data
       const lead = allLeads.find(l => l.id === leadId);
-      if (lead) {
-        Object.assign(lead, updates);
-      }
-      
+      if (lead) Object.assign(lead, updates);
       closeModal();
       renderLeads();
       updateStats();
-      
       document.getElementById('status-msg').innerHTML = '<p class="success-state">✓ Lead updated successfully</p>';
     }
   } catch (err) {
@@ -593,9 +629,7 @@ async function saveLead(leadId) {
 }
 
 function deleteLead(leadId) {
-  if (!confirm('Are you sure you want to DELETE this lead? This cannot be undone.')) {
-    return;
-  }
+  if (!confirm('Are you sure you want to DELETE this lead? This cannot be undone.')) return;
   
   fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
     method: 'DELETE',
@@ -631,43 +665,29 @@ function updateStats() {
   const total = allLeads.length;
   const today = new Date().toDateString();
   
-  const todayCount = allLeads.filter(l => {
-    return l.created_at && new Date(l.created_at).toDateString() === today;
-  }).length;
-  
+  const todayCount = allLeads.filter(l => l.created_at && new Date(l.created_at).toDateString() === today).length;
   const contacted = allLeads.filter(l => ['contacted', 'scheduled', 'paid'].includes(l.status)).length;
   const paid = allLeads.filter(l => l.status === 'paid').length;
   const conversion = total > 0 ? Math.round((contacted / total) * 100) : 0;
   
-  const totalRevenue = allLeads
-    .filter(l => l.status === 'paid' && l.revenue_amount)
-    .reduce((sum, l) => sum + parseFloat(l.revenue_amount), 0);
+  const totalRevenue = allLeads.filter(l => l.status === 'paid' && l.revenue_amount).reduce((sum, l) => sum + parseFloat(l.revenue_amount), 0);
   
   document.getElementById('total-leads').textContent = total;
   document.getElementById('today-leads').textContent = todayCount;
   document.getElementById('conversion-rate').textContent = conversion + '%';
   document.getElementById('total-revenue').textContent = '$' + totalRevenue.toFixed(0);
   
-  // Dynamic city analytics - get all unique cities and counts
+  // Dynamic city analytics
   const cityCounts = {};
   allLeads.forEach(lead => {
     const city = (lead.city || 'Unknown').trim();
     cityCounts[city] = (cityCounts[city] || 0) + 1;
   });
-  
-  // Sort cities by count descending
   const sortedCities = Object.entries(cityCounts).sort((a, b) => b[1] - a[1]);
-  
-  const cityHtml = sortedCities.map(([city, count]) => `
-    <div class="analytics-card">
-      <div class="analytics-num">${count}</div>
-      <div class="analytics-label">${city}</div>
-    </div>
-  `).join('');
-  
+  const cityHtml = sortedCities.map(([city, count]) => `<div class="analytics-card"><div class="analytics-num">${count}</div><div class="analytics-label">${city}</div></div>`).join('');
   document.getElementById('city-analytics').innerHTML = cityHtml || '<p style="color:var(--gray)">No city data</p>';
   
-  // Dynamic damage type analytics - get all unique damage types
+  // Dynamic damage type analytics
   const damageCounts = {};
   allLeads.forEach(lead => {
     const damage = (lead.damage_type || 'Unknown').trim();
@@ -675,28 +695,20 @@ function updateStats() {
       damageCounts[damage] = (damageCounts[damage] || 0) + 1;
     }
   });
-  
-  // Sort by count descending
   const sortedDamage = Object.entries(damageCounts).sort((a, b) => b[1] - a[1]);
-  
-  const damageHtml = sortedDamage.map(([damage, count]) => `
-    <div class="analytics-card">
-      <div class="analytics-num">${count}</div>
-      <div class="analytics-label">${damage}</div>
-    </div>
-  `).join('');
-  
+  const damageHtml = sortedDamage.map(([damage, count]) => `<div class="analytics-card"><div class="analytics-num">${count}</div><div class="analytics-label">${damage}</div></div>`).join('');
   document.getElementById('damage-analytics').innerHTML = damageHtml || '<p style="color:var(--gray)">No damage type data</p>';
 }
 
-// Close modal on outside click
 document.getElementById('lead-modal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
-// Enter key
 document.getElementById('password-input').addEventListener('keypress', e => {
-  if (e.key === 'Enter') checkPassword();
+  if (e.key === 'Enter') login();
+});
+document.getElementById('email-input').addEventListener('keypress', e => {
+  if (e.key === 'Enter') login();
 });
 </script>
 </body>
