@@ -1178,24 +1178,32 @@ function sendToSupabase() {
     lat: userLat ? parseFloat(userLat) : null,
     lng: userLng ? parseFloat(userLng) : null,
     damage_type: damage_type,
-    description: description || null,
-    lat: lat,
-    lng: lng
+    description: description || null
   };
   
   // Send to submit-lead edge function (handles DB + emails with confirm/decline buttons)
   const formRequest = fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/submit-lead', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
     body: new URLSearchParams(leadData).toString()
   });
 
   formRequest
-    .then(response => response.json())
+    .then(response => {
+      console.log('Response status:', response.status);
+      return response.json();
+    })
     .then(data => {
       console.log('Form submitted:', data);
+      if (data.error) {
+        alert('Error: ' + data.error);
+      }
     })
     .catch(err => {
       console.error('Error:', err);
+      alert('Submission failed. Please try again or contact support.');
     })
     .finally(() => {
       document.querySelector('.success-msg').style.display = 'block';
