@@ -38,20 +38,25 @@ Deno.serve(async (req) => {
     const edgeFunctionUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1'
 
     // Get next available contractor from DB
-    let contractorEmail = ''
+    let contractorEmail = 'ctbelisle@gmail.com'
     
-    const contractorRes = await fetch(`${supabaseUrl}/rest/v1/contractors?active=eq.true&order=priority.asc&limit=1`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + supabaseKey,
-        'Content-Type': 'application/json'
+    try {
+      const contractorRes = await fetch(`${supabaseUrl}/rest/v1/contractors?active=eq.true&order=priority.asc&limit=1`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': 'Bearer ' + supabaseKey,
+          'Content-Type': 'application/json'
+        }
+      })
+      const contractors = await contractorRes.json()
+      if (contractors && contractors.length > 0 && contractors[0].email) {
+        contractorEmail = contractors[0].email
+        console.log('Got contractor from DB:', contractorEmail)
+      } else {
+        console.log('No active contractors found, using fallback')
       }
-    })
-    const contractors = await contractorRes.json()
-    if (contractors && contractors.length > 0) {
-      contractorEmail = contractors[0].email
-    } else {
-      contractorEmail = 'ctbelisle@gmail.com' // fallback
+    } catch (e) {
+      console.error('Contractor fetch failed:', e.message)
     }
 
     // Write to Supabase using service role key (bypasses RLS)
@@ -100,6 +105,8 @@ Deno.serve(async (req) => {
     }
 
     // Send emails via Gmail - ALWAYS try if password exists
+    console.log('Email config check - password exists:', !!gmailAppPassword, 'leadId:', leadId, 'contractor:', contractorEmail)
+    
     if (gmailAppPassword) {
       let confirmUrl = ''
       let declineUrl = ''
@@ -109,6 +116,9 @@ Deno.serve(async (req) => {
         confirmUrl = `${baseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
         declineUrl = `${baseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
       }
+
+      console.log('Sending emails to contractor:', contractorEmail, 'and admin:', adminEmail)
+      console.log('leadId for buttons:', leadId || 'NONE')
 
       const buttonsHtml = leadId ? `
         <div style="margin-top:30px; padding:20px; background:#f5f5f5; border-radius:8px;">
@@ -146,12 +156,22 @@ Deno.serve(async (req) => {
       `
 
       // Email to contractor
-      await sendGmailEmail(contractorEmail, 'tylerbelislefl@gmail.com', gmailAppPassword, 
-        `🚨 NEW LEAD — ${name} needs water damage help in ${city}`, contractorEmailHtml)
+      try {
+        const cResult = await sendGmailEmail(contractorEmail, 'tylerbelislefl@gmail.com', gmailAppPassword, 
+          `🚨 NEW LEAD — ${name} needs water damage help in ${city}`, contractorEmailHtml)
+        console.log('Contractor email result:', cResult.status)
+      } catch (e) {
+        console.error('Contractor email failed:', e.message)
+      }
 
       // Email to admin
-      await sendGmailEmail(adminEmail, 'tylerbelislefl@gmail.com', gmailAppPassword,
-        `📋 New Lead: ${name} - ${city}`, adminEmailHtml)
+      try {
+        const aResult = await sendGmailEmail(adminEmail, 'tylerbelislefl@gmail.com', gmailAppPassword,
+          `📋 New Lead: ${name} - ${city}`, adminEmailHtml)
+        console.log('Admin email result:', aResult.status)
+      } catch (e) {
+        console.error('Admin email failed:', e.message)
+      }
     } else {
       console.error('GMAIL_APP_PASSWORD not set - emails not sent')
     }

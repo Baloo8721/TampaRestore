@@ -1158,45 +1158,16 @@ function getLocationAndSend() {
 }
 
 function sendToSupabase() {
-  console.log('sendToSupabase called - starting');
+  console.log('Sending to submit-lead edge function...');
   const name = document.getElementById('fname')?.value || '';
   const phone = document.getElementById('fphone')?.value || '';
   const email = document.getElementById('femail')?.value || '';
   const city = document.getElementById('fcity')?.value || '';
   const damage_type = document.getElementById('fdamage')?.value || '';
   const description = document.getElementById('fdesc')?.value || '';
-  const timestamp = new Date().toISOString();
-  
-  const leadData = {
-    name: name,
-    phone: phone,
-    email: email || null,
-    city: city,
-    state: 'FL',
-    lat: userLat ? parseFloat(userLat) : null,
-    lng: userLng ? parseFloat(userLng) : null,
-    damage_type: damage_type,
-    description: description || null,
-    status: 'sent',
-    source: 'website',
-    sent_to_contractor_at: timestamp,
-    assigned_contractor_email: 'ctbelisle@gmail.com'
-  };
 
-  // ALWAYS save to DB first (this will always work)
-  const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify([leadData])
-  });
-
-  // ALSO try edge function for emails (will work once deployed)
-  const sendEmail = fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
+  // ONLY call submit-lead - handles DB write + sends emails
+  fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -1209,11 +1180,13 @@ function sendToSupabase() {
           '&description=' + encodeURIComponent(description) + 
           '&lat=' + encodeURIComponent(userLat) + 
           '&lng=' + encodeURIComponent(userLng)
-  });
-
-  Promise.all([saveLead, sendEmail])
-    .then(([leadRes, emailRes]) => {
-      console.log('Lead saved:', leadRes.status, 'Email attempt:', emailRes.status);
+  })
+    .then(response => {
+      console.log('Submit-lead response:', response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log('Result:', data);
     })
     .catch(err => console.error('Error:', err))
     .finally(() => {
