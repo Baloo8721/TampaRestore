@@ -1209,12 +1209,11 @@ function sendToSupabase() {
     
     fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/send-email', {
       method: 'POST',
-      mode: 'no-cors',
       body: emailFormData
-    }).then(() => {
-      console.log('Emails sent');
-    }).catch(() => {
-      console.log('Email send failed (non-critical)');
+    }).then(response => {
+      console.log('Email response:', response.status);
+    }).catch(err => {
+      console.log('Email error:', err);
     });
     
     // Show success message
