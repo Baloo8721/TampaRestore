@@ -117,11 +117,21 @@
 
 <!-- Login -->
 <div id="login-screen">
-  <div class="login-box">
+  <div class="login-box" id="login-box">
     <h2>🔒 TampaRestore Admin</h2>
     <input type="password" id="password-input" placeholder="Enter password" />
     <button onclick="checkPassword()">Login</button>
     <p class="login-error" id="login-error">Incorrect password</p>
+  </div>
+  
+  <!-- Setup (shown if no credentials) -->
+  <div class="login-box" id="setup-box" style="display:none;">
+    <h2>⚙️ Setup Supabase</h2>
+    <p style="font-size:12px; color:#666; margin-bottom:12px;">Enter your Supabase credentials once. They're saved in your browser.</p>
+    <input type="text" id="setup-url" placeholder="Supabase URL (https://xxx.supabase.co)" style="width:100%; padding:12px; margin-bottom:8px; font-size:14px;" />
+    <input type="text" id="setup-key" placeholder="Supabase anon key (eyJ...)" style="width:100%; padding:12px; margin-bottom:12px; font-size:14px;" />
+    <button onclick="saveCredentials()">Save & Continue</button>
+    <p class="login-error" id="setup-error" style="margin-top:8px;">Please fill in both fields</p>
   </div>
 </div>
 
@@ -238,12 +248,12 @@
 </div>
 
 <script>
-// CONFIGURATION - Fill in your Supabase details here
+// CONFIGURATION
 const PASSWORD = 'TampaRestore2026!';
 
-// Supabase config - UPDATE THESE with your credentials
-const SUPABASE_URL = 'https://aqa fvfzsybcqf xqk lqsd.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWZ2ZnpzeWJjcWZ4cWtscXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU1ODAsImV4cCI6MjA5MzgzMTU4MH0.VUO2Uaf6IlM_cr-UwJ5YdQuinjasQehfoxe6dxqLecg';
+// Supabase config - loaded from localStorage (set once in browser)
+let SUPABASE_URL = localStorage.getItem('supabase_url') || '';
+let SUPABASE_KEY = localStorage.getItem('supabase_key') || '';
 
 let allLeads = [];
 let currentFilter = 'all';
@@ -263,6 +273,31 @@ function logout() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('password-input').value = '';
+}
+
+// Check if credentials exist on load
+window.onload = function() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('setup-box').style.display = 'block';
+  }
+};
+
+function saveCredentials() {
+  const url = document.getElementById('setup-url').value.trim();
+  const key = document.getElementById('setup-key').value.trim();
+  
+  if (!url || !key) {
+    document.getElementById('setup-error').style.display = 'block';
+    return;
+  }
+  
+  // Save to localStorage
+  localStorage.setItem('supabase_url', url);
+  localStorage.setItem('supabase_key', key);
+  
+  // Reload to use new credentials
+  location.reload();
 }
 
 async function loadLeads() {
