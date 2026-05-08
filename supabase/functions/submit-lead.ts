@@ -34,10 +34,10 @@ Deno.serve(async (req) => {
     const contractorEmail = Deno.env.get('CONTRACTOR_EMAIL') || 'ctbelisle@gmail.com'
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const supabaseUrl = Deno.env.get('DB_URL') || ''
-    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('ANON_KEY') || ''
+    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
     const resendApiKey = Deno.env.get('RESEND_KEY') || ''
 
-    // Write to Supabase
+    // Write to Supabase using service role key (bypasses RLS)
     const leadData = {
       name,
       phone,
@@ -64,6 +64,11 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify([leadData])
     })
+
+    if (!insertRes.ok) {
+      const err = await insertRes.text()
+      console.error('DB insert error:', err)
+    }
 
     // Send emails via Resend API
     if (resendApiKey) {

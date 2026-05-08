@@ -1,5 +1,5 @@
 // TampaRestore - Get Leads Edge Function
-// Returns all leads for admin dashboard - PUBLIC ACCESS
+// Returns all leads for admin dashboard - PUBLIC
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,24 +12,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get from env vars (set in Supabase Edge Function settings)
+    // Get service role key for full access
     const supabaseUrl = Deno.env.get('DB_URL') || ''
-    const anonKey = Deno.env.get('ANON_KEY') || ''
+    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
 
-    if (!supabaseUrl || !anonKey) {
+    if (!supabaseUrl || !supabaseKey) {
       return new Response(JSON.stringify({ error: 'Missing config' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Fetch leads via Supabase REST API using anon key (designed for public use)
+    // Fetch leads using service role key
     const response = await fetch(
       `${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=100`,
       {
         headers: {
-          'apikey': anonKey,
-          'Authorization': `Bearer ${anonKey}`,
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json'
         }
       }
