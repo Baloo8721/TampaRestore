@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'TampaRestore Leads <leads@tamparestore.com>',
-        to: [contractorEmail],
+        to: contractorEmail,
         subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
         html: `
           <h2 style="color:#D92B2B;">🚨 NEW WATER DAMAGE LEAD</h2>
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'TampaRestore Admin <leads@tamparestore.com>',
-        to: [adminEmail],
+        to: adminEmail,
         subject: `📋 New Lead: ${name} - ${city}`,
         html: `
           <h2>📋 New Lead Received</h2>
