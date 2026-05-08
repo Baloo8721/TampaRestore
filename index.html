@@ -1185,7 +1185,7 @@ function sendToSupabase() {
     assigned_contractor_email: 'ctbelisle@gmail.com'
   };
   
-  // Send directly to Supabase REST API
+// Send lead to Supabase
   fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
@@ -1195,41 +1195,39 @@ function sendToSupabase() {
       'Prefer': 'return=minimal'
     },
     body: JSON.stringify([leadData])
-  }).then(() => {
+  })
+  .then(() => {
     console.log('Lead saved to Supabase');
     
-    // Send email notification - wait for this to complete
-    const emailFormData = new URLSearchParams();
-    emailFormData.append('name', name);
-    emailFormData.append('phone', phone);
-    emailFormData.append('email', email);
-    emailFormData.append('city', city);
-    emailFormData.append('damage-type', damage_type);
-    emailFormData.append('description', description);
+    // Now send email - build JSON body instead of form data
+    const emailBody = JSON.stringify({
+      name: name,
+      phone: phone,
+      email: email,
+      city: city,
+      'damage-type': damage_type,
+      description: description
+    });
     
     return fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/send-email', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json'
       },
-      body: emailFormData.toString()
+      body: emailBody
     });
   })
-  .then(emailRes => {
-    return emailRes.json();
-  })
+  .then(emailRes => emailRes.json())
   .then(emailData => {
     console.log('Email result:', emailData);
   })
   .catch(err => {
-    console.error('Email error:', err);
-  });
-    
-    // Show success message
+    console.error('Error:', err);
+  })
+  .finally(() => {
+    // Always show success message
     document.querySelector('.success-msg').style.display = 'block';
     document.getElementById('contact-form').reset();
-  }).catch((err) => {
-    console.log('Error saving lead:', err);
   });
 }
 </script>
