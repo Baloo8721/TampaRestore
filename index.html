@@ -1179,42 +1179,20 @@ function sendToSupabase() {
     lng: userLng ? parseFloat(userLng) : null,
     damage_type: damage_type,
     description: description || null,
-    status: 'new',
-    source: 'website',
-    sent_to_contractor_at: timestamp,
-    assigned_contractor_email: 'ctbelisle@gmail.com'
+    lat: lat,
+    lng: lng
   };
   
-// Send lead to Supabase AND call edge function for emails
-  const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
+  // Send to submit-lead edge function (handles DB + emails with confirm/decline buttons)
+  const submitForm = fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/submit-lead', {
     method: 'POST',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify([leadData])
+    body: new URLSearchParams(leadData).toString()
   });
 
-  // Also call edge function to send emails (keys stay in Supabase)
-  const sendEmail = fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/send-email', {
-    method: 'POST',
-    body: 'name=' + encodeURIComponent(name) + 
-          '&phone=' + encodeURIComponent(phone) + 
-          '&email=' + encodeURIComponent(email) + 
-          '&city=' + encodeURIComponent(city) + 
-          '&damage-type=' + encodeURIComponent(damage_type) + 
-          '&description=' + encodeURIComponent(description)
-  });
-
-  Promise.all([saveLead, sendEmail])
-    .then(([leadResult, emailResult]) => {
-      console.log('Lead saved, email called');
-      return emailResult.json();
-    })
-    .then(emailData => {
-      console.log('Email result:', emailData);
+  submitForm
+    .then(response => response.json())
+    .then(data => {
+      console.log('Form submitted:', data);
     })
     .catch(err => {
       console.error('Error:', err);
