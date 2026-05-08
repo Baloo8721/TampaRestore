@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
+    const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
     const edgeFunctionUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1'
 
     // Get next available contractor from DB
@@ -157,18 +158,18 @@ Deno.serve(async (req) => {
 
       // Email to contractor
       try {
-        const cResult = await sendGmailEmail(contractorEmail, 'tylerbelislefl@gmail.com', gmailAppPassword, 
+        const cResult = await sendGmailEmail(contractorEmail, gmailUser, gmailAppPassword, 
           `🚨 NEW LEAD — ${name} needs water damage help in ${city}`, contractorEmailHtml)
-        console.log('Contractor email result:', cResult.status)
+        console.log('Contractor email result:', cResult.status, cResult.error || '')
       } catch (e) {
         console.error('Contractor email failed:', e.message)
       }
 
       // Email to admin
       try {
-        const aResult = await sendGmailEmail(adminEmail, 'tylerbelislefl@gmail.com', gmailAppPassword,
+        const aResult = await sendGmailEmail(adminEmail, gmailUser, gmailAppPassword,
           `📋 New Lead: ${name} - ${city}`, adminEmailHtml)
-        console.log('Admin email result:', aResult.status)
+        console.log('Admin email result:', aResult.status, aResult.error || '')
       } catch (e) {
         console.error('Admin email failed:', e.message)
       }
@@ -208,5 +209,11 @@ async function sendGmailEmail(to: string, from: string, password: string, subjec
     })
   })
   
-  return { status: response.status }
+  const result = { status: response.status }
+  if (!response.ok) {
+    const errorText = await response.text()
+    result.error = errorText
+    console.log('Gmail API error:', errorText)
+  }
+  return result
 }
