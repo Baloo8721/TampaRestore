@@ -1,16 +1,12 @@
 // TampaRestore - Supabase Edge Function
 // Handles form submissions, writes to DB, sends emails
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Resend } from 'https://esm.sh/resend@3.0.0'
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -26,16 +22,7 @@ Deno.serve(async (req) => {
     const description = formData.get('description')?.toString() || ''
     const lat = formData.get('lat')?.toString() || ''
     const lng = formData.get('lng')?.toString() || ''
-    const botField = formData.get('bot-field')?.toString()
 
-    // Honeypot check
-    if (botField) {
-      return new Response(JSON.stringify({ success: true, message: 'Lead received' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Validate
     if (!name || !phone || !city) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
@@ -50,10 +37,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('ANON_KEY') || ''
     const resendApiKey = Deno.env.get('RESEND_KEY') || ''
 
-    // Create Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Lead data for DB
+    // Write to Supabase
     const leadData = {
       name,
       phone,
@@ -70,65 +54,67 @@ Deno.serve(async (req) => {
       assigned_contractor_email: contractorEmail,
     }
 
-    // Write to Supabase
-    const { data, error } = await supabase
-      .from('leads')
-      .insert([leadData])
-      .select()
+    const insertRes = await fetch(`${supabaseUrl}/rest/v1/leads`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': 'Bearer ' + supabaseKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify([leadData])
+    })
 
-    if (error) {
-      console.error('Supabase error:', error)
-    }
-
-    // Send emails via Resend
+    // Send emails via Resend API
     if (resendApiKey) {
-      const resend = new Resend(resendApiKey)
-      
-      // Email to CONTRACTOR
-      await resend.emails.send({
-        from: 'TampaRestore Leads <leads@tamparestore.com>',
-        to: [contractorEmail],
-        subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
-        html: `
-          <h2>🚨 New Water Damage Lead</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
-          <p><strong>Email:</strong> ${email || 'N/A'}</p>
-          <p><strong>City:</strong> ${city}</p>
-          <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
-          <p><strong>Description:</strong> ${description || 'N/A'}</p>
-          <p><strong>Location:</strong> ${lat && lng ? `${lat}, ${lng}` : 'N/A'}</p>
-          <hr>
-          <p><strong>CALL THIS LEAD WITHIN 5 MINUTES!</strong></p>
-          ${data ? `<p>Lead ID: ${data[0].id}</p>` : ''}
-        `
+      const emailBody = `
+        <h2>🚨 New Water Damage Lead</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
+        <p><strong>Email:</strong> ${email || 'N/A'}</p>
+        <p><strong>City:</strong> ${city}</p>
+        <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
+        <p><strong>Description:</strong> ${description || 'N/A'}</p>
+        <hr>
+        <p><strong>CALL THIS LEAD WITHIN 5 MINUTES!</strong></p>
+      `
+
+      // Email to contractor
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + resendApiKey
+        },
+        body: JSON.stringify({
+          from: 'TampaRestore Leads <leads@tamparestore.com>',
+          to: [contractorEmail],
+          subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
+          html: emailBody
+        })
       })
 
-      // Email to YOU (admin)
-      await resend.emails.send({
-        from: 'TampaRestore Admin <leads@tamparestore.com>',
-        to: [adminEmail],
-        subject: `📋 New Lead: ${name} - ${city}`,
-        html: `
-          <h2>📋 New Lead Received</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Phone:</strong> ${phone}</p>
-          <p><strong>City:</strong> ${city}</p>
-          <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-        `
+      // Email to admin
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + resendApiKey
+        },
+        body: JSON.stringify({
+          from: 'TampaRestore Admin <leads@tamparestore.com>',
+          to: [adminEmail],
+          subject: `📋 New Lead: ${name} - ${city}`,
+          html: `<h2>📋 New Lead</h2><p>${name} - ${phone} - ${city}</p>`
+        })
       })
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: 'Lead saved and sent',
-      leadId: data?.[0]?.id 
-    }), {
+    return new Response(JSON.stringify({ success: true, message: 'Lead saved' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (error) {
-    console.error('Error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
