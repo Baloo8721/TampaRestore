@@ -1236,20 +1236,6 @@ function sendToSupabase() {
     document.getElementById('contact-form').reset();
   });
 }
-      console.log('Both complete - Lead:', leadRes.status, 'Email:', emailRes.status);
-      return emailRes.json();
-    })
-    .then(data => {
-      console.log('Email result:', data);
-    })
-    .catch(err => {
-      console.error('Error:', err);
-    })
-    .finally(() => {
-      document.querySelector('.success-msg').style.display = 'block';
-      document.getElementById('contact-form').reset();
-    });
-}
 </script>
 </body>
 </html>
