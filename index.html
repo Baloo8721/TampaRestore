@@ -1157,6 +1157,9 @@ function getLocationAndSend() {
   }
 }
 
+const SUPABASE_URL = 'https://aqafvfzsybcqfxqklqsd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWZ2ZnpzeWJjcWZ4cWtscXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU1ODAsImV4cCI6MjA5MzgzMTU4MH0.VUO2Uaf6IlM_cr-UwJ5YdQuinjasQehfoxe6dxqLecg';
+
 function sendToSupabase() {
   // Get all form values
   const name = document.getElementById('fname')?.value || '';
@@ -1178,32 +1181,46 @@ function sendToSupabase() {
     lat: userLat ? parseFloat(userLat) : null,
     lng: userLng ? parseFloat(userLng) : null,
     damage_type: damage_type,
-    description: description || null
+    description: description || null,
+    status: 'sent',
+    source: 'website',
+    sent_to_contractor_at: timestamp,
+    assigned_contractor_email: 'ctbelisle@gmail.com'
   };
   
-  // Send to submit-lead edge function (handles DB + emails with confirm/decline buttons)
-  const formRequest = fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/submit-lead', {
+  // Save to Supabase directly (this was working before)
+  const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
     },
-    body: new URLSearchParams(leadData).toString()
+    body: JSON.stringify([leadData])
   });
 
-  formRequest
-    .then(response => {
-      console.log('Response status:', response.status);
-      return response.json();
+  // Also call edge function to send emails with buttons
+  const sendEmail = fetch(SUPABASE_URL + '/functions/v1/send-email', {
+    method: 'POST',
+    body: 'name=' + encodeURIComponent(name) + 
+          '&phone=' + encodeURIComponent(phone) + 
+          '&email=' + encodeURIComponent(email) + 
+          '&city=' + encodeURIComponent(city) + 
+          '&damage-type=' + encodeURIComponent(damage_type) + 
+          '&description=' + encodeURIComponent(description)
+  });
+
+  Promise.all([saveLead, sendEmail])
+    .then(([leadRes, emailRes]) => {
+      console.log('Lead saved, email sent');
+      return emailRes.json();
     })
     .then(data => {
-      console.log('Form submitted:', data);
-      if (data.error) {
-        alert('Error: ' + data.error);
-      }
+      console.log('Email result:', data);
     })
     .catch(err => {
       console.error('Error:', err);
-      alert('Submission failed. Please try again or contact support.');
     })
     .finally(() => {
       document.querySelector('.success-msg').style.display = 'block';
