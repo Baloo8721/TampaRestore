@@ -1198,7 +1198,7 @@ function sendToSupabase() {
   }).then(() => {
     console.log('Lead saved to Supabase');
     
-    // Also send email notifications (fire and forget)
+    // Also send email notifications
     const emailFormData = new URLSearchParams();
     emailFormData.append('name', name);
     emailFormData.append('phone', phone);
@@ -1207,13 +1207,20 @@ function sendToSupabase() {
     emailFormData.append('damage-type', damage_type);
     emailFormData.append('description', description);
     
+    // Call the send-email edge function
     fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/send-email', {
       method: 'POST',
-      body: emailFormData
-    }).then(response => {
-      console.log('Email response:', response.status);
-    }).catch(err => {
-      console.log('Email error:', err);
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: emailFormData.toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log('Email sent:', data);
+    })
+    .catch(err => {
+      console.error('Email failed:', err);
     });
     
     // Show success message
