@@ -11,76 +11,95 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const formData = await req.formData()
+    let name = '', phone = '', email = '', city = '', damageType = '', description = ''
     
-    const name = formData.get('name')?.toString() || ''
-    const phone = formData.get('phone')?.toString() || ''
-    const email = formData.get('email')?.toString() || ''
-    const city = formData.get('city')?.toString() || ''
-    const damageType = formData.get('damage-type')?.toString() || ''
-    const description = formData.get('description')?.toString() || ''
+    const contentType = req.headers.get('content-type') || ''
+    
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const formData = await req.formData()
+      name = formData.get('name')?.toString() || ''
+      phone = formData.get('phone')?.toString() || ''
+      email = formData.get('email')?.toString() || ''
+      city = formData.get('city')?.toString() || ''
+      damageType = formData.get('damage-type')?.toString() || ''
+      description = formData.get('description')?.toString() || ''
+    } else if (contentType.includes('application/json')) {
+      const body = await req.json()
+      name = body.name || ''
+      phone = body.phone || ''
+      email = body.email || ''
+      city = body.city || ''
+      damageType = body['damage-type'] || ''
+      description = body.description || ''
+    } else {
+      // Try to parse from URL for testing
+      const url = new URL(req.url)
+      name = url.searchParams.get('name') || ''
+      phone = url.searchParams.get('phone') || ''
+      email = url.searchParams.get('email') || ''
+      city = url.searchParams.get('city') || ''
+      damageType = url.searchParams.get('damage-type') || ''
+      description = url.searchParams.get('description') || ''
+    }
 
     const contractorEmail = Deno.env.get('CONTRACTOR_EMAIL') || 'ctbelisle@gmail.com'
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const resendApiKey = Deno.env.get('RESEND_KEY') || ''
 
     if (!resendApiKey) {
-      return new Response(JSON.stringify({ error: 'Resend not configured' }), {
+      return new Response(JSON.stringify({ error: 'RESEND_KEY not configured in Edge Function secrets' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const emailData = {
-      from: 'TampaRestore Leads <leads@tamparestore.com>',
-      to: [contractorEmail],
-      subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
-      html: `
-        <h2 style="color:#D92B2B;">🚨 NEW WATER DAMAGE LEAD</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
-        <p><strong>Email:</strong> ${email || 'N/A'}</p>
-        <p><strong>City:</strong> ${city}</p>
-        <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
-        <p><strong>Description:</strong> ${description || 'N/A'}</p>
-        <hr>
-        <p style="color:#D92B2B;font-weight:bold;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
-      `
-    }
-
-    const res1 = await fetch('https://api.resend.com/emails', {
+    // Email to contractor
+    await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + resendApiKey
       },
-      body: JSON.stringify(emailData)
+      body: JSON.stringify({
+        from: 'TampaRestore Leads <leads@tamparestore.com>',
+        to: [contractorEmail],
+        subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
+        html: `
+          <h2 style="color:#D92B2B;">🚨 NEW WATER DAMAGE LEAD</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
+          <p><strong>Email:</strong> ${email || 'N/A'}</p>
+          <p><strong>City:</strong> ${city}</p>
+          <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
+          <p><strong>Description:</strong> ${description || 'N/A'}</p>
+          <hr>
+          <p style="color:#D92B2B;font-weight:bold;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+        `
+      })
     })
 
-    const adminEmailData = {
-      from: 'TampaRestore Admin <leads@tamparestore.com>',
-      to: [adminEmail],
-      subject: `📋 New Lead: ${name} - ${city}`,
-      html: `
-        <h2>📋 New Lead Received</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>City:</strong> ${city}</p>
-        <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
-        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-      `
-    }
-
-    const res2 = await fetch('https://api.resend.com/emails', {
+    // Email to admin
+    await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + resendApiKey
       },
-      body: JSON.stringify(adminEmailData)
+      body: JSON.stringify({
+        from: 'TampaRestore Admin <leads@tamparestore.com>',
+        to: [adminEmail],
+        subject: `📋 New Lead: ${name} - ${city}`,
+        html: `
+          <h2>📋 New Lead Received</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>City:</strong> ${city}</p>
+          <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
+        `
+      })
     })
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, message: 'Emails sent' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
