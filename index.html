@@ -1111,14 +1111,21 @@
 </footer>
 
 <script>
-// Netlify function endpoint
-const NETLIFY_FUNCTION_URL = '/.netlify/functions/submit-lead';
+// Supabase config - loaded from localStorage (entered once in admin, shared with form)
+let SUPABASE_URL = localStorage.getItem('supabase_url') || '';
+let SUPABASE_ANON_KEY = localStorage.getItem('supabase_key') || '';
 
 // Geolocation variables
 let userLat = '';
 let userLng = '';
 
 function submitForm() {
+  // Check if Supabase is configured
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    alert('Site not configured. Please contact the administrator or go to /admin-4829.html to set up.');
+    return;
+  }
+
   const name = document.getElementById('fname').value.trim();
   const phone = document.getElementById('fphone').value.trim();
   const city = document.getElementById('fcity').value;
@@ -1128,7 +1135,7 @@ function submitForm() {
     return;
   }
 
-  // Get geolocation and send to Supabase via Netlify function
+  // Get geolocation and send to Supabase
   getLocationAndSend();
 }
 
@@ -1170,32 +1177,44 @@ function sendToSupabase() {
   const ref = urlParams.get('ref') || '';
   const source = urlParams.get('source') || 'website';
   
-  // Build form data
-  const formData = new URLSearchParams();
-  formData.append('name', name);
-  formData.append('phone', phone);
-  formData.append('email', email);
-  formData.append('city', city);
-  formData.append('damage-type', damage_type);
-  formData.append('description', description);
-  formData.append('lat', userLat);
-  formData.append('lng', userLng);
-  formData.append('ref', ref);
-  formData.append('source', source);
+  const timestamp = new Date().toISOString();
+  const contractorEmail = 'ctbelisle@gmail.com';
   
-  // Send to Netlify function (writes to Supabase + sends emails)
-  fetch(NETLIFY_FUNCTION_URL, {
+  // Write directly to Supabase
+  const leadData = {
+    name: name,
+    phone: phone,
+    email: email || null,
+    city: city,
+    state: 'FL',
+    lat: userLat ? parseFloat(userLat) : null,
+    lng: userLng ? parseFloat(userLng) : null,
+    damage_type: damage_type,
+    description: description || null,
+    status: 'new',
+    source: source,
+    referral_code: ref || null,
+    sent_to_contractor_at: timestamp,
+    assigned_contractor_email: contractorEmail
+  };
+  
+  fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
-    mode: 'no-cors',
-    body: formData
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(leadData)
   }).then(() => {
-    console.log('Lead sent to Supabase + emails');
+    console.log('Lead saved to Supabase');
+    // Show success message
+    document.querySelector('.success-msg').style.display = 'block';
+    document.getElementById('contact-form').reset();
   }).catch((err) => {
-    console.log('Error sending to function:', err);
+    console.log('Error saving to Supabase:', err);
   });
-  
-  // Also submit to Netlify Forms (backup)
-  document.getElementById('contact-form').submit();
 }
 </script>
 </body>
