@@ -1161,6 +1161,7 @@ const SUPABASE_URL = 'https://aqafvfzsybcqfxqklqsd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWZ2ZnpzeWJjcWZ4cWtscXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU1ODAsImV4cCI6MjA5MzgzMTU4MH0.VUO2Uaf6IlM_cr-UwJ5YdQuinjasQehfoxe6dxqLecg';
 
 function sendToSupabase() {
+  console.log('sendToSupabase called - starting');
   // Get all form values
   const name = document.getElementById('fname')?.value || '';
   const phone = document.getElementById('fphone')?.value || '';
@@ -1189,6 +1190,8 @@ function sendToSupabase() {
   };
   
   // Save to Supabase directly (this was working before)
+  console.log('Sending lead to Supabase:', leadData);
+  
   const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
@@ -1198,22 +1201,36 @@ function sendToSupabase() {
       'Prefer': 'return=minimal'
     },
     body: JSON.stringify([leadData])
+  })
+  .then(res => {
+    console.log('Save lead response:', res.status, res.statusText);
+    if (!res.ok) {
+      console.error('Save lead failed with:', res.status);
+    }
+    return res;
   });
 
   // Also call edge function to send emails with buttons
   const sendEmail = fetch(SUPABASE_URL + '/functions/v1/send-email', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
     body: 'name=' + encodeURIComponent(name) + 
           '&phone=' + encodeURIComponent(phone) + 
           '&email=' + encodeURIComponent(email) + 
           '&city=' + encodeURIComponent(city) + 
           '&damage-type=' + encodeURIComponent(damage_type) + 
           '&description=' + encodeURIComponent(description)
+  })
+  .then(res => {
+    console.log('Send email response:', res.status, res.statusText);
+    return res;
   });
 
   Promise.all([saveLead, sendEmail])
     .then(([leadRes, emailRes]) => {
-      console.log('Lead saved, email sent');
+      console.log('Both complete - Lead:', leadRes.status, 'Email:', emailRes.status);
       return emailRes.json();
     })
     .then(data => {
