@@ -1181,13 +1181,18 @@ function sendToSupabase() {
   fetch(SUPABASE_FUNCTION_URL, {
     method: 'POST',
     body: formData
-  }).then(() => {
-    console.log('Lead sent to Supabase');
-    // Show success message
-    document.querySelector('.success-msg').style.display = 'block';
-    document.getElementById('contact-form').reset();
+  }).then(response => {
+    if (response.ok) {
+      console.log('Lead sent to Supabase');
+      // Show success message
+      document.querySelector('.success-msg').style.display = 'block';
+      document.getElementById('contact-form').reset();
+    } else {
+      alert('Error submitting form. Please try again.');
+    }
   }).catch((err) => {
     console.log('Error sending lead:', err);
+    alert('Error submitting form. Please try again.');
   });
 }
 </script>
