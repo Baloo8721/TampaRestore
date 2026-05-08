@@ -1169,58 +1169,39 @@ function sendToSupabase() {
   
   const timestamp = new Date().toISOString();
   
-  // Build lead data
-  const leadData = {
-    name: name,
-    phone: phone,
-    email: email || null,
-    city: city,
-    state: 'FL',
-    lat: userLat ? parseFloat(userLat) : null,
-    lng: userLng ? parseFloat(userLng) : null,
-    damage_type: damage_type,
-    description: description || null,
-    status: 'sent',
-    source: 'website',
-    sent_to_contractor_at: timestamp,
-    assigned_contractor_email: 'ctbelisle@gmail.com'
-  };
-  
-  // Save lead to Supabase first, then send email with lead_id
-  fetch(SUPABASE_URL + '/rest/v1/leads', {
+  // SINGLE call to submit-lead edge function - handles DB write + emails
+  const submitLead = fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
     method: 'POST',
     headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
+      'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: JSON.stringify([leadData])
-  })
-  .then(res => res.json())
-  .then(data => {
-    const leadId = (data && data[0] && data[0].id) ? data[0].id : '';
-    
-    // Send email with lead_id for buttons
-    return fetch(SUPABASE_URL + '/functions/v1/send-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'name=' + encodeURIComponent(name) + 
-            '&phone=' + encodeURIComponent(phone) + 
-            '&email=' + encodeURIComponent(email) + 
-            '&city=' + encodeURIComponent(city) + 
-            '&damage-type=' + encodeURIComponent(damage_type) + 
-            '&description=' + encodeURIComponent(description) +
-            '&lead_id=' + encodeURIComponent(leadId)
-    });
-  })
-  .catch(err => console.error('Error:', err))
-  .finally(() => {
-    document.querySelector('.success-msg').style.display = 'block';
-    document.getElementById('contact-form').reset();
+    body: 'name=' + encodeURIComponent(name) + 
+          '&phone=' + encodeURIComponent(phone) + 
+          '&email=' + encodeURIComponent(email) + 
+          '&city=' + encodeURIComponent(city) + 
+          '&damage-type=' + encodeURIComponent(damage_type) + 
+          '&description=' + encodeURIComponent(description) + 
+          '&lat=' + encodeURIComponent(userLat) + 
+          '&lng=' + encodeURIComponent(userLng)
   });
+
+  submitLead
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Server error: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Lead submitted:', data);
+    })
+    .catch(err => {
+      console.error('Error submitting lead:', err);
+    })
+    .finally(() => {
+      document.querySelector('.success-msg').style.display = 'block';
+      document.getElementById('contact-form').reset();
+    });
 }
 </script>
 </body>

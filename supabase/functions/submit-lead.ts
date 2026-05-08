@@ -84,22 +84,42 @@ Deno.serve(async (req) => {
 
     // Get the inserted lead ID
     let leadId = ''
-    const leadIdRes = await fetch(`${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=1`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + supabaseKey,
+    try {
+      const leadIdRes = await fetch(`${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=1`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': 'Bearer ' + supabaseKey,
+        }
+      })
+      const recentLeads = await leadIdRes.json()
+      if (recentLeads && recentLeads.length > 0) {
+        leadId = recentLeads[0].id
       }
-    })
-    const recentLeads = await leadIdRes.json()
-    if (recentLeads && recentLeads.length > 0) {
-      leadId = recentLeads[0].id
+    } catch (e) {
+      console.error('Failed to get lead ID:', e)
     }
 
-    // Send emails via Gmail
-    if (gmailAppPassword && leadId) {
-      const baseUrl = `${edgeFunctionUrl}/contractor-action`
-      const confirmUrl = `${baseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
-      const declineUrl = `${baseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
+    // Send emails via Gmail - ALWAYS try if password exists
+    if (gmailAppPassword) {
+      let confirmUrl = ''
+      let declineUrl = ''
+      
+      if (leadId) {
+        const baseUrl = `${edgeFunctionUrl}/contractor-action`
+        confirmUrl = `${baseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
+        declineUrl = `${baseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
+      }
+
+      const buttonsHtml = leadId ? `
+        <div style="margin-top:30px; padding:20px; background:#f5f5f5; border-radius:8px;">
+          <p style="margin-bottom:15px;"><strong>Quick Actions:</strong></p>
+          <a href="${confirmUrl}" style="display:inline-block; background:#059669; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; margin-right:10px;">✅ I Contacted This Lead</a>
+          <a href="${declineUrl}" style="display:inline-block; background:#DC2626; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">❌ Decline / Pass</a>
+        </div>
+        <p style="margin-top:20px; font-size:12px; color:#666;">
+          If buttons don't work, you can also just reply to this email with "CONFIRMED" or "DECLINED"
+        </p>
+      ` : `<p style="margin-top:20px; color:#666;">⚠️ Action buttons unavailable - please contact lead directly.</p>`
 
       const contractorEmailHtml = `
         <h2 style="color:#D92B2B;">🚨 NEW WATER DAMAGE LEAD</h2>
@@ -111,16 +131,7 @@ Deno.serve(async (req) => {
         <p><strong>Description:</strong> ${description || 'N/A'}</p>
         <hr>
         <p style="color:#D92B2B;font-weight:bold;font-size:18px;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
-        
-        <div style="margin-top:30px; padding:20px; background:#f5f5f5; border-radius:8px;">
-          <p style="margin-bottom:15px;"><strong>Quick Actions:</strong></p>
-          <a href="${confirmUrl}" style="display:inline-block; background:#059669; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; margin-right:10px;">✅ I Contacted This Lead</a>
-          <a href="${declineUrl}" style="display:inline-block; background:#DC2626; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">❌ Decline / Pass</a>
-        </div>
-        
-        <p style="margin-top:20px; font-size:12px; color:#666;">
-          If buttons don't work, you can also just reply to this email with "CONFIRMED" or "DECLINED"
-        </p>
+        ${buttonsHtml}
       `
 
       const adminEmailHtml = `
@@ -131,6 +142,7 @@ Deno.serve(async (req) => {
         <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
         <p><strong>Contractor:</strong> ${contractorEmail}</p>
         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+        ${leadId ? `<p><strong>Lead ID:</strong> ${leadId}</p>` : ''}
       `
 
       // Email to contractor
@@ -140,6 +152,8 @@ Deno.serve(async (req) => {
       // Email to admin
       await sendGmailEmail(adminEmail, 'tylerbelislefl@gmail.com', gmailAppPassword,
         `📋 New Lead: ${name} - ${city}`, adminEmailHtml)
+    } else {
+      console.error('GMAIL_APP_PASSWORD not set - emails not sent')
     }
 
     return new Response(JSON.stringify({ success: true, message: 'Lead saved' }), {
