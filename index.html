@@ -1158,16 +1158,45 @@ function getLocationAndSend() {
 }
 
 function sendToSupabase() {
-  console.log('Sending to submit-lead edge function...');
+  console.log('Processing lead...');
   const name = document.getElementById('fname')?.value || '';
   const phone = document.getElementById('fphone')?.value || '';
   const email = document.getElementById('femail')?.value || '';
   const city = document.getElementById('fcity')?.value || '';
   const damage_type = document.getElementById('fdamage')?.value || '';
   const description = document.getElementById('fdesc')?.value || '';
+  const timestamp = new Date().toISOString();
+  
+  const leadData = {
+    name: name,
+    phone: phone,
+    email: email || null,
+    city: city,
+    state: 'FL',
+    lat: userLat ? parseFloat(userLat) : null,
+    lng: userLng ? parseFloat(userLng) : null,
+    damage_type: damage_type,
+    description: description || null,
+    status: 'sent',
+    source: 'website',
+    sent_to_contractor_at: timestamp,
+    assigned_contractor_email: 'ctbelisle@gmail.com'
+  };
 
-  // ONLY call submit-lead - handles DB write + sends emails
-  fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
+  // ALWAYS save to Supabase directly (guaranteed to work)
+  const saveToDb = fetch(SUPABASE_URL + '/rest/v1/leads', {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify([leadData])
+  });
+
+  // ALSO call edge function for emails
+  const sendEmails = fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -1180,13 +1209,11 @@ function sendToSupabase() {
           '&description=' + encodeURIComponent(description) + 
           '&lat=' + encodeURIComponent(userLat) + 
           '&lng=' + encodeURIComponent(userLng)
-  })
-    .then(response => {
-      console.log('Submit-lead response:', response.status);
-      return response.json();
-    })
-    .then(data => {
-      console.log('Result:', data);
+  });
+
+  Promise.all([saveToDb, sendEmails])
+    .then(([dbResult, emailResult]) => {
+      console.log('DB:', dbResult.status, 'Email:', emailResult.status);
     })
     .catch(err => console.error('Error:', err))
     .finally(() => {
