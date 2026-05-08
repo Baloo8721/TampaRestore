@@ -1186,7 +1186,7 @@ function sendToSupabase() {
     assigned_contractor_email: 'ctbelisle@gmail.com'
   };
   
-  // Save to Supabase directly
+  // Save lead and get ID
   const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
@@ -1196,31 +1196,31 @@ function sendToSupabase() {
       'Prefer': 'return=representation'
     },
     body: JSON.stringify([leadData])
-  });
-
-  // Also call edge function to send emails
-  const sendEmail = fetch(SUPABASE_URL + '/functions/v1/send-email', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: 'name=' + encodeURIComponent(name) + 
-          '&phone=' + encodeURIComponent(phone) + 
-          '&email=' + encodeURIComponent(email) + 
-          '&city=' + encodeURIComponent(city) + 
-          '&damage-type=' + encodeURIComponent(damage_type) + 
-          '&description=' + encodeURIComponent(description)
-  });
-
-  Promise.all([saveLead, sendEmail])
-    .then(([leadRes, emailRes]) => {
-      console.log('Lead:', leadRes.status, 'Email:', emailRes.status);
-    })
-    .catch(err => console.error('Error:', err))
-    .finally(() => {
-      document.querySelector('.success-msg').style.display = 'block';
-      document.getElementById('contact-form').reset();
+  })
+  .then(res => res.json())
+  .then(data => {
+    const leadId = data && data[0] ? data[0].id : '';
+    
+    // Send email with lead ID for buttons
+    return fetch(SUPABASE_URL + '/functions/v1/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'name=' + encodeURIComponent(name) + 
+            '&phone=' + encodeURIComponent(phone) + 
+            '&email=' + encodeURIComponent(email) + 
+            '&city=' + encodeURIComponent(city) + 
+            '&damage-type=' + encodeURIComponent(damage_type) + 
+            '&description=' + encodeURIComponent(description) +
+            '&lead_id=' + encodeURIComponent(leadId)
     });
+  })
+  .catch(err => console.error('Error:', err))
+  .finally(() => {
+    document.querySelector('.success-msg').style.display = 'block';
+    document.getElementById('contact-form').reset();
+  });
 }
 </script>
 </body>
