@@ -87,33 +87,43 @@ CREATE POLICY "Public can insert leads" ON leads FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public can update leads" ON leads FOR UPDATE USING (true);
 
 -- ============================================
--- CONTRACTORS TABLE (future use)
+-- CONTRACTORS TABLE
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS contractors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
 
   name TEXT NOT NULL,
-  email TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
   phone TEXT,
 
   service_areas TEXT[], -- ['Tampa', 'Pasco County', etc]
   damage_types TEXT[], -- ['Flooding', 'Burst Pipe', etc]
 
-  price_per_lead DECIMAL(10,2),
+  price_per_lead DECIMAL(10,2) DEFAULT 75,
   monthly_fee DECIMAL(10,2),
 
   active BOOLEAN DEFAULT true,
-  priority INTEGER DEFAULT 0
+  priority INTEGER DEFAULT 0  -- 0 = highest, higher = lower priority
 );
 
 -- Enable realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE contractors;
 
+-- Index for active contractors
+CREATE INDEX IF NOT EXISTS idx_contractors_active ON contractors(active, priority);
+
 -- Policies
 CREATE POLICY "Public can read contractors" ON contractors FOR SELECT USING (true);
 CREATE POLICY "Public can insert contractors" ON contractors FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public can update contractors" ON contractors FOR UPDATE USING (true);
+CREATE POLICY "Public can delete contractors" ON contractors FOR DELETE USING (true);
+
+-- Add sample contractor
+INSERT INTO contractors (name, email, phone, active, priority, price_per_lead)
+VALUES ('Primary Contractor', 'ctbelisle@gmail.com', '813-482-8671', true, 0, 75);
 
 -- ============================================
 -- REFERRALS TABLE (future use)

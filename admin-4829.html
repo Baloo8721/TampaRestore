@@ -231,6 +231,7 @@
         <button class="filter-btn" onclick="setFilter('paid')">Paid</button>
         <button class="filter-btn" onclick="setFilter('closed')">Closed</button>
         <button class="filter-btn" onclick="setFilter('junk')">Junk</button>
+        <button class="filter-btn" onclick="setFilter('declined')">Declined</button>
       </div>
       
       <div id="status-msg"></div>
@@ -254,6 +255,30 @@
       </table>
     </div>
     
+    <!-- Contractors -->
+    <div class="section">
+      <div class="section-header">
+        <h3>👷 Contractors</h3>
+        <button class="btn btn-small" onclick="showAddContractor()">+ Add Contractor</button>
+      </div>
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Price/Lead</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="contractors-tbody">
+          <tr><td colspan="7" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    
     <!-- Quick Info -->
     <div class="section">
       <div class="section-header">
@@ -261,9 +286,9 @@
       </div>
       <div style="font-size: 14px; line-height: 2; color: var(--gray);">
         <div><strong>Database:</strong> Supabase</div>
-        <div><strong>Contractor:</strong> ctbelisle@gmail.com</div>
         <div><strong>Admin:</strong> tylerbelislefl@gmail.com</div>
         <div><strong>Auth:</strong> Supabase Auth (secure)</div>
+        <div><strong>Response Time Goal:</strong> Under 5 minutes</div>
       </div>
     </div>
   </div>
@@ -371,6 +396,7 @@ function showDashboard(user) {
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('user-email').textContent = user.email;
   loadLeads();
+  loadContractors();
 }
 
 function logout() {
@@ -382,6 +408,202 @@ function logout() {
   document.getElementById('password-input').value = '';
   document.getElementById('login-btn').disabled = false;
   document.getElementById('login-btn').textContent = 'Login';
+}
+
+// === CONTRACTORS ===
+let allContractors = [];
+
+async function loadContractors() {
+  const tbody = document.getElementById('contractors-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
+  
+  try {
+    const response = await fetch(SUPABASE_URL + '/rest/v1/contractors?order=priority.asc', {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    allContractors = data || [];
+    renderContractors();
+  } catch (err) {
+    console.error('Error loading contractors:', err);
+    tbody.innerHTML = '<tr><td colspan="7" class="error-state">Error: ' + err.message + '</td></tr>';
+  }
+}
+
+function renderContractors() {
+  const tbody = document.getElementById('contractors-tbody');
+  
+  if (allContractors.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No contractors. Click "Add Contractor" to add one.</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = allContractors.map(c => `
+    <tr>
+      <td><strong>${c.name || 'N/A'}</strong></td>
+      <td>${c.email || 'N/A'}</td>
+      <td>${c.phone || '-'}</td>
+      <td>$${c.price_per_lead || 75}</td>
+      <td>${c.priority}</td>
+      <td>
+        <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${c.active ? '#D1FAE5' : '#FEE2E2'}; color: ${c.active ? '#059669' : '#991B1B'};">
+          ${c.active ? 'ACTIVE' : 'INACTIVE'}
+        </span>
+      </td>
+      <td>
+        <button class="action-btn" onclick="editContractor('${c.id}')">✏️</button>
+        <button class="action-btn ${c.active ? 'delete' : 'call'}" onclick="toggleContractor('${c.id}', ${!c.active})">
+          ${c.active ? '⏸️' : '▶️'}
+        </button>
+        <button class="action-btn delete" onclick="deleteContractor('${c.id}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function showAddContractor(contractor = null) {
+  const isEdit = !!contractor;
+  const modal = document.getElementById('lead-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const modalFooter = document.getElementById('modal-footer');
+  
+  modalTitle.textContent = isEdit ? '✏️ Edit Contractor' : '➕ Add Contractor';
+  
+  modalBody.innerHTML = `
+    <form id="contractor-form">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="contractor-name" value="${contractor ? escapeHtml(contractor.name || '') : ''}" required />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="contractor-email" value="${contractor ? escapeHtml(contractor.email || '') : ''}" required />
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" id="contractor-phone" value="${contractor ? escapeHtml(contractor.phone || '') : ''}" />
+      </div>
+      <div class="form-group">
+        <label>Price per Lead ($)</label>
+        <input type="number" id="contractor-price" value="${contractor ? contractor.price_per_lead || 75 : 75}" />
+      </div>
+      <div class="form-group">
+        <label>Priority (0 = highest)</label>
+        <input type="number" id="contractor-priority" value="${contractor ? contractor.priority || 0 : 0}" />
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="contractor-active" ${(!contractor || contractor.active) ? 'checked' : ''} />
+          Active
+        </label>
+      </div>
+    </form>
+  `;
+  
+  modalFooter.innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-success" onclick="saveContractor('${contractor ? contractor.id : ''}')">💾 Save</button>
+  `;
+  
+  modal.classList.add('active');
+}
+
+function editContractor(id) {
+  const contractor = allContractors.find(c => c.id === id);
+  if (contractor) showAddContractor(contractor);
+}
+
+async function saveContractor(id) {
+  const name = document.getElementById('contractor-name').value;
+  const email = document.getElementById('contractor-email').value;
+  const phone = document.getElementById('contractor-phone').value;
+  const price = parseFloat(document.getElementById('contractor-price').value) || 75;
+  const priority = parseInt(document.getElementById('contractor-priority').value) || 0;
+  const active = document.getElementById('contractor-active').checked;
+  
+  if (!name || !email) {
+    alert('Name and email are required');
+    return;
+  }
+  
+  const data = {
+    name,
+    email,
+    phone: phone || null,
+    price_per_lead: price,
+    priority,
+    active,
+    updated_at: new Date().toISOString()
+  };
+  
+  try {
+    if (id) {
+      // Update
+      await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(data)
+      });
+    } else {
+      // Insert
+      await fetch(`${SUPABASE_URL}/rest/v1/contractors`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(data)
+      });
+    }
+    
+    closeModal();
+    loadContractors();
+    document.getElementById('status-msg').innerHTML = '<p class="success-state">✓ Contractor saved</p>';
+  } catch (err) {
+    console.error('Error saving contractor:', err);
+    alert('Error: ' + err.message);
+  }
+}
+
+async function toggleContractor(id, makeActive) {
+  await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ active: makeActive, updated_at: new Date().toISOString() })
+  });
+  loadContractors();
+}
+
+async function deleteContractor(id) {
+  if (!confirm('Are you sure you want to DELETE this contractor?')) return;
+  
+  await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Prefer': 'return=minimal'
+    }
+  });
+  loadContractors();
 }
 
 async function loadLeads() {
@@ -459,21 +681,30 @@ function renderLeads() {
     const time = lead.created_at ? new Date(lead.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     
     let responseTime = '-';
+    let responseColor = '';
     if (lead.sent_to_contractor_at) {
       const sentTime = new Date(lead.sent_to_contractor_at);
       const now = new Date();
       const minutes = Math.round((now - sentTime) / 60000);
-      if (minutes < 60) {
-        responseTime = minutes + ' min';
-      } else {
-        responseTime = Math.round(minutes/60) + ' hr';
-      }
+      
       if (lead.contractor_contacted_at) {
-        responseTime = '✓ Contacted';
+        // Already contacted - show actual response time
+        const responseMins = lead.contractor_response_minutes || minutes;
+        responseTime = `✓ ${responseMins} min`;
+        responseColor = responseMins <= 5 ? 'color:#059669;font-weight:bold;' : 'color:#D97706;font-weight:bold;';
+      } else {
+        // Still pending - show time since sent
+        if (minutes < 60) {
+          responseTime = minutes + ' min';
+          responseColor = minutes <= 5 ? 'color:#059669;' : minutes <= 30 ? 'color:#D97706;' : 'color:#DC2626;';
+        } else {
+          responseTime = Math.round(minutes/60) + ' hr';
+          responseColor = 'color:#DC2626;font-weight:bold;';
+        }
       }
     }
     
-    const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk'];
+const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk', 'declined', 'no_contractor'];
     
     return `
       <tr>
@@ -486,7 +717,7 @@ function renderLeads() {
             ${statusOptions.map(s => `<option value="${s}" ${s === status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
         </td>
-        <td style="font-size:12px;">${responseTime}</td>
+        <td style="font-size:12px; ${responseColor}">${responseTime}</td>
         <td class="lead-date">${date}<br>${time}</td>
         <td>
           <button class="action-btn call" title="Call" onclick="callPhone('${lead.phone}')">📞</button>
@@ -550,7 +781,7 @@ function viewLead(leadId) {
   
   modalTitle.textContent = 'Edit Lead';
   
-  const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk'];
+  const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk', 'declined', 'no_contractor'];
   const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString() : 'N/A';
   
   modalBody.innerHTML = `
