@@ -1111,21 +1111,15 @@
 </footer>
 
 <script>
-// Supabase config - loaded from localStorage (entered once in admin, shared with form)
-let SUPABASE_URL = localStorage.getItem('supabase_url') || '';
-let SUPABASE_ANON_KEY = localStorage.getItem('supabase_key') || '';
+// Supabase Edge Function URL (no keys needed - they're in Supabase)
+const SUPABASE_FUNCTION_URL = 'YOUR_SUPABASE_EDGE_FUNCTION_URL_HERE';
+// Example: https://abc123.supabase.co/functions/v1/submit-lead
 
 // Geolocation variables
 let userLat = '';
 let userLng = '';
 
 function submitForm() {
-  // Check if Supabase is configured
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    alert('Site not configured. Please contact the administrator or go to /admin-4829.html to set up.');
-    return;
-  }
-
   const name = document.getElementById('fname').value.trim();
   const phone = document.getElementById('fphone').value.trim();
   const city = document.getElementById('fcity').value;
@@ -1135,7 +1129,7 @@ function submitForm() {
     return;
   }
 
-  // Get geolocation and send to Supabase
+  // Get geolocation and send to Supabase via Netlify function
   getLocationAndSend();
 }
 
@@ -1172,48 +1166,28 @@ function sendToSupabase() {
   const damage_type = document.getElementById('fdamage')?.value || '';
   const description = document.getElementById('fdesc')?.value || '';
   
-  // Get URL params for tracking (ref codes, etc)
-  const urlParams = new URLSearchParams(window.location.search);
-  const ref = urlParams.get('ref') || '';
-  const source = urlParams.get('source') || 'website';
+  // Build form data
+  const formData = new URLSearchParams();
+  formData.append('name', name);
+  formData.append('phone', phone);
+  formData.append('email', email);
+  formData.append('city', city);
+  formData.append('damage-type', damage_type);
+  formData.append('description', description);
+  formData.append('lat', userLat);
+  formData.append('lng', userLng);
   
-  const timestamp = new Date().toISOString();
-  const contractorEmail = 'ctbelisle@gmail.com';
-  
-  // Write directly to Supabase
-  const leadData = {
-    name: name,
-    phone: phone,
-    email: email || null,
-    city: city,
-    state: 'FL',
-    lat: userLat ? parseFloat(userLat) : null,
-    lng: userLng ? parseFloat(userLng) : null,
-    damage_type: damage_type,
-    description: description || null,
-    status: 'new',
-    source: source,
-    referral_code: ref || null,
-    sent_to_contractor_at: timestamp,
-    assigned_contractor_email: contractorEmail
-  };
-  
-  fetch(SUPABASE_URL + '/rest/v1/leads', {
+  // Send to Supabase Edge Function (keys stay in Supabase - not in your code)
+  fetch(SUPABASE_FUNCTION_URL, {
     method: 'POST',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify(leadData)
+    body: formData
   }).then(() => {
-    console.log('Lead saved to Supabase');
+    console.log('Lead sent to Supabase');
     // Show success message
     document.querySelector('.success-msg').style.display = 'block';
     document.getElementById('contact-form').reset();
   }).catch((err) => {
-    console.log('Error saving to Supabase:', err);
+    console.log('Error sending lead:', err);
   });
 }
 </script>
