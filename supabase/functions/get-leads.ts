@@ -1,5 +1,5 @@
 // TampaRestore - Get Leads Edge Function
-// Returns all leads for admin dashboard
+// Returns all leads for admin dashboard - PUBLIC ACCESS
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,17 +12,36 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Get from env vars (set in Supabase Edge Function settings)
     const supabaseUrl = Deno.env.get('DB_URL') || ''
-    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('ANON_KEY') || ''
+    const anonKey = Deno.env.get('ANON_KEY') || ''
 
-    // Fetch leads directly via REST API
-    const response = await fetch(`${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=100`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + supabaseKey,
-        'Content-Type': 'application/json'
+    if (!supabaseUrl || !anonKey) {
+      return new Response(JSON.stringify({ error: 'Missing config' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Fetch leads via Supabase REST API using anon key (designed for public use)
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=100`,
+      {
+        headers: {
+          'apikey': anonKey,
+          'Authorization': `Bearer ${anonKey}`,
+          'Content-Type': 'application/json'
+        }
       }
-    })
+    )
+
+    if (!response.ok) {
+      const err = await response.text()
+      return new Response(JSON.stringify({ error: 'API error: ' + response.status, details: err }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const leads = await response.json()
 
