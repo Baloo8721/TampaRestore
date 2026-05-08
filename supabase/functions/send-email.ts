@@ -1,5 +1,4 @@
 // TampaRestore - Send Email Edge Function
-// Called by form submit to send notifications
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,55 +31,53 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Email to CONTRACTOR
-    const contractorHtml = `
-      <h2 style="color:#D92B2B;">🚨 NEW WATER DAMAGE LEAD</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
-      <p><strong>Email:</strong> ${email || 'N/A'}</p>
-      <p><strong>City:</strong> ${city}</p>
-      <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
-      <p><strong>Description:</strong> ${description || 'N/A'}</p>
-      <hr>
-      <p style="color:#D92B2B;font-weight:bold;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
-    `
+    const emailData = {
+      from: 'TampaRestore Leads <leads@tamparestore.com>',
+      to: [contractorEmail],
+      subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
+      html: `
+        <h2 style="color:#D92B2B;">🚨 NEW WATER DAMAGE LEAD</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
+        <p><strong>Email:</strong> ${email || 'N/A'}</p>
+        <p><strong>City:</strong> ${city}</p>
+        <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
+        <p><strong>Description:</strong> ${description || 'N/A'}</p>
+        <hr>
+        <p style="color:#D92B2B;font-weight:bold;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+      `
+    }
 
-    await fetch('https://api.resend.com/emails', {
+    const res1 = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + resendApiKey
       },
-      body: JSON.stringify({
-        from: 'TampaRestore Leads <leads@tamparestore.com>',
-        to: [contractorEmail],
-        subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
-        html: contractorHtml
-      })
+      body: JSON.stringify(emailData)
     })
 
-    // Email to YOU (admin)
-    const adminHtml = `
-      <h2>📋 New Lead Received</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Phone:</strong> ${phone}</p>
-      <p><strong>City:</strong> ${city}</p>
-      <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
-      <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-    `
+    const adminEmailData = {
+      from: 'TampaRestore Admin <leads@tamparestore.com>',
+      to: [adminEmail],
+      subject: `📋 New Lead: ${name} - ${city}`,
+      html: `
+        <h2>📋 New Lead Received</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>City:</strong> ${city}</p>
+        <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
+        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+      `
+    }
 
-    await fetch('https://api.resend.com/emails', {
+    const res2 = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + resendApiKey
       },
-      body: JSON.stringify({
-        from: 'TampaRestore Admin <leads@tamparestore.com>',
-        to: [adminEmail],
-        subject: `📋 New Lead: ${name} - ${city}`,
-        html: adminHtml
-      })
+      body: JSON.stringify(adminEmailData)
     })
 
     return new Response(JSON.stringify({ success: true }), {
