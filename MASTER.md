@@ -15,47 +15,26 @@ TampaRestore is a free referral service connecting Tampa Bay homeowners with lic
 
 | Component | Tool | Cost | Status |
 |-----------|------|------|--------|
-| Website | GitHub Pages / Netlify | Free | ✅ Ready |
-| Form Lead Capture | Netlify Forms | Free | ✅ Ready |
-| Admin Email | tylerbelislefl@gmail.com | You get lead notifications |
-| Contractor Email | ctbelisle@gmail.com | Gets forwarded leads |
-| Database | Google Apps Script | Free | ⚠️ Setup |
-| Auto-forward | Gmail Filter | Free | ⚠️ Enable |
-| Dashboard | admin-4829.html | Free | ✅ Ready |
+| Website | GitHub Pages | Free | ✅ Ready |
+| Form Lead Capture | Supabase Edge Function | Free | ✅ Ready |
+| Database | Supabase | Free | ✅ Ready |
+| Email Notifications | Gmail SMTP (App Password) | Free | ✅ Ready |
+| Admin Dashboard | admin-4829.html | Free | ✅ Ready |
 | Phone | Google Voice | Free | ⏳ Later |
 
 ---
 
 ## COMPLETE SETUP STEPS
 
-### STEP 1: ENABLE NETLIFY EMAIL NOTIFICATIONS
+### Everything is set up!
 
-1. Go to Netlify Dashboard → Your site → Forms
-2. Click "Form Notifications" → Add Email Notification
-3. Enter: tylerbelislefl@gmail.com
-4. Save
+1. **Website** → GitHub Pages
+2. **Form submits to** → Supabase Edge Function (`submit-lead`)
+3. **Edge function** → Writes to Supabase DB + sends emails via Gmail SMTP
+4. **Contractor** → Gets email at ctbelisle@gmail.com
+5. **Admin** → Gets email at tylerbelislefl@gmail.com
 
-Now every form submission emails you instantly.
-
-### STEP 2: SETUP GMAIL AUTO-FORWARD
-
-You get the email. To auto-forward to contractor:
-
-1. Go to Gmail → Settings → Filters
-2. Create filter:
-   - Subject: contains "[Netlify]"
-3. Add action: Forward to ctbelisle@gmail.com
-
-Or manual forward:
-
-1. Go to Gmail → Settings → Filters
-2. Create filter:
-   - Subject: contains "[Netlify]"
-3. Add action: Forward to ctbelisle@gmail.com
-
-### STEP 4: UPDATE FORM (Optional)
-
-After Apps Script is deployed, update form to also submit to Google Sheet.
+No manual setup needed!
 
 ---
 
@@ -64,12 +43,17 @@ After Apps Script is deployed, update form to also submit to Google Sheet.
 ```
 /Users/tylerbelisle/TampaRestore/
 ├── index.html                      ← Main site
-├── admin-4829.html               ← Admin dashboard
-├── MASTER.md                    ← This file
-├── APPS_SCRIPT_SETUP.md         ← Database setup guide
-├── status.md                   ← Current status
+├── admin-4829.html                 ← Admin dashboard
+├── MASTER.md                      ← This file
+├── status.md                      ← Current status
+├── supabase/
+│   ├── functions/
+│   │   ├── submit-lead.ts        ← Form handler + emails
+│   │   ├── send-email.ts         ← Email helper
+│   │   └── get-leads.ts          ← Admin data fetch
+│   └── schema.sql                ← DB schema
 └── google-apps-script/
-    └── Code.js                 ← Apps Script code
+    └── Code.js                   ← Old - not used anymore
 ```
 
 ---
@@ -79,13 +63,13 @@ After Apps Script is deployed, update form to also submit to Google Sheet.
 ```
 Homeowner submits form
          ↓
-1. Netlify Forms captures → Primary source (ALWAYS WORKS)
-2. Netlify emails YOU → tylerbelislefl@gmail.com
-3. YOU forward to contractor → ctbelisle@gmail.com
+1. index.html → Supabase Edge Function (submit-lead)
+2. Edge Function writes lead to Supabase database
+3. Edge Function (send-email) sends via Gmail SMTP:
+   - Email to contractor (ctbelisle@gmail.com)
+   - Email to admin (tylerbelislefl@gmail.com)
 4. Contractor calls homeowner
 5. 💰 Get paid
-
-Google Sheet integration is optional backup.
 ```
 
 ---
@@ -112,12 +96,11 @@ Google Sheet integration is optional backup.
 
 ## WHAT'S READY TO DEPLOY
 
-- ✅ index.html (updated with geolocation)
+- ✅ index.html (form + geolocation)
 - ✅ admin-4829.html (dashboard)
-- ✅ Netlify config
-- ⚠️ Need: Netlify email setup
-- ⚠️ Need: Apps Script deployment
-- ⚠️ Need: Gmail filter
+- ✅ Supabase Edge Functions (submit-lead, get-leads, send-email)
+- ✅ Gmail SMTP email (both contractor + admin get notified)
+- ✅ Supabase database
 
 ---
 

@@ -1,76 +1,43 @@
 # TampaRestore — Current Status
 
-Last Updated: May 6, 2026
+Last Updated: May 8, 2026
 
 ---
 
 ## BUILD STATUS
 
-| Component | Status | Next Step |
-|-----------|--------|----------|
-| index.html | ✅ Ready | Deploy |
-| admin-4829.html | ✅ Ready | Deploy |
-| Netlify Forms | ✅ Configured | Enable email |
-| Google Apps Script | ⚠️ Need setup | Follow APPS_SCRIPT_SETUP.md |
-| Gmail Filter | ⚠️ Need setup | Manual setup |
+| Component | Status | Notes |
+|-----------|--------|-------|
+| index.html | ✅ Ready | Main site with form |
+| admin-4829.html | ✅ Ready | Dashboard fetches from Supabase |
+| Supabase DB | ✅ Ready | Stores leads |
+| Edge Functions | ✅ Ready | submit-lead, get-leads |
+| Email (Gmail SMTP) | ✅ Working | Contractor + Admin get notified |
+| Google Voice | ⏳ Later | Optional |
 
 ---
 
-## FILES READY TO DEPLOY
+## FILES READY
 
 ```
 index.html                  - Main site with form + geolocation
-admin-4829.html           - Dashboard (demo data for now)
-netlify.toml              - Netlify config
-package.json             - Dependencies
+admin-4829.html             - Dashboard (fetches real data)
+supabase/
+├── functions/submit-lead.ts - Form handler + emails
+├── functions/get-leads.ts   - Admin data fetch
+└── schema.sql              - DB schema
 ```
-
----
-
-## ⚡ ACTIONABLE NEXT STEPS (IN ORDER)
-
-### Step 1: Enable Email Notifications (2 min)
-
-1. Go to Netlify Dashboard
-2. Find your site → Forms tab
-3. Click "Form Notifications"
-4. Add "Email Notification" → tylerbelislefl@gmail.com
-5. Save
-
-Now form submissions email you automatically.
-
-### Step 2: Set Up Google Sheets Database (10 min)
-
-Follow: APPS_SCRIPT_SETUP.md
-
-1. Open your Google Sheet (link in project)
-2. Add column headers (A-K)
-3. Extensions → Apps Script
-4. Paste code from google-apps-script/Code.js
-5. Deploy as Web App ("Anyone" access)
-6. Save the URL
-
-### Step 3: Set Up Gmail Auto-Forward (2 min)
-
-1. Gmail → Settings → Filters
-2. Create filter:
-   - From: contains "noreply@netlify.com" OR
-   - Subject: contains "water-damage-lead"
-3. Actions: Forward to ctbelisle@gmail.com
-
-### Step 4: Test
-
-Submit a test form → check email → verify leads come in
 
 ---
 
 ## CURRENT AUTOMATION FLOW
 
 ```
-Form → Netlify Forms → Email to YOU
+Form → Supabase Edge Function → DB + Emails
+                         ↓
+              contractor (ctbelisle@gmail.com)
+              admin (tylerbelislefl@gmail.com)
 ```
-
-Manual for now until Apps Script is set up.
 
 ---
 
@@ -81,12 +48,14 @@ Password: TampaRestore2026!
 
 ---
 
-## WHAT YOU NEED FROM ME
+## WHAT'S DONE
 
-- Apps Script URL from Step 2
-- I'll update dashboard to fetch real data
-- I'll update form to also submit to Sheet
+- ✅ Supabase project setup
+- ✅ Edge function for form submissions
+- ✅ Gmail SMTP for emails (both contractor + admin notified)
+- ✅ Database schema for leads
+- ✅ Admin dashboard pulls real data
 
 ---
 
-*Ready to deploy.*
+*Everything working!*

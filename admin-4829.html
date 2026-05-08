@@ -27,11 +27,12 @@
     
     /* Login */
     #login-screen { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .login-box { background: var(--white); padding: 40px; width: 100%; max-width: 360px; text-align: center; }
+    .login-box { background: var(--white); padding: 40px; width: 100%; max-width: 360px; text-align: center; border-radius: 8px; }
     .login-box h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; color: var(--navy); margin-bottom: 20px; }
-    .login-box input { width: 100%; padding: 14px; border: 2px solid var(--light-gray); font-family: 'Barlow', sans-serif; font-size: 16px; margin-bottom: 12px; text-align: center; }
+    .login-box input { width: 100%; padding: 14px; border: 2px solid var(--light-gray); font-family: 'Barlow', sans-serif; font-size: 16px; margin-bottom: 12px; text-align: center; border-radius: 4px; }
     .login-box input:focus { border-color: var(--red); outline: none; }
-    .login-box button { width: 100%; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; text-transform: uppercase; padding: 14px; border: none; cursor: pointer; }
+    .login-box button { width: 100%; background: var(--red); color: var(--white); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; text-transform: uppercase; padding: 14px; border: none; cursor: pointer; border-radius: 4px; }
+    .login-box button:hover { background: var(--red-dark); }
     .login-error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
     
     /* Dashboard */
@@ -40,7 +41,8 @@
     header { background: var(--navy); padding: 16px 5%; display: flex; align-items: center; justify-content: space-between; }
     .logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; color: var(--white); text-transform: uppercase; }
     .logo span { color: var(--red); }
-    .logout-btn { background: transparent; border: 1px solid var(--gray); color: var(--gray); padding: 8px 16px; font-size: 13px; cursor: pointer; }
+    .logout-btn { background: transparent; border: 1px solid var(--gray); color: var(--gray); padding: 8px 16px; font-size: 13px; cursor: pointer; border-radius: 4px; }
+    .logout-btn:hover { background: var(--navy-light); color: var(--white); }
     
     /* Stats */
     .stats-bar { background: var(--white); padding: 24px 5%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; border-bottom: 1px solid var(--light-gray); }
@@ -51,14 +53,14 @@
     
     /* Sections */
     .main-content { padding: 24px 5%; }
-    .section { background: var(--white); padding: 20px; margin-bottom: 24px; }
+    .section { background: var(--white); padding: 20px; margin-bottom: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .section-header h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; text-transform: uppercase; }
     
     /* Table */
     .leads-table { width: 100%; border-collapse: collapse; }
     .leads-table th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gray); padding: 12px 8px; border-bottom: 2px solid var(--light-gray); background: var(--off-white); }
-    .leads-table td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid var(--light-gray); }
+    .leads-table td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid var(--light-gray); vertical-align: middle; }
     .leads-table tr:hover { background: #FAFAFA; }
     
     .lead-name { font-weight: 600; }
@@ -68,48 +70,84 @@
     .lead-date { font-size: 12px; color: var(--gray); }
     
     /* Status badges */
-    .status-badge { display: inline-block; padding: 4px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; border-radius: 4px; }
-    .status-new { background: #FEF3C7; color: #92400E; }
-    .status-contacted { background: #DBEAFE; color: #1E40AF; }
-    .status-paid { background: #D1FAE5; color: #065F46; }
-    .status-closed { background: var(--light-gray); color: var(--gray); }
+    .status-select { padding: 6px 10px; font-size: 12px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: var(--white); }
+    .status-new { background: #FEF3C7; border-color: #FCD34D; }
+    .status-sent { background: #DBEAFE; border-color: #93C5FD; }
+    .status-contacted { background: #C7D2FE; border-color: #A5B4FC; }
+    .status-scheduled { background: #D1FAE5; border-color: #6EE7B7; }
+    .status-closed { background: #F3F4F6; border-color: #D1D5DB; }
+    .status-paid { background: #D1FAE5; border-color: #34D399; color: #059669; font-weight: bold; }
+    .status-junk { background: #FEE2E2; border-color: #FCA5A5; }
     
     /* Analytics */
-    .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
-    .analytics-card { background: var(--off-white); padding: 16px; text-align: center; }
-    .analytics-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; }
-    .analytics-label { font-size: 12px; color: var(--gray); text-transform: uppercase; }
+    .analytics-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
+    .analytics-card { background: var(--off-white); padding: 12px; text-align: center; border-radius: 6px; }
+    .analytics-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 24px; color: var(--navy); }
+    .analytics-label { font-size: 11px; color: var(--gray); text-transform: uppercase; margin-top: 4px; }
     
-    .btn { padding: 8px 16px; font-size: 13px; cursor: pointer; background: var(--navy); color: var(--white); border: none; }
+    .btn { padding: 8px 16px; font-size: 13px; cursor: pointer; background: var(--navy); color: var(--white); border: none; border-radius: 4px; }
     .btn:hover { background: var(--red); }
-    .refresh-btn { background: var(--navy); padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--white); border: none; }
+    .btn-small { padding: 6px 12px; font-size: 12px; }
+    .btn-success { background: var(--green); }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: var(--red); }
+    .btn-danger:hover { background: var(--red-dark); }
+    .btn-secondary { background: var(--gray); }
+    .btn-secondary:hover { background: #6B7280; }
+    
+    .refresh-btn { background: var(--navy); padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--white); border: none; border-radius: 4px; }
+    .refresh-btn:hover { background: var(--red); }
     .empty-state { text-align: center; padding: 40px; color: var(--gray); }
     .error-state { text-align: center; padding: 40px; color: var(--red); }
     .loading { text-align: center; padding: 40px; color: var(--gray); }
     .last-updated { font-size: 11px; color: var(--gray); text-align: right; margin-top: 8px; }
-    .success-state { text-align: center; padding: 20px; color: var(--green); }
-    
-    /* Status select dropdown */
-    .status-select { padding: 4px 8px; font-size: 11px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
-    .status-new { background: #FEF3C7; color: #92400E; }
-    .status-sent { background: #DBEAFE; color: #1E40AF; }
-    .status-contacted { background: #C7D2FE; color: #3730A3; }
-    .status-scheduled { background: #D1FAE5; color: #065F46; }
-    .status-closed { background: #F3F4F6; color: #6B7280; }
-    .status-paid { background: #D1FAE5; color: #059669; font-weight: bold; }
-    .status-junk { background: #FEE2E2; color: #991B1B; }
+    .success-state { text-align: center; padding: 12px; color: var(--green); background: var(--green-light); border-radius: 4px; margin-bottom: 12px; }
+    .error-msg { text-align: center; padding: 12px; color: var(--white); background: var(--red); border-radius: 4px; margin-bottom: 12px; }
     
     /* Action buttons */
-    .action-btn { background: var(--navy); color: white; border: none; padding: 4px 8px; font-size: 12px; cursor: pointer; border-radius: 4px; margin: 0 2px; }
+    .action-btn { background: var(--navy); color: var(--white); border: none; padding: 5px 8px; font-size: 11px; cursor: pointer; border-radius: 4px; margin: 0 2px; }
     .action-btn:hover { background: var(--red); }
+    .action-btn.call { background: var(--green); }
+    .action-btn.call:hover { background: #047857; }
+    .action-btn.delete { background: var(--red); }
+    .action-btn.delete:hover { background: #991B1B; }
+    
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--white); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+    .modal-header { background: var(--navy); color: var(--white); padding: 20px; display: flex; align-items: center; justify-content: space-between; border-radius: 12px 12px 0 0; }
+    .modal-header h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; text-transform: uppercase; }
+    .modal-close { background: none; border: none; color: var(--white); font-size: 24px; cursor: pointer; padding: 0; line-height: 1; }
+    .modal-body { padding: 20px; }
+    .modal-footer { padding: 20px; border-top: 1px solid var(--light-gray); display: flex; gap: 12px; justify-content: flex-end; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--light-gray); border-radius: 6px; font-size: 14px; font-family: 'Barlow', sans-serif; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--navy); outline: none; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    
+    .detail-row { display: flex; padding: 10px 0; border-bottom: 1px solid var(--light-gray); }
+    .detail-label { width: 120px; font-weight: 600; color: var(--gray); font-size: 13px; text-transform: uppercase; }
+    .detail-value { flex: 1; color: var(--navy); }
+    .detail-value a { color: var(--navy); text-decoration: none; }
+    
+    .btn-call-phone { display: inline-flex; align-items: center; gap: 6px; background: var(--green); color: var(--white); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; }
+    .btn-call-phone:hover { background: #047857; }
+    .btn-email { display: inline-flex; align-items: center; gap: 6px; background: var(--navy); color: var(--white); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; }
+    .btn-email:hover { background: var(--navy-light); }
     
     /* Filter buttons */
-    .filter-btn { padding: 4px 12px; font-size: 12px; cursor: pointer; background: var(--light-gray); color: var(--gray); border: none; border-radius: 4px; margin-right: 4px; }
-    .filter-btn.active { background: var(--navy); color: white; }
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; font-size: 12px; cursor: pointer; background: var(--light-gray); color: var(--gray); border: none; border-radius: 20px; }
+    .filter-btn:hover { background: var(--gray); color: var(--white); }
+    .filter-btn.active { background: var(--navy); color: var(--white); }
     
     @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .analytics-grid { grid-template-columns: 1fr; }
+      .analytics-grid { grid-template-columns: repeat(3, 1fr); }
+      .leads-table { display: block; overflow-x: auto; }
     }
   </style>
 </head>
@@ -123,8 +161,6 @@
     <button onclick="checkPassword()">Login</button>
     <p class="login-error" id="login-error">Incorrect password</p>
   </div>
-  
-  
 </div>
 
 <!-- Dashboard -->
@@ -132,7 +168,7 @@
   <header>
     <div class="logo">Tampa<span>Restore</span> Admin</div>
     <div style="display:flex; gap:12px;">
-      <button class="logout-btn" onclick="window.open('https://app.netlify.com/sites')">🌐 Netlify</button>
+      <button class="logout-btn" onclick="window.open('https://supabase.com/dashboard')">📊 Supabase</button>
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
   </header>
@@ -150,12 +186,12 @@
     <div class="stat-card">
       <div class="stat-num" id="conversion-rate">-</div>
       <div class="stat-label">Conversion</div>
-      <div class="stat-sub">Converted to paid</div>
+      <div class="stat-sub">Contacted + Paid</div>
     </div>
     <div class="stat-card">
       <div class="stat-num" id="total-revenue">$0</div>
       <div class="stat-label">Revenue</div>
-      <div class="stat-sub">This month</div>
+      <div class="stat-sub">Paid leads</div>
     </div>
   </div>
   
@@ -181,7 +217,7 @@
         </div>
         <div class="analytics-card">
           <div class="analytics-num" id="storm-count">-</div>
-          <div class="analytics-label">Storm Damage</div>
+          <div class="analytics-label">Storm</div>
         </div>
         <div class="analytics-card">
           <div class="analytics-num" id="pipe-count">-</div>
@@ -198,8 +234,20 @@
     <!-- Leads List -->
     <div class="section">
       <div class="section-header">
-        <h3>📋 All Leads (From Netlify)</h3>
+        <h3>📋 All Leads</h3>
         <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
+      </div>
+      
+      <!-- Filters -->
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('all')">All</button>
+        <button class="filter-btn" onclick="setFilter('new')">New</button>
+        <button class="filter-btn" onclick="setFilter('sent')">Sent</button>
+        <button class="filter-btn" onclick="setFilter('contacted')">Contacted</button>
+        <button class="filter-btn" onclick="setFilter('scheduled')">Scheduled</button>
+        <button class="filter-btn" onclick="setFilter('paid')">Paid</button>
+        <button class="filter-btn" onclick="setFilter('closed')">Closed</button>
+        <button class="filter-btn" onclick="setFilter('junk')">Junk</button>
       </div>
       
       <div id="status-msg"></div>
@@ -209,17 +257,16 @@
           <tr>
             <th>Name</th>
             <th>Phone</th>
-            <th>Email</th>
             <th>City</th>
             <th>Damage</th>
             <th>Status</th>
             <th>Response</th>
             <th>Date</th>
-            <th>Action</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="leads-tbody">
-          <tr><td colspan="9" class="loading">Loading...</td></tr>
+          <tr><td colspan="8" class="loading">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -227,14 +274,30 @@
     <!-- Quick Info -->
     <div class="section">
       <div class="section-header">
-        <h3>⚡ Quick Info</h3>
+        <h3>⚡ System Info</h3>
       </div>
       <div style="font-size: 14px; line-height: 2; color: var(--gray);">
-        <div><strong>Data Source:</strong> Supabase Database</div>
+        <div><strong>Database:</strong> Supabase (aqafvfzsybcqfxqklqsd)</div>
         <div><strong>Contractor:</strong> ctbelisle@gmail.com</div>
-        <div><strong>Your Email:</strong> tylerbelislefl@gmail.com</div>
-        <div><strong>Form Endpoint:</strong> Netlify Function → Supabase</div>
+        <div><strong>Admin:</strong> tylerbelislefl@gmail.com</div>
+        <div><strong>Email:</strong> Gmail SMTP (App Password)</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- View/Edit Modal -->
+<div class="modal-overlay" id="lead-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Lead Details</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <!-- Dynamic content -->
+    </div>
+    <div class="modal-footer" id="modal-footer">
+      <!-- Dynamic buttons -->
     </div>
   </div>
 </div>
@@ -270,11 +333,10 @@ function logout() {
 async function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
   const statusMsg = document.getElementById('status-msg');
-  tbody.innerHTML = '<tr><td colspan="9" class="loading">Fetching leads...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Fetching leads...</td></tr>';
   statusMsg.innerHTML = '';
   
   try {
-    // Fetch directly from Supabase REST API
     const response = await fetch(SUPABASE_URL + '/rest/v1/leads?order=created_at.desc', {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
@@ -289,7 +351,6 @@ async function loadLeads() {
     
     const data = await response.json();
     
-    // Map Supabase fields to our format
     allLeads = (data || []).map(lead => ({
       id: lead.id,
       name: lead.name || 'Unknown',
@@ -305,7 +366,7 @@ async function loadLeads() {
       sent_to_contractor_at: lead.sent_to_contractor_at,
       contractor_contacted_at: lead.contractor_contacted_at,
       assigned_contractor_email: lead.assigned_contractor_email || '',
-      revenue_amount: lead.revenue_amount,
+      revenue_amount: lead.revenue_amount || '',
       source: lead.source || 'website',
       notes: lead.notes || ''
     }));
@@ -318,7 +379,8 @@ async function loadLeads() {
     
   } catch (err) {
     console.error('Error:', err);
-    tbody.innerHTML = '<tr><td colspan="9" class="error-state">Error: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="error-state">Error: ' + err.message + '</td></tr>';
+    statusMsg.innerHTML = '<p class="error-msg">Error loading leads: ' + err.message + '</p>';
   }
 }
 
@@ -326,26 +388,22 @@ function renderLeads() {
   const tbody = document.getElementById('leads-tbody');
   
   if (allLeads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No leads yet. Go get some!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No leads yet. Go get some!</td></tr>';
     return;
   }
   
-  // Apply filter
   let filtered = allLeads;
   if (currentFilter !== 'all') {
     filtered = allLeads.filter(l => l.status === currentFilter);
   }
   
-  // Sort by date (newest first)
   const sorted = [...filtered].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   
   tbody.innerHTML = sorted.map(lead => {
     const status = lead.status || 'new';
-    const statusClass = 'status-' + status;
     const date = lead.created_at ? new Date(lead.created_at).toLocaleDateString() : 'N/A';
     const time = lead.created_at ? new Date(lead.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
     
-    // Calculate response time if sent to contractor
     let responseTime = '-';
     if (lead.sent_to_contractor_at) {
       const sentTime = new Date(lead.sent_to_contractor_at);
@@ -356,76 +414,228 @@ function renderLeads() {
       } else {
         responseTime = Math.round(minutes/60) + ' hr';
       }
-      // If contractor confirmed contact
       if (lead.contractor_contacted_at) {
         responseTime = '✓ Contacted';
       }
     }
     
-    // Status options for dropdown
     const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk'];
     
     return `
       <tr>
         <td class="lead-name">${lead.name || 'N/A'}</td>
-        <td class="lead-phone"><a href="tel:${lead.phone}">${lead.phone || 'N/A'}</a></td>
-        <td style="font-size:12px; color:#666;">${lead.email || '-'}</td>
+        <td class="lead-phone">${lead.phone || 'N/A'}</td>
         <td class="lead-city">${lead.city || 'N/A'}</td>
         <td>${lead.damage_type || 'N/A'}</td>
         <td>
-          <select class="status-select ${statusClass}" onchange="updateLeadStatus('${lead.id}', this.value)">
+          <select class="status-select status-${status}" onchange="updateLeadStatus('${lead.id}', this.value)">
             ${statusOptions.map(s => `<option value="${s}" ${s === status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
         </td>
         <td style="font-size:12px;">${responseTime}</td>
         <td class="lead-date">${date}<br>${time}</td>
         <td>
-          <button class="action-btn" onclick="callLead('${lead.phone}')">📞</button>
-          <button class="action-btn" onclick="viewLeadDetails('${lead.id}')">👁️</button>
+          <button class="action-btn call" title="Call" onclick="callPhone('${lead.phone}')">📞</button>
+          <button class="action-btn" title="View/Edit" onclick="viewLead('${lead.id}')">👁️</button>
+          <button class="action-btn delete" title="Delete" onclick="deleteLead('${lead.id}')">🗑️</button>
         </td>
       </tr>
     `;
   }).join('');
 }
 
-function updateLeadStatus(leadId, newStatus) {
-  fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
-    method: 'PATCH',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({
-      status: newStatus,
-      updated_at: new Date().toISOString()
-    })
-  }).then(() => {
-    console.log('Lead status updated');
-    // Update local data
-    const lead = allLeads.find(l => l.id === leadId);
-    if (lead) lead.status = newStatus;
-    updateStats();
-  }).catch(err => {
-    console.error('Error updating status:', err);
+function setFilter(filter) {
+  currentFilter = filter;
+  
+  // Update active state
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.textContent.toLowerCase() === filter || (filter === 'all' && btn.textContent === 'All')) {
+      btn.classList.add('active');
+    }
   });
+  
+  renderLeads();
 }
 
-function callLead(phone) {
-  window.location.href = 'tel:' + phone;
-}
-
-function viewLeadDetails(leadId) {
-  const lead = allLeads.find(l => l.id === leadId);
-  if (lead) {
-    alert(`Lead Details:\n\nName: ${lead.name}\nPhone: ${lead.phone}\nEmail: ${lead.email}\nCity: ${lead.city}\nDamage: ${lead.damage_type}\nDescription: ${lead.description}\nLocation: ${lead.lat ? lead.lat + ', ' + lead.lng : 'N/A'}\nSource: ${lead.source}\nNotes: ${lead.notes || 'None'}`);
+async function updateLeadStatus(leadId, newStatus) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+    });
+    
+    if (response.ok) {
+      const lead = allLeads.find(l => l.id === leadId);
+      if (lead) lead.status = newStatus;
+      updateStats();
+    }
+  } catch (err) {
+    console.error('Error updating status:', err);
   }
 }
 
-function setFilter(filter) {
-  currentFilter = filter;
-  renderLeads();
+function callPhone(phone) {
+  // Use direct tel: link - on iPhone this will prompt to call
+  window.location.href = 'tel:' + phone.replace(/\D/g, '');
+}
+
+function viewLead(leadId) {
+  const lead = allLeads.find(l => l.id === leadId);
+  if (!lead) return;
+  
+  const modal = document.getElementById('lead-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const modalFooter = document.getElementById('modal-footer');
+  
+  modalTitle.textContent = 'Edit Lead';
+  
+  const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk'];
+  const dateStr = lead.created_at ? new Date(lead.created_at).toLocaleString() : 'N/A';
+  
+  modalBody.innerHTML = `
+    <form id="lead-form">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="edit-name" value="${escapeHtml(lead.name || '')}" />
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" id="edit-phone" value="${escapeHtml(lead.phone || '')}" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="edit-email" value="${escapeHtml(lead.email || '')}" />
+      </div>
+      <div class="form-group">
+        <label>City</label>
+        <input type="text" id="edit-city" value="${escapeHtml(lead.city || '')}" />
+      </div>
+      <div class="form-group">
+        <label>Damage Type</label>
+        <input type="text" id="edit-damage" value="${escapeHtml(lead.damage_type || '')}" />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="edit-description">${escapeHtml(lead.description || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-status">
+          ${statusOptions.map(s => `<option value="${s}" ${s === (lead.status || 'new') ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Revenue Amount ($)</label>
+        <input type="number" id="edit-revenue" value="${lead.revenue_amount || ''}" placeholder="e.g. 75" />
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="edit-notes" placeholder="Add notes...">${escapeHtml(lead.notes || '')}</textarea>
+      </div>
+      <div style="margin-top: 16px; padding: 12px; background: var(--off-white); border-radius: 6px; font-size: 13px;">
+        <div><strong>Created:</strong> ${dateStr}</div>
+        <div><strong>ID:</strong> ${lead.id}</div>
+      </div>
+    </form>
+  `;
+  
+  modalFooter.innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-success" onclick="saveLead('${lead.id}')">💾 Save Changes</button>
+  `;
+  
+  modal.classList.add('active');
+}
+
+async function saveLead(leadId) {
+  const updates = {
+    name: document.getElementById('edit-name').value,
+    phone: document.getElementById('edit-phone').value,
+    email: document.getElementById('edit-email').value || null,
+    city: document.getElementById('edit-city').value,
+    damage_type: document.getElementById('edit-damage').value,
+    description: document.getElementById('edit-description').value || null,
+    status: document.getElementById('edit-status').value,
+    revenue_amount: document.getElementById('edit-revenue').value ? parseFloat(document.getElementById('edit-revenue').value) : null,
+    notes: document.getElementById('edit-notes').value || null,
+    updated_at: new Date().toISOString()
+  };
+  
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(updates)
+    });
+    
+    if (response.ok) {
+      // Update local data
+      const lead = allLeads.find(l => l.id === leadId);
+      if (lead) {
+        Object.assign(lead, updates);
+      }
+      
+      closeModal();
+      renderLeads();
+      updateStats();
+      
+      document.getElementById('status-msg').innerHTML = '<p class="success-state">✓ Lead updated successfully</p>';
+    }
+  } catch (err) {
+    console.error('Error saving lead:', err);
+    alert('Error saving: ' + err.message);
+  }
+}
+
+function deleteLead(leadId) {
+  if (!confirm('Are you sure you want to DELETE this lead? This cannot be undone.')) {
+    return;
+  }
+  
+  fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Prefer': 'return=minimal'
+    }
+  }).then(response => {
+    if (response.ok) {
+      allLeads = allLeads.filter(l => l.id !== leadId);
+      renderLeads();
+      updateStats();
+      document.getElementById('status-msg').innerHTML = '<p class="error-msg">Lead deleted</p>';
+    }
+  }).catch(err => {
+    console.error('Error deleting:', err);
+    alert('Error deleting: ' + err.message);
+  });
+}
+
+function closeModal() {
+  document.getElementById('lead-modal').classList.remove('active');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 function updateStats() {
@@ -436,13 +646,10 @@ function updateStats() {
     return l.created_at && new Date(l.created_at).toDateString() === today;
   }).length;
   
-  const newLeads = allLeads.filter(l => l.status === 'new').length;
-  const sentToContractor = allLeads.filter(l => l.status === 'sent').length;
-  const contacted = allLeads.filter(l => l.status === 'contacted' || l.status === 'scheduled').length;
+  const contacted = allLeads.filter(l => ['contacted', 'scheduled', 'paid'].includes(l.status)).length;
   const paid = allLeads.filter(l => l.status === 'paid').length;
-  const conversion = total > 0 ? Math.round(((contacted + paid) / total) * 100) : 0;
+  const conversion = total > 0 ? Math.round((contacted / total) * 100) : 0;
   
-  // Calculate revenue
   const totalRevenue = allLeads
     .filter(l => l.status === 'paid' && l.revenue_amount)
     .reduce((sum, l) => sum + parseFloat(l.revenue_amount), 0);
@@ -452,7 +659,6 @@ function updateStats() {
   document.getElementById('conversion-rate').textContent = conversion + '%';
   document.getElementById('total-revenue').textContent = '$' + totalRevenue.toFixed(0);
   
-  // City breakdown
   const cityLower = (c) => (c || '').toLowerCase();
   const tampa = allLeads.filter(l => cityLower(l.city) === 'tampa').length;
   const wesley = allLeads.filter(l => cityLower(l.city) === 'wesley chapel').length;
@@ -462,7 +668,6 @@ function updateStats() {
   document.getElementById('wesley-count').textContent = wesley;
   document.getElementById('other-count').textContent = other;
   
-  // Damage type breakdown
   const storm = allLeads.filter(l => cityLower(l.damage_type)?.includes('storm')).length;
   const pipe = allLeads.filter(l => cityLower(l.damage_type)?.includes('pipe')).length;
   const flood = allLeads.filter(l => cityLower(l.damage_type)?.includes('flood')).length;
@@ -471,6 +676,11 @@ function updateStats() {
   document.getElementById('pipe-count').textContent = pipe;
   document.getElementById('flood-count').textContent = flood;
 }
+
+// Close modal on outside click
+document.getElementById('lead-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
 
 // Enter key
 document.getElementById('password-input').addEventListener('keypress', e => {
