@@ -46,9 +46,9 @@ Deno.serve(async (req) => {
     const timestamp = new Date().toISOString()
     const contractorEmail = Deno.env.get('CONTRACTOR_EMAIL') || 'ctbelisle@gmail.com'
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || ''
-    const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
+    const supabaseUrl = Deno.env.get('DB_URL') || ''
+    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || Deno.env.get('ANON_KEY') || ''
+    const resendApiKey = Deno.env.get('RESEND_KEY') || ''
 
     // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey)
