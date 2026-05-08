@@ -1184,12 +1184,12 @@ function sendToSupabase() {
   };
   
   // Send to submit-lead edge function (handles DB + emails with confirm/decline buttons)
-  const submitForm = fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/submit-lead', {
+  const formRequest = fetch('https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1/submit-lead', {
     method: 'POST',
     body: new URLSearchParams(leadData).toString()
   });
 
-  submitForm
+  formRequest
     .then(response => response.json())
     .then(data => {
       console.log('Form submitted:', data);
