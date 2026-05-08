@@ -1186,10 +1186,7 @@ function sendToSupabase() {
     assigned_contractor_email: 'ctbelisle@gmail.com'
   };
   
-  // Save to Supabase directly (this was working before)
-  console.log('Sending lead to Supabase:', leadData);
-  
-  // Save lead and get the ID
+  // Save to Supabase directly
   const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
@@ -1199,42 +1196,31 @@ function sendToSupabase() {
       'Prefer': 'return=representation'
     },
     body: JSON.stringify([leadData])
-  })
-  .then(res => {
-    console.log('Save lead response:', res.status, res.statusText);
-    return res.json();
-  })
-  .then(data => {
-    // Get lead ID from response
-    const leadId = data && data[0] ? data[0].id : '';
-    console.log('Lead ID:', leadId);
-    
-    // Now send email with lead ID for buttons
-    return fetch(SUPABASE_URL + '/functions/v1/send-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'name=' + encodeURIComponent(name) + 
-            '&phone=' + encodeURIComponent(phone) + 
-            '&email=' + encodeURIComponent(email) + 
-            '&city=' + encodeURIComponent(city) + 
-            '&damage-type=' + encodeURIComponent(damage_type) + 
-            '&description=' + encodeURIComponent(description) +
-            '&lead_id=' + encodeURIComponent(leadId)
-    });
-  })
-  .then(res => {
-    console.log('Send email response:', res.status, res.statusText);
-    return res;
-  })
-  .catch(err => {
-    console.error('Error:', err);
-  })
-  .finally(() => {
-    document.querySelector('.success-msg').style.display = 'block';
-    document.getElementById('contact-form').reset();
   });
+
+  // Also call edge function to send emails
+  const sendEmail = fetch(SUPABASE_URL + '/functions/v1/send-email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'name=' + encodeURIComponent(name) + 
+          '&phone=' + encodeURIComponent(phone) + 
+          '&email=' + encodeURIComponent(email) + 
+          '&city=' + encodeURIComponent(city) + 
+          '&damage-type=' + encodeURIComponent(damage_type) + 
+          '&description=' + encodeURIComponent(description)
+  });
+
+  Promise.all([saveLead, sendEmail])
+    .then(([leadRes, emailRes]) => {
+      console.log('Lead:', leadRes.status, 'Email:', emailRes.status);
+    })
+    .catch(err => console.error('Error:', err))
+    .finally(() => {
+      document.querySelector('.success-msg').style.display = 'block';
+      document.getElementById('contact-form').reset();
+    });
 }
 </script>
 </body>
