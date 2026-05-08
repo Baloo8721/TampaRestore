@@ -1,4 +1,5 @@
 // TampaRestore - Send Email Edge Function
+// Called by form submit to send notifications
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,50 +12,35 @@ Deno.serve(async (req) => {
   }
 
   try {
-    let name = '', phone = '', email = '', city = '', damageType = '', description = ''
+    // Read the request body
+    const body = await req.text()
     
-    const contentType = req.headers.get('content-type') || ''
-    
-    if (contentType.includes('application/x-www-form-urlencoded')) {
-      const formData = await req.formData()
-      name = formData.get('name')?.toString() || ''
-      phone = formData.get('phone')?.toString() || ''
-      email = formData.get('email')?.toString() || ''
-      city = formData.get('city')?.toString() || ''
-      damageType = formData.get('damage-type')?.toString() || ''
-      description = formData.get('description')?.toString() || ''
-    } else if (contentType.includes('application/json')) {
-      const body = await req.json()
-      name = body.name || ''
-      phone = body.phone || ''
-      email = body.email || ''
-      city = body.city || ''
-      damageType = body['damage-type'] || ''
-      description = body.description || ''
-    } else {
-      // Try to parse from URL for testing
-      const url = new URL(req.url)
-      name = url.searchParams.get('name') || ''
-      phone = url.searchParams.get('phone') || ''
-      email = url.searchParams.get('email') || ''
-      city = url.searchParams.get('city') || ''
-      damageType = url.searchParams.get('damage-type') || ''
-      description = url.searchParams.get('description') || ''
-    }
+    // Parse URL-encoded form data manually
+    const params = new URLSearchParams(body)
+    const name = params.get('name') || ''
+    const phone = params.get('phone') || ''
+    const email = params.get('email') || ''
+    const city = params.get('city') || ''
+    const damageType = params.get('damage-type') || ''
+    const description = params.get('description') || ''
+
+    console.log('Received lead:', { name, phone, city, damageType })
 
     const contractorEmail = Deno.env.get('CONTRACTOR_EMAIL') || 'ctbelisle@gmail.com'
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const resendApiKey = Deno.env.get('RESEND_KEY') || ''
 
+    console.log('RESEND_KEY set:', resendApiKey ? 'yes' : 'NO!')
+
     if (!resendApiKey) {
-      return new Response(JSON.stringify({ error: 'RESEND_KEY not configured in Edge Function secrets' }), {
+      return new Response(JSON.stringify({ error: 'RESEND_KEY not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Email to contractor
-    await fetch('https://api.resend.com/emails', {
+    // Email to CONTRACTOR
+    const r1 = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -77,9 +63,10 @@ Deno.serve(async (req) => {
         `
       })
     })
+    console.log('Contractor email response:', r1.status)
 
-    // Email to admin
-    await fetch('https://api.resend.com/emails', {
+    // Email to ADMIN
+    const r2 = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,15 +82,23 @@ Deno.serve(async (req) => {
           <p><strong>Phone:</strong> ${phone}</p>
           <p><strong>City:</strong> ${city}</p>
           <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
+          <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
         `
       })
     })
+    console.log('Admin email response:', r2.status)
 
-    return new Response(JSON.stringify({ success: true, message: 'Emails sent' }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: 'Emails sent',
+      contractorStatus: r1.status,
+      adminStatus: r2.status
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (error) {
+    console.error('Error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
