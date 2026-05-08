@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TampaRestore — Admin Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -287,17 +286,25 @@
 const SUPABASE_URL = 'https://aqafvfzsybcqfxqklqsd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWZ2ZnpzeWJjcWZ4cWtscXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU1ODAsImV4cCI6MjA5MzgzMTU4MH0.VUO2Uaf6IlM_cr-UwJ5YdQuinjasQehfoxe6dxqLecg';
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 let allLeads = [];
-let currentFilter = 'all';
+let currentFilter = '';
+let currentUser = null;
 
-// Check if user is already logged in on page load
-window.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    showDashboard(session.user);
+// Check for existing session on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const savedSession = localStorage.getItem('tampa_admin_session');
+  if (savedSession) {
+    try {
+      const session = JSON.parse(savedSession);
+      if (session.expires_at > Date.now()) {
+        currentUser = session.user;
+        showDashboard(currentUser);
+      } else {
+        localStorage.removeItem('tampa_admin_session');
+      }
+    } catch (e) {
+      localStorage.removeItem('tampa_admin_session');
+    }
   }
 });
 
@@ -318,18 +325,38 @@ async function login() {
   loginError.style.display = 'none';
   
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
+    // Use Supabase Auth API directly (no eval)
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password
+      })
     });
     
-    if (error) {
-      throw error;
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error_description || 'Invalid credentials');
     }
     
-    if (data.session) {
-      showDashboard(data.user);
-    }
+    currentUser = { email: data.user.email, id: data.user.id };
+    
+    // Save session
+    const sessionData = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      user: currentUser,
+      expires_at: Date.now() + (data.expires_in * 1000)
+    };
+    localStorage.setItem('tampa_admin_session', JSON.stringify(sessionData));
+    
+    showDashboard(currentUser);
+    
   } catch (err) {
     console.error('Login error:', err);
     loginError.textContent = 'Invalid email or password';
@@ -346,8 +373,9 @@ function showDashboard(user) {
   loadLeads();
 }
 
-async function logout() {
-  await supabase.auth.signOut();
+function logout() {
+  localStorage.removeItem('tampa_admin_session');
+  currentUser = null;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('email-input').value = '';
@@ -355,14 +383,6 @@ async function logout() {
   document.getElementById('login-btn').disabled = false;
   document.getElementById('login-btn').textContent = 'Login';
 }
-
-// Listen for auth changes
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT') {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('dashboard').style.display = 'none';
-  }
-});
 
 async function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
