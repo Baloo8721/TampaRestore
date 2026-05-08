@@ -196,12 +196,25 @@
   </div>
   
   <div class="main-content">
-    <!-- Analytics -->
+<!-- Analytics -->
     <div class="section">
       <div class="section-header">
         <h3>📈 Analytics</h3>
         <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
       </div>
+      
+      <h4 style="font-size: 13px; color: var(--gray); text-transform: uppercase; margin-bottom: 12px;">🏙️ By City</h4>
+      <div class="analytics-grid" id="city-analytics">
+        <!-- Dynamic city cards -->
+      </div>
+      
+      <h4 style="font-size: 13px; color: var(--gray); text-transform: uppercase; margin: 20px 0 12px;">💥 By Damage Type</h4>
+      <div class="analytics-grid" id="damage-analytics">
+        <!-- Dynamic damage type cards -->
+      </div>
+      
+      <p class="last-updated" id="last-updated"></p>
+    </div>
       <div class="analytics-grid">
         <div class="analytics-card">
           <div class="analytics-num" id="tampa-count">-</div>
@@ -659,22 +672,45 @@ function updateStats() {
   document.getElementById('conversion-rate').textContent = conversion + '%';
   document.getElementById('total-revenue').textContent = '$' + totalRevenue.toFixed(0);
   
-  const cityLower = (c) => (c || '').toLowerCase();
-  const tampa = allLeads.filter(l => cityLower(l.city) === 'tampa').length;
-  const wesley = allLeads.filter(l => cityLower(l.city) === 'wesley chapel').length;
-  const other = total - tampa - wesley;
+  // Dynamic city analytics - get all unique cities and counts
+  const cityCounts = {};
+  allLeads.forEach(lead => {
+    const city = (lead.city || 'Unknown').trim();
+    cityCounts[city] = (cityCounts[city] || 0) + 1;
+  });
   
-  document.getElementById('tampa-count').textContent = tampa;
-  document.getElementById('wesley-count').textContent = wesley;
-  document.getElementById('other-count').textContent = other;
+  // Sort cities by count descending
+  const sortedCities = Object.entries(cityCounts).sort((a, b) => b[1] - a[1]);
   
-  const storm = allLeads.filter(l => cityLower(l.damage_type)?.includes('storm')).length;
-  const pipe = allLeads.filter(l => cityLower(l.damage_type)?.includes('pipe')).length;
-  const flood = allLeads.filter(l => cityLower(l.damage_type)?.includes('flood')).length;
+  const cityHtml = sortedCities.map(([city, count]) => `
+    <div class="analytics-card">
+      <div class="analytics-num">${count}</div>
+      <div class="analytics-label">${city}</div>
+    </div>
+  `).join('');
   
-  document.getElementById('storm-count').textContent = storm;
-  document.getElementById('pipe-count').textContent = pipe;
-  document.getElementById('flood-count').textContent = flood;
+  document.getElementById('city-analytics').innerHTML = cityHtml || '<p style="color:var(--gray)">No city data</p>';
+  
+  // Dynamic damage type analytics - get all unique damage types
+  const damageCounts = {};
+  allLeads.forEach(lead => {
+    const damage = (lead.damage_type || 'Unknown').trim();
+    if (damage && damage !== 'N/A') {
+      damageCounts[damage] = (damageCounts[damage] || 0) + 1;
+    }
+  });
+  
+  // Sort by count descending
+  const sortedDamage = Object.entries(damageCounts).sort((a, b) => b[1] - a[1]);
+  
+  const damageHtml = sortedDamage.map(([damage, count]) => `
+    <div class="analytics-card">
+      <div class="analytics-num">${count}</div>
+      <div class="analytics-label">${damage}</div>
+    </div>
+  `).join('');
+  
+  document.getElementById('damage-analytics').innerHTML = damageHtml || '<p style="color:var(--gray)">No damage type data</p>';
 }
 
 // Close modal on outside click
