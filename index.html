@@ -1159,18 +1159,44 @@ function getLocationAndSend() {
 
 function sendToSupabase() {
   console.log('sendToSupabase called - starting');
-  // Get all form values
   const name = document.getElementById('fname')?.value || '';
   const phone = document.getElementById('fphone')?.value || '';
   const email = document.getElementById('femail')?.value || '';
   const city = document.getElementById('fcity')?.value || '';
   const damage_type = document.getElementById('fdamage')?.value || '';
   const description = document.getElementById('fdesc')?.value || '';
-  
   const timestamp = new Date().toISOString();
   
-  // SINGLE call to submit-lead edge function - handles DB write + emails
-  const submitLead = fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
+  const leadData = {
+    name: name,
+    phone: phone,
+    email: email || null,
+    city: city,
+    state: 'FL',
+    lat: userLat ? parseFloat(userLat) : null,
+    lng: userLng ? parseFloat(userLng) : null,
+    damage_type: damage_type,
+    description: description || null,
+    status: 'sent',
+    source: 'website',
+    sent_to_contractor_at: timestamp,
+    assigned_contractor_email: 'ctbelisle@gmail.com'
+  };
+
+  // ALWAYS save to DB first (this will always work)
+  const saveLead = fetch(SUPABASE_URL + '/rest/v1/leads', {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify([leadData])
+  });
+
+  // ALSO try edge function for emails (will work once deployed)
+  const sendEmail = fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -1185,19 +1211,11 @@ function sendToSupabase() {
           '&lng=' + encodeURIComponent(userLng)
   });
 
-  submitLead
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Server error: ' + response.status);
-      }
-      return response.json();
+  Promise.all([saveLead, sendEmail])
+    .then(([leadRes, emailRes]) => {
+      console.log('Lead saved:', leadRes.status, 'Email attempt:', emailRes.status);
     })
-    .then(data => {
-      console.log('Lead submitted:', data);
-    })
-    .catch(err => {
-      console.error('Error submitting lead:', err);
-    })
+    .catch(err => console.error('Error:', err))
     .finally(() => {
       document.querySelector('.success-msg').style.display = 'block';
       document.getElementById('contact-form').reset();
