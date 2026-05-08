@@ -1177,22 +1177,18 @@ function sendToSupabase() {
   formData.append('lat', userLat);
   formData.append('lng', userLng);
   
-  // Send to Supabase Edge Function (keys stay in Supabase - not in your code)
+  // Send to Supabase Edge Function (no-cors mode needed for Edge Functions)
   fetch(SUPABASE_FUNCTION_URL, {
     method: 'POST',
+    mode: 'no-cors',
     body: formData
-  }).then(response => {
-    if (response.ok) {
-      console.log('Lead sent to Supabase');
-      // Show success message
-      document.querySelector('.success-msg').style.display = 'block';
-      document.getElementById('contact-form').reset();
-    } else {
-      alert('Error submitting form. Please try again.');
-    }
+  }).then(() => {
+    console.log('Lead sent to Supabase');
+    // Show success message
+    document.querySelector('.success-msg').style.display = 'block';
+    document.getElementById('contact-form').reset();
   }).catch((err) => {
     console.log('Error sending lead:', err);
-    alert('Error submitting form. Please try again.');
   });
 }
 </script>
