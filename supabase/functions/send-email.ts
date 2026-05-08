@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         'Authorization': 'Bearer ' + resendApiKey
       },
       body: JSON.stringify({
-        from: 'TampaRestore Leads <leads@tamparestore.com>',
+        from: 'TampaRestore on Resend <onboarding@resend.dev>',
         to: contractorEmail,
         subject: `🚨 NEW LEAD — ${name} needs water damage help in ${city}`,
         html: `
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
         'Authorization': 'Bearer ' + resendApiKey
       },
       body: JSON.stringify({
-        from: 'TampaRestore Admin <leads@tamparestore.com>',
+        from: 'TampaRestore on Resend <onboarding@resend.dev>',
         to: adminEmail,
         subject: `📋 New Lead: ${name} - ${city}`,
         html: `
