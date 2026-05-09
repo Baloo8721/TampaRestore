@@ -259,16 +259,16 @@
     <div class="section">
       <div class="section-header">
         <h3>👷 Contractors</h3>
-        <button class="btn btn-small" onclick="showAddContractor()">+ Add Contractor</button>
+        <button class="btn btn-small" id="add-contractor-btn" onclick="showAddContractor()">+ Add Contractor</button>
       </div>
-      <table class="leads-table">
+      <table class="leads-table" id="contractors-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Name</th>
             <th>Email</th>
             <th>Phone</th>
             <th>Price/Lead</th>
-            <th>Priority</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -277,6 +277,7 @@
           <tr><td colspan="7" class="loading">Loading...</td></tr>
         </tbody>
       </table>
+      <p id="contractor-count" style="font-size:12px;color:var(--gray);margin-top:8px;"></p>
     </div>
     
     <!-- Quick Info -->
@@ -437,19 +438,28 @@ async function loadContractors() {
 
 function renderContractors() {
   const tbody = document.getElementById('contractors-tbody');
+  const countEl = document.getElementById('contractor-count');
   
-  if (allContractors.length === 0) {
+  const sorted = [...allContractors].sort((a, b) => a.priority - b.priority);
+  
+  if (sorted.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No contractors. Click "Add Contractor" to add one.</td></tr>';
+    countEl.textContent = '';
     return;
   }
   
-  tbody.innerHTML = allContractors.map(c => `
-    <tr>
+  tbody.innerHTML = sorted.map(c => `
+    <tr data-id="${c.id}">
+      <td style="text-align:center;">
+        <input type="number" min="1" max="${Math.max(sorted.length, 10)}" value="${c.priority + 1}"
+          style="width:48px;text-align:center;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;"
+          onchange="reorderContractor('${c.id}', this.value, ${sorted.length})"
+          title="Click to change position" />
+      </td>
       <td><strong>${c.name || 'N/A'}</strong></td>
       <td>${c.email || 'N/A'}</td>
       <td>${c.phone || '-'}</td>
       <td>$${c.price_per_lead || 75}</td>
-      <td>${c.priority}</td>
       <td>
         <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${c.active ? '#D1FAE5' : '#FEE2E2'}; color: ${c.active ? '#059669' : '#991B1B'};">
           ${c.active ? 'ACTIVE' : 'INACTIVE'}
@@ -464,9 +474,15 @@ function renderContractors() {
       </td>
     </tr>
   `).join('');
+  
+  countEl.textContent = `Showing ${sorted.length}/10 contractors in contact order`;
 }
 
 function showAddContractor(contractor = null) {
+  if (!contractor && allContractors.length >= 10) {
+    alert('Maximum of 10 contractors reached. Delete one to add another.');
+    return;
+  }
   const isEdit = !!contractor;
   const modal = document.getElementById('lead-modal');
   const modalTitle = document.getElementById('modal-title');
@@ -494,8 +510,8 @@ function showAddContractor(contractor = null) {
         <input type="number" id="contractor-price" value="${contractor ? contractor.price_per_lead || 75 : 75}" />
       </div>
       <div class="form-group">
-        <label>Priority (0 = highest)</label>
-        <input type="number" id="contractor-priority" value="${contractor ? contractor.priority || 0 : 0}" />
+        <label>Position (1 = first contacted)</label>
+        <input type="number" id="contractor-priority" value="${contractor ? contractor.priority + 1 : allContractors.length + 1}" min="1" max="10" />
       </div>
       <div class="form-group">
         <label>
@@ -524,8 +540,9 @@ async function saveContractor(id) {
   const email = document.getElementById('contractor-email').value;
   const phone = document.getElementById('contractor-phone').value;
   const price = parseFloat(document.getElementById('contractor-price').value) || 75;
-  const priority = parseInt(document.getElementById('contractor-priority').value) || 0;
+  const pos = parseInt(document.getElementById('contractor-priority').value) || 1;
   const active = document.getElementById('contractor-active').checked;
+  const priority = Math.max(0, Math.min(9, pos - 1));
   
   if (!name || !email) {
     alert('Name and email are required');
@@ -544,7 +561,7 @@ async function saveContractor(id) {
   
   try {
     if (id) {
-      // Update
+      const oldPriority = allContractors.find(c => c.id === id)?.priority || 0;
       await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
         method: 'PATCH',
         headers: {
@@ -555,8 +572,49 @@ async function saveContractor(id) {
         },
         body: JSON.stringify(data)
       });
+      if (oldPriority !== priority) {
+        const sorted = [...allContractors].sort((a, b) => a.priority - b.priority);
+        const otherUpdates = sorted
+          .filter(c => c.id !== id)
+          .map(c => {
+            if (priority < oldPriority) {
+              if (c.priority >= priority && c.priority < oldPriority) return { id: c.id, priority: c.priority + 1 };
+            } else {
+              if (c.priority > oldPriority && c.priority <= priority) return { id: c.id, priority: c.priority - 1 };
+            }
+            return null;
+          })
+          .filter(Boolean);
+        await Promise.all(otherUpdates.map(u =>
+          fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${u.id}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ priority: u.priority, updated_at: new Date().toISOString() })
+          })
+        ));
+      }
     } else {
-      // Insert
+      const sorted = [...allContractors].sort((a, b) => a.priority - b.priority);
+      const shiftDown = sorted.filter(c => c.priority >= priority);
+      if (shiftDown.length > 0) {
+        await Promise.all(shiftDown.map(c =>
+          fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${c.id}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ priority: c.priority + 1, updated_at: new Date().toISOString() })
+          })
+        ));
+      }
       await fetch(`${SUPABASE_URL}/rest/v1/contractors`, {
         method: 'POST',
         headers: {
@@ -603,6 +661,54 @@ async function deleteContractor(id) {
       'Prefer': 'return=minimal'
     }
   });
+  loadContractors();
+}
+
+async function reorderContractor(movedId, newPosStr, totalCount) {
+  const newPos = parseInt(newPosStr);
+  if (isNaN(newPos) || newPos < 1) newPos = 1;
+  if (newPos > 10) newPos = 10;
+  
+  const sorted = [...allContractors].sort((a, b) => a.priority - b.priority);
+  const movedIdx = sorted.findIndex(c => c.id === movedId);
+  if (movedIdx < 0) return;
+  
+  const oldPos = sorted[movedIdx].priority;
+  if (newPos - 1 === oldPos) return;
+  
+  let updates = [];
+  
+  if (newPos - 1 > oldPos) {
+    sorted.forEach(c => {
+      if (c.id === movedId) {
+        updates.push({ id: c.id, priority: newPos - 1 });
+      } else if (c.priority > oldPos && c.priority <= newPos - 1) {
+        updates.push({ id: c.id, priority: c.priority - 1 });
+      }
+    });
+  } else {
+    sorted.forEach(c => {
+      if (c.id === movedId) {
+        updates.push({ id: c.id, priority: newPos - 1 });
+      } else if (c.priority >= newPos - 1 && c.priority < oldPos) {
+        updates.push({ id: c.id, priority: c.priority + 1 });
+      }
+    });
+  }
+  
+  await Promise.all(updates.map(u =>
+    fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${u.id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ priority: u.priority, updated_at: new Date().toISOString() })
+    })
+  ));
+  
   loadContractors();
 }
 
