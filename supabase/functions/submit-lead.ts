@@ -1,5 +1,5 @@
 // TampaRestore - Supabase Edge Function
-// Handles form submissions, writes to DB, sends emails with confirm/decline buttons
+// NOTE: DB write handled by index.html - this function ONLY sends emails
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,8 +20,6 @@ Deno.serve(async (req) => {
     const city = formData.get('city')?.toString() || ''
     const damageType = formData.get('damage-type')?.toString() || ''
     const description = formData.get('description')?.toString() || ''
-    const lat = formData.get('lat')?.toString() || ''
-    const lng = formData.get('lng')?.toString() || ''
 
     if (!name || !phone || !city) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -30,20 +28,17 @@ Deno.serve(async (req) => {
       })
     }
 
-    const timestamp = new Date().toISOString()
     const adminEmail = 'tylerbelislefl@gmail.com'
     const supabaseUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co'
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
     const gmailUser = 'tylerbelislefl@gmail.com'
     const edgeFunctionUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1'
-    
-    console.log('DEBUG - gmailAppPassword exists:', !!gmailAppPassword)
-    console.log('DEBUG - using from:', gmailUser)
+
+    console.log('DEBUG - password length:', gmailAppPassword ? gmailAppPassword.length : 0)
 
     // Get next available contractor from DB
     let contractorEmail = 'ctbelisle@gmail.com'
-    
     try {
       const contractorRes = await fetch(`${supabaseUrl}/rest/v1/contractors?active=eq.true&order=priority.asc&limit=1`, {
         headers: {
@@ -56,16 +51,12 @@ Deno.serve(async (req) => {
       if (contractors && contractors.length > 0 && contractors[0].email) {
         contractorEmail = contractors[0].email
         console.log('Got contractor from DB:', contractorEmail)
-      } else {
-        console.log('No active contractors found, using fallback')
       }
     } catch (e) {
       console.error('Contractor fetch failed:', e.message)
     }
 
-    // NOTE: DB write is done by index.html directly - this function only sends emails
-
-    // Try to get the most recent lead ID for action buttons (optional - won't break if fails)
+    // Try to get the most recent lead ID for action buttons
     let leadId = ''
     try {
       const leadIdRes = await fetch(`${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=1`, {
@@ -80,11 +71,11 @@ Deno.serve(async (req) => {
         console.log('Found leadId for email buttons:', leadId)
       }
     } catch (e) {
-      console.log('Could not get leadId for buttons (edge case)')
+      console.log('Could not get leadId for buttons')
     }
 
-    // Send emails via Gmail - ALWAYS try if password exists
-    console.log('Email config check - password exists:', !!gmailAppPassword, 'leadId:', leadId, 'contractor:', contractorEmail)
+    // Send emails via SMTP
+    console.log('Email check - password:', !!gmailAppPassword, 'leadId:', leadId)
     
     if (gmailAppPassword) {
       let confirmUrl = ''
@@ -96,22 +87,19 @@ Deno.serve(async (req) => {
         declineUrl = `${baseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
       }
 
-      console.log('Sending emails to contractor:', contractorEmail, 'and admin:', adminEmail)
-      console.log('leadId for buttons:', leadId || 'NONE')
-
       const buttonsHtml = leadId ? `
         <div style="margin-top:30px; padding:20px; background:#f5f5f5; border-radius:8px;">
           <p style="margin-bottom:15px;"><strong>Quick Actions:</strong></p>
-          <a href="${confirmUrl}" style="display:inline-block; background:#059669; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; margin-right:10px;">✅ I Contacted This Lead</a>
-          <a href="${declineUrl}" style="display:inline-block; background:#DC2626; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">❌ Decline / Pass</a>
+          <a href="${confirmUrl}" style="display:inline-block; background:#059669; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold; margin-right:10px;">[Confirm] I Contacted This Lead</a>
+          <a href="${declineUrl}" style="display:inline-block; background:#DC2626; color:white; padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">[Decline] Pass to Next</a>
         </div>
         <p style="margin-top:20px; font-size:12px; color:#666;">
-          If buttons don't work, you can also just reply to this email with "CONFIRMED" or "DECLINED"
+          Or reply with CONFIRMED or DECLINED
         </p>
-      ` : `<p style="margin-top:20px; color:#666;">⚠️ Action buttons unavailable - please contact lead directly.</p>`
+      ` : `<p style="margin-top:20px; color:#666;">Contact lead directly.</p>`
 
       const contractorEmailHtml = `
-        <h2 style="color:#D92B2B;">🚨 NEW WATER DAMAGE LEAD</h2>
+        <h2 style="color:#D92B2B;">NEW WATER DAMAGE LEAD</h2>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
         <p><strong>Email:</strong> ${email || 'N/A'}</p>
@@ -119,35 +107,34 @@ Deno.serve(async (req) => {
         <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
         <p><strong>Description:</strong> ${description || 'N/A'}</p>
         <hr>
-        <p style="color:#D92B2B;font-weight:bold;font-size:18px;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+        <p style="color:#D92B2B;font-weight:bold;">CALL THIS LEAD WITHIN 5 MINUTES!</p>
         ${buttonsHtml}
       `
 
       const adminEmailHtml = `
-        <h2>📋 New Lead Received</h2>
+        <h2>New Lead Received</h2>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Phone:</strong> ${phone}</p>
         <p><strong>City:</strong> ${city}</p>
         <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
         <p><strong>Contractor:</strong> ${contractorEmail}</p>
         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-        ${leadId ? `<p><strong>Lead ID:</strong> ${leadId}</p>` : ''}
       `
 
-      // Email to contractor
-      const cResult = await sendGmailEmail(contractorEmail, gmailUser, gmailAppPassword, 
-        `🚨 NEW LEAD — ${name} needs water damage help in ${city}`, contractorEmailHtml)
-      console.log('Contractor email result:', cResult.status)
+      // Email to contractor via SMTP
+      const cResult = await sendGmailSMTP(contractorEmail, gmailUser, gmailAppPassword, 
+        `NEW LEAD - ${name} - ${city}`, contractorEmailHtml)
+      console.log('Contractor email result:', cResult.status, cResult.error || '')
 
-      // Email to admin
-      const aResult = await sendGmailEmail(adminEmail, gmailUser, gmailAppPassword,
-        `📋 New Lead: ${name} - ${city}`, adminEmailHtml)
-      console.log('Admin email result:', aResult.status)
+      // Email to admin via SMTP
+      const aResult = await sendGmailSMTP(adminEmail, gmailUser, gmailAppPassword,
+        `New Lead: ${name}`, adminEmailHtml)
+      console.log('Admin email result:', aResult.status, aResult.error || '')
     } else {
       console.error('GMAIL_APP_PASSWORD not set - emails not sent')
     }
 
-    return new Response(JSON.stringify({ success: true, message: 'Lead saved' }), {
+    return new Response(JSON.stringify({ success: true, message: 'Emails processed' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
@@ -160,35 +147,72 @@ Deno.serve(async (req) => {
   }
 })
 
-function b64Encode(str: string): string {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(str)
-  const binString = Array.from(data, (byte) => String.fromCharCode(byte)).join('')
-  return btoa(binString)
-}
-
-async function sendGmailEmail(to: string, from: string, password: string, subject: string, html: string) {
-  const credentials = b64Encode(`${from}:${password}`)
-  
-  const emailBody = `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`
-  
-  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${credentials}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      raw: b64Encode(emailBody)
-    })
-  })
-  
-  const result = { status: response.status }
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.log('Gmail API error:', errorText)
+// Use SMTP directly (app passwords work with SMTP)
+async function sendGmailSMTP(to: string, from: string, password: string, subject: string, html: string) {
+  try {
+    const conn = await Deno.connect({ hostname: 'smtp.gmail.com', port: 587 })
+    const enc = new TextEncoder()
+    const dec = new TextDecoder()
+    
+    const read = async () => { 
+      const b = new Uint8Array(1024); 
+      const n = await conn.read(b); 
+      return n > 0 ? dec.decode(b.slice(0,n)) : '' 
+    }
+    const send = async (d: string) => { await conn.write(enc.encode(d)) }
+    
+    await read()
+    await send('EHLO localhost\r\n')
+    await read()
+    await send('STARTTLS\r\n')
+    await read()
+    
+    const tls = await Deno.startTls(conn, { hostname: 'smtp.gmail.com' })
+    const tenc = new TextEncoder()
+    const tdec = new TextDecoder()
+    const tsend = async (d: string) => { await tls.write(tenc.encode(d)) }
+    const tread = async () => { 
+      const b = new Uint8Array(1024); 
+      const n = await tls.read(b); 
+      return n > 0 ? tdec.decode(b.slice(0,n)) : '' 
+    }
+    
+    await tsend('EHLO localhost\r\n')
+    await tread()
+    await tsend('AUTH LOGIN\r\n')
+    await tread()
+    await tsend(btoa(from) + '\r\n')
+    await tread()
+    const authStep2 = await tread()
+    if (!authStep2.includes('334')) {
+      console.log('SMTP auth step 1 failed:', authStep2)
+      tls.close()
+      return { status: 500, error: 'Auth step 1 failed' }
+    }
+    await tsend(btoa(password) + '\r\n')
+    const authResult = await tread()
+    if (!authResult.includes('235')) {
+      console.log('SMTP auth failed:', authResult)
+      tls.close()
+      return { status: 401, error: 'Auth failed' }
+    }
+    
+    await tsend('MAIL FROM:<' + from + '>\r\n')
+    await tread()
+    await tsend('RCPT TO:<' + to + '>\r\n')
+    await tread()
+    await tsend('DATA\r\n')
+    
+    const msg = `From: <${from}>\r\nTo: <${to}>\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}\r\n.`
+    await tsend(msg + '\r\n')
+    await tread()
+    await tsend('QUIT\r\n')
+    tls.close()
+    
+    console.log('SMTP email sent to:', to)
+    return { status: 200 }
+  } catch (e) {
+    console.log('SMTP error:', e.message)
+    return { status: 500, error: e.message }
   }
-  return result
-}
-  return result
 }
