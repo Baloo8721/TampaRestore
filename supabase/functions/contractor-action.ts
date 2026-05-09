@@ -242,6 +242,9 @@ Deno.serve(async (req) => {
 })
 
 async function sendGmailNotification(to: string, password: string, subject: string, html: string) {
+  // Use proper UTF-8 encoding
+  const utf8Bytes = new TextEncoder().encode(`To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`)
+  const base64 = btoa(String.fromCharCode(...utf8Bytes))
   const credentials = btoa(`tylerbelislefl@gmail.com:${password}`)
   const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
@@ -250,13 +253,15 @@ async function sendGmailNotification(to: string, password: string, subject: stri
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      raw: btoa(`To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`)
+      raw: base64
     })
   })
   return { status: response.status }
 }
 
 async function sendGmailDirect(password: string, to: string, subject: string, html: string) {
+  const utf8Bytes = new TextEncoder().encode(`To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`)
+  const base64 = btoa(String.fromCharCode(...utf8Bytes))
   const credentials = btoa(`tylerbelislefl@gmail.com:${password}`)
   const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
@@ -265,7 +270,7 @@ async function sendGmailDirect(password: string, to: string, subject: string, ht
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      raw: btoa(`To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`)
+      raw: base64
     })
   })
   return { status: response.status }
