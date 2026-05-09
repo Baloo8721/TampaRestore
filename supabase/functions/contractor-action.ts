@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
           <h2 style="color: red;">Unauthorized</h2>
           <p>Invalid API key.</p>
         </body></html>
-      `, { headers: { ...corsHeaders, 'Content-Type': 'text/html' } })
+      `, { headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
     }
 
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
           <h2 style="color: red;">Missing Information</h2>
           <p>Please contact support.</p>
         </body></html>
-      `, { headers: { ...corsHeaders, 'Content-Type': 'text/html' } })
+      `, { headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
     }
 
     // Get current lead data
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
           <h2 style="color: red;">Lead Not Found</h2>
           <p>This lead may have been removed.</p>
         </body></html>
-      `, { headers: { ...corsHeaders, 'Content-Type': 'text/html' } })
+      `, { headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
     }
 
     const timestamp = new Date().toISOString()
@@ -245,16 +245,21 @@ Deno.serve(async (req) => {
       <html><body style="font-family: Arial; text-align: center; padding: 40px;">
         <h2>Done</h2>
       </body></html>
-    `, { headers: { ...corsHeaders, 'Content-Type': 'text/html' } })
+    `, { 
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'text/html; charset=utf-8' 
+      } 
+    })
 
   } catch (error) {
     return new Response(`
       <!DOCTYPE html>
-      <html><body style="font-family: Arial; text-align: center; padding: 40px;">
+      <html><head><meta charset="utf-8"></head><body style="font-family: Arial; text-align: center; padding: 40px;">
         <h2 style="color: red;">Error</h2>
         <p>${error.message}</p>
       </body></html>
-    `, { headers: { ...corsHeaders, 'Content-Type': 'text/html' } })
+    `, { headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
   }
 })
 
