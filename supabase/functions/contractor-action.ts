@@ -70,8 +70,11 @@ Deno.serve(async (req) => {
     const timestamp = new Date().toISOString()
     let updates: Record<string, unknown> = { updated_at: timestamp }
 
+    console.log('Action:', action, 'leadId:', leadId)
+
     // Get contractor list from DB
     let contractorList: string[] = []
+    console.log('Fetching contractors from:', `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`)
     const contractorRes = await fetch(
       `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`,
       {
@@ -83,6 +86,7 @@ Deno.serve(async (req) => {
       }
     )
     const contractors = await contractorRes.json()
+    console.log('Contractors from DB:', contractors)
     if (contractors && contractors.length > 0) {
       contractorList = contractors.map((c: any) => c.email)
     }
@@ -177,6 +181,7 @@ Deno.serve(async (req) => {
     }
 
     // Update lead in DB
+    console.log('Updating lead:', leadId, 'with:', JSON.stringify(updates))
     await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
       method: 'PATCH',
       headers: {
@@ -187,6 +192,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify(updates)
     })
+    console.log('Lead updated successfully')
 
     // Return confirmation page
     const actionText = action === 'confirm' ? 'confirmed' : action === 'decline' ? 'declined' : 'undone'
