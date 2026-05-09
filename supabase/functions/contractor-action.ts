@@ -198,35 +198,36 @@ Deno.serve(async (req) => {
     const actionText = action === 'confirm' ? 'confirmed' : action === 'decline' ? 'declined' : 'undone'
     const color = action === 'confirm' ? 'green' : action === 'decline' ? 'orange' : 'blue'
 
-    return new Response(`
-      <!DOCTYPE html>
-      <html><head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                 text-align: center; padding: 40px 20px; background: #f5f5f5; }
-          .card { background: white; max-width: 400px; margin: 0 auto; padding: 40px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-          .icon { font-size: 60px; margin-bottom: 20px; }
-          h2 { color: ${color === 'green' ? '#059669' : color === 'orange' ? '#D97706' : '#2563EB'}; margin: 0 0 10px; }
-          p { color: #666; margin: 20px 0; }
-          .btn { display: inline-block; padding: 12px 24px; background: #0A1628; color: white; 
-                 text-decoration: none; border-radius: 6px; font-size: 14px; }
-          .lead-info { background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left; }
-          .lead-info p { margin: 5px 0; font-size: 14px; }
-          .lead-info strong { color: #374151; }
-        </style>
-      </head><body>
-        <div class="card">
-          <div class="icon">${action === 'confirm' ? '✅' : action === 'decline' ? '❌' : '↩️'}</div>
-          <h2>Lead ${actionText}!</h2>
-          <div class="lead-info">
-            <p><strong>Name:</strong> ${lead.name}</p>
-            <p><strong>Phone:</strong> ${lead.phone}</p>
-            <p><strong>City:</strong> ${lead.city}</p>
-          </div>
-          ${action === 'confirm' || action === 'decline' ? `<p style="margin-top: 20px;"><a href="?action=undo&lead_id=${leadId}&email=${encodeURIComponent(lead.assigned_contractor_email || '')}&apikey=${ANON_KEY || ''}" class="btn" style="background: #6b7280;">↩️ Undo / Change</a></p>` : ''}
-          <p style="margin-top: 30px; font-size: 12px; color: #999;">You can close this window</p>
+    // Custom thank you page for contractor
+    const thankYouHtml = action === 'confirm' ? `
+      <div style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="font-size: 60px;">✅</div>
+        <h2 style="color: #059669; margin: 0 0 10px;">Thanks for responding!</h2>
+        <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; max-width: 400px; margin: 20px auto;">
+          <p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
+          <p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
+          <p style="margin: 5px 0;"><strong>City:</strong> ${lead.city}</p>
         </div>
+        <p style="color: #666; margin-top: 20px;">Need help? Contact Tyler: <strong>tylerbelislefl@gmail.com</strong></p>
+        <p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
+      </div>
+    ` : action === 'decline' ? `
+      <div style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="font-size: 60px;">❌</div>
+        <h2 style="color: #D97706; margin: 0 0 10px;">Lead Passed On</h2>
+        <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; max-width: 400px; margin: 20px auto;">
+          <p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
+          <p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
+        </div>
+        <p style="color: #666; margin-top: 20px;">This lead has been passed to the next contractor.</p>
+        <p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
+      </div>
+    ` : ''
+
+    return new Response(thankYouHtml || `
+      <!DOCTYPE html>
+      <html><body style="font-family: Arial; text-align: center; padding: 40px;">
+        <h2>Done</h2>
       </body></html>
     `, { headers: { ...corsHeaders, 'Content-Type': 'text/html' } })
 
