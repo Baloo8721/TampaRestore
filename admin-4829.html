@@ -602,8 +602,8 @@ async function saveContractor(id) {
       const sorted = [...allContractors].sort((a, b) => a.priority - b.priority);
       const shiftDown = sorted.filter(c => c.priority >= priority);
       if (shiftDown.length > 0) {
-        await Promise.all(shiftDown.map(c =>
-          fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${c.id}`, {
+        for (const c of shiftDown) {
+          await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${c.id}`, {
             method: 'PATCH',
             headers: {
               'apikey': SUPABASE_ANON_KEY,
@@ -612,8 +612,8 @@ async function saveContractor(id) {
               'Prefer': 'return=minimal'
             },
             body: JSON.stringify({ priority: c.priority + 1, updated_at: new Date().toISOString() })
-          })
-        ));
+          });
+        }
       }
       await fetch(`${SUPABASE_URL}/rest/v1/contractors`, {
         method: 'POST',

@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
 
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
+    const actionBaseUrl = `${SUPABASE_URL}/functions/v1/contractor-action`
 
     if (!leadId || !action) {
       return new Response(`
@@ -113,7 +114,7 @@ Deno.serve(async (req) => {
 
       // Send confirmation email to admin
       if (gmailAppPassword) {
-        sendGmailNotification(adminEmail, gmailAppPassword, `✅ Lead Confirmed: ${lead.name}`, 
+        await sendGmailNotification(adminEmail, gmailAppPassword, `✅ Lead Confirmed: ${lead.name}`, 
           `<p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
            <p><strong>City:</strong> ${lead.city}</p>
@@ -135,25 +136,35 @@ Deno.serve(async (req) => {
 
         // Send email to next contractor
         if (gmailAppPassword) {
+          // Build confirm/decline buttons for the next contractor email
+          const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
+          const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
+          const nextButtonsHtml = `
+            <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
+              <p style="margin-bottom: 15px; font-size: 16px;"><strong>Quick Actions:</strong></p>
+              <a href="${confirmUrl}" style="display: inline-block; background: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPTED] I Will Call This Lead</a>
+              <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[DECLINE] Pass to Next Contractor</a>
+            </div>
+          `
           const nextEmailBody = `
-            <h2 style="color:#D92B2B;">🚨 LEAD PASSED TO YOU</h2>
+            <h2 style="color:#D92B2B; font-size: 24px;">🚨 LEAD PASSED TO YOU</h2>
             <p>The previous contractor declined this lead. It's now assigned to you.</p>
             <hr>
             <p><strong>Name:</strong> ${lead.name}</p>
-            <p><strong>Phone:</strong> <a href="tel:${lead.phone}">${lead.phone}</a></p>
+            <p><strong>Phone:</strong> <a href="tel:${lead.phone}" style="color:#059669;font-weight:bold;">${lead.phone}</a></p>
             <p><strong>City:</strong> ${lead.city}</p>
             <p><strong>Damage Type:</strong> ${lead.damage_type || 'N/A'}</p>
             <p><strong>Description:</strong> ${lead.description || 'N/A'}</p>
             <hr>
-            <p style="color:#D92B2B;font-weight:bold;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+            <p style="color:#D92B2B;font-weight:bold;font-size:18px;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+            ${nextButtonsHtml}
           `
-          sendGmailDirect(gmailAppPassword, nextContractor, `🚨 New Lead: ${lead.name}`, nextEmailBody)
+          await sendGmailDirect(gmailAppPassword, nextContractor, `🚨 New Lead: ${lead.name}`, nextEmailBody)
         }
       } else {
         updates.status = 'no_contractor'
-        // Alert admin - no contractors available
         if (gmailAppPassword) {
-          sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ NO CONTRACTORS AVAILABLE: ${lead.name}`,
+          await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ NO CONTRACTORS AVAILABLE: ${lead.name}`,
             `<p>This lead was declined but there are no other contractors in the rotation.</p>
              <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
              <p><strong>City:</strong> ${lead.city}</p>
@@ -163,9 +174,10 @@ Deno.serve(async (req) => {
 
       // Notify admin
       if (gmailAppPassword) {
-        sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ Lead Declined: ${lead.name}`,
+        await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ Lead Declined: ${lead.name}`,
           `<p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
+           <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Next contractor:</strong> ${nextContractor || 'None available'}</p>`)
       }
 
