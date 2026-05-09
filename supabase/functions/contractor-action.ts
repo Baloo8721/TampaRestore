@@ -205,7 +205,7 @@ Deno.serve(async (req) => {
       return new Response(null, {
         status: 302,
         headers: {
-          'Location': thankYouUrl + '?name=' + encodeURIComponent(lead.name) + '&phone=' + encodeURIComponent(lead.phone) + '&city=' + encodeURIComponent(lead.city) + '& action=accept'
+          'Location': thankYouUrl + '?name=' + encodeURIComponent(lead.name) + '&phone=' + encodeURIComponent(lead.phone) + '&city=' + encodeURIComponent(lead.city) + '&action=accept'
         }
       })
     }
