@@ -200,43 +200,20 @@ Deno.serve(async (req) => {
 
     // Simple thank you for contractor
     if (action === 'confirm') {
-      const html = `
-<!DOCTYPE html>
-<html><head><title>Thank You</title></head>
-<body style="font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;">
-<h1 style="color:green;">THANKS!</h1>
-<p>Lead: <strong>${lead.name}</strong></p>
-<p>Phone: <strong>${lead.phone}</strong></p>
-<p>City: <strong>${lead.city}</strong></p>
-<hr>
-<p>Need help? Email: tylerbelislefl@gmail.com</p>
-<p style="color:#999;font-size:12px;">Close this window</p>
-</body></html>`
-      return new Response(html, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      })
+      return new Response(
+        '<html><head><meta charset="utf-8"><title>Thanks</title></head><body style="font-family:Arial;text-align:center;padding:40px;background:#f5f5f5;"><h1 style="color:green;">THANKS!</h1><p><strong>' + lead.name + '</strong></p><p>' + lead.phone + '</p><p>' + lead.city + '</p><hr><p>Questions? Email: tylerbelislefl@gmail.com</p></body></html>',
+        { 'Content-Type': 'text/html' }
+      )
     }
     
     if (action === 'decline') {
-      const html = `
-<!DOCTYPE html>
-<html><head><title>Passed On</title></head>
-<body style="font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;">
-<h1 style="color:orange;">PASSED</h1>
-<p>Lead: <strong>${lead.name}</strong></p>
-<p>Phone: <strong>${lead.phone}</strong></p>
-<hr>
-<p>This lead has been passed to the next contractor.</p>
-<p style="color:#999;font-size:12px;">Close this window</p>
-</body></html>`
-      return new Response(html, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      })
+      return new Response(
+        '<html><head><meta charset="utf-8"><title>Passed</title></head><body style="font-family:Arial;text-align:center;padding:40px;background:#f5f5f5;"><h1 style="color:orange;">PASSED</h1><p><strong>' + lead.name + '</strong></p><p>' + lead.phone + '</p><hr><p>This lead has been passed on.</p></body></html>',
+        { 'Content-Type': 'text/html' }
+      )
     }
 
-    return new Response('Done', {
-      headers: { 'Content-Type': 'text/plain' }
-    })
+    return new Response('Done', { 'Content-Type': 'text/plain' })
 
   } catch (error) {
     return new Response(`
