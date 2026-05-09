@@ -198,58 +198,44 @@ Deno.serve(async (req) => {
     const actionText = action === 'confirm' ? 'confirmed' : action === 'decline' ? 'declined' : 'undone'
     const color = action === 'confirm' ? 'green' : action === 'decline' ? 'orange' : 'blue'
 
-    // Custom thank you page for contractor
-    const thankYouHtml = action === 'confirm' ? `
+    // Simple thank you for contractor
+    if (action === 'confirm') {
+      const html = `
 <!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5;">
-<div style="max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px;">
-<div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-<h2 style="color: #059669; margin: 0 0 15px;">Thanks for responding!</h2>
-<div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
-<p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
-<p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
-<p style="margin: 5px 0;"><strong>City:</strong> ${lead.city}</p>
-</div>
-<p style="color: #666; margin-top: 20px;">Need help? Contact Tyler: <strong>tylerbelislefl@gmail.com</strong></p>
-<p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
-</div>
-</body>
-</html>
-    ` : action === 'decline' ? `
+<html><head><title>Thank You</title></head>
+<body style="font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;">
+<h1 style="color:green;">THANKS!</h1>
+<p>Lead: <strong>${lead.name}</strong></p>
+<p>Phone: <strong>${lead.phone}</strong></p>
+<p>City: <strong>${lead.city}</strong></p>
+<hr>
+<p>Need help? Email: tylerbelislefl@gmail.com</p>
+<p style="color:#999;font-size:12px;">Close this window</p>
+</body></html>`
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      })
+    }
+    
+    if (action === 'decline') {
+      const html = `
 <!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5;">
-<div style="max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px;">
-<div style="font-size: 60px; margin-bottom: 20px;">❌</div>
-<h2 style="color: #D97706; margin: 0 0 15px;">Lead Passed On</h2>
-<div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
-<p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
-<p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
-</div>
-<p style="color: #666; margin-top: 20px;">This lead has been passed to the next contractor.</p>
-<p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
-</div>
-</body>
-</html>
-    ` : ''
+<html><head><title>Passed On</title></head>
+<body style="font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;">
+<h1 style="color:orange;">PASSED</h1>
+<p>Lead: <strong>${lead.name}</strong></p>
+<p>Phone: <strong>${lead.phone}</strong></p>
+<hr>
+<p>This lead has been passed to the next contractor.</p>
+<p style="color:#999;font-size:12px;">Close this window</p>
+</body></html>`
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      })
+    }
 
-    return new Response(thankYouHtml || `
-      <!DOCTYPE html>
-      <html><body style="font-family: Arial; text-align: center; padding: 40px;">
-        <h2>Done</h2>
-      </body></html>
-    `, { 
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'text/html; charset=utf-8' 
-      } 
+    return new Response('Done', {
+      headers: { 'Content-Type': 'text/plain' }
     })
 
   } catch (error) {
