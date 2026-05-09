@@ -198,19 +198,25 @@ Deno.serve(async (req) => {
     const actionText = action === 'confirm' ? 'confirmed' : action === 'decline' ? 'declined' : 'undone'
     const color = action === 'confirm' ? 'green' : action === 'decline' ? 'orange' : 'blue'
 
-    // Simple thank you for contractor
+    // Thank you for contractor - redirect to thank you page
+    const thankYouUrl = 'https://baloo8721.github.io/TampaRestore/thank-you.html'
+    
     if (action === 'confirm') {
-      return new Response(
-        '<html><head><meta charset="utf-8"><title>Thanks</title></head><body style="font-family:Arial;text-align:center;padding:40px;background:#f5f5f5;"><h1 style="color:green;">THANKS!</h1><p><strong>' + lead.name + '</strong></p><p>' + lead.phone + '</p><p>' + lead.city + '</p><hr><p>Questions? Email: tylerbelislefl@gmail.com</p></body></html>',
-        { 'Content-Type': 'text/html' }
-      )
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': thankYouUrl + '?name=' + encodeURIComponent(lead.name) + '&phone=' + encodeURIComponent(lead.phone) + '&city=' + encodeURIComponent(lead.city) + '& action=accept'
+        }
+      })
     }
     
     if (action === 'decline') {
-      return new Response(
-        '<html><head><meta charset="utf-8"><title>Passed</title></head><body style="font-family:Arial;text-align:center;padding:40px;background:#f5f5f5;"><h1 style="color:orange;">PASSED</h1><p><strong>' + lead.name + '</strong></p><p>' + lead.phone + '</p><hr><p>This lead has been passed on.</p></body></html>',
-        { 'Content-Type': 'text/html' }
-      )
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': thankYouUrl + '?name=' + encodeURIComponent(lead.name) + '& action=pass'
+        }
+      })
     }
 
     return new Response('Done', { 'Content-Type': 'text/plain' })
