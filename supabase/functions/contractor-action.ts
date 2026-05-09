@@ -200,28 +200,44 @@ Deno.serve(async (req) => {
 
     // Custom thank you page for contractor
     const thankYouHtml = action === 'confirm' ? `
-      <div style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <div style="font-size: 60px;">✅</div>
-        <h2 style="color: #059669; margin: 0 0 10px;">Thanks for responding!</h2>
-        <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; max-width: 400px; margin: 20px auto;">
-          <p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
-          <p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
-          <p style="margin: 5px 0;"><strong>City:</strong> ${lead.city}</p>
-        </div>
-        <p style="color: #666; margin-top: 20px;">Need help? Contact Tyler: <strong>tylerbelislefl@gmail.com</strong></p>
-        <p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
-      </div>
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5;">
+<div style="max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px;">
+<div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+<h2 style="color: #059669; margin: 0 0 15px;">Thanks for responding!</h2>
+<div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
+<p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
+<p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
+<p style="margin: 5px 0;"><strong>City:</strong> ${lead.city}</p>
+</div>
+<p style="color: #666; margin-top: 20px;">Need help? Contact Tyler: <strong>tylerbelislefl@gmail.com</strong></p>
+<p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
+</div>
+</body>
+</html>
     ` : action === 'decline' ? `
-      <div style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <div style="font-size: 60px;">❌</div>
-        <h2 style="color: #D97706; margin: 0 0 10px;">Lead Passed On</h2>
-        <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; max-width: 400px; margin: 20px auto;">
-          <p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
-          <p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
-        </div>
-        <p style="color: #666; margin-top: 20px;">This lead has been passed to the next contractor.</p>
-        <p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
-      </div>
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="text-align: center; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5;">
+<div style="max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px;">
+<div style="font-size: 60px; margin-bottom: 20px;">❌</div>
+<h2 style="color: #D97706; margin: 0 0 15px;">Lead Passed On</h2>
+<div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
+<p style="margin: 5px 0;"><strong>Lead:</strong> ${lead.name}</p>
+<p style="margin: 5px 0;"><strong>Phone:</strong> ${lead.phone}</p>
+</div>
+<p style="color: #666; margin-top: 20px;">This lead has been passed to the next contractor.</p>
+<p style="font-size: 12px; color: #999; margin-top: 30px;">You can close this window</p>
+</div>
+</body>
+</html>
     ` : ''
 
     return new Response(thankYouHtml || `
