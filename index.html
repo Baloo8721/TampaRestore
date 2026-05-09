@@ -1134,31 +1134,27 @@ function submitForm() {
 }
 
 function getLocationAndSend() {
-  // Try to get location
+  // Try to get location - fast timeout
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         userLat = position.coords.latitude;
         userLng = position.coords.longitude;
-        console.log('Location captured:', userLat, userLng);
         sendToSupabase();
       },
-      (error) => {
-        console.log('Geolocation denied or error:', error.message);
+      () => {
         userLat = '';
         userLng = '';
         sendToSupabase();
       },
-      { timeout: 5000, maximumAge: 60000 }
+      { timeout: 2000, maximumAge: 30000 }
     );
   } else {
-    // Geolocation not supported
     sendToSupabase();
   }
 }
 
 function sendToSupabase() {
-  console.log('Processing lead...');
   const name = document.getElementById('fname')?.value || '';
   const phone = document.getElementById('fphone')?.value || '';
   const email = document.getElementById('femail')?.value || '';
@@ -1183,20 +1179,19 @@ function sendToSupabase() {
     assigned_contractor_email: 'ctbelisle@gmail.com'
   };
 
-  // ALWAYS save to Supabase directly (guaranteed to work)
-  const saveToDb = fetch(SUPABASE_URL + '/rest/v1/leads', {
+  // Save to Supabase first (fire and forget)
+  fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
       'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify([leadData])
   });
 
-  // ALSO call edge function for emails
-  const sendEmails = fetch(SUPABASE_URL + '/functions/v1/send-email', {
+  // Send emails (fire and forget)
+  fetch(SUPABASE_URL + '/functions/v1/send-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -1207,20 +1202,12 @@ function sendToSupabase() {
           '&email=' + encodeURIComponent(email) + 
           '&city=' + encodeURIComponent(city) + 
           '&damage-type=' + encodeURIComponent(damage_type) + 
-          '&description=' + encodeURIComponent(description) + 
-          '&lat=' + encodeURIComponent(userLat) + 
-          '&lng=' + encodeURIComponent(userLng)
+          '&description=' + encodeURIComponent(description)
   });
 
-  Promise.all([saveToDb, sendEmails])
-    .then(([dbResult, emailResult]) => {
-      console.log('DB:', dbResult.status, 'Email:', emailResult.status);
-    })
-    .catch(err => console.error('Error:', err))
-    .finally(() => {
-      document.querySelector('.success-msg').style.display = 'block';
-      document.getElementById('contact-form').reset();
-    });
+  // Show success immediately
+  document.querySelector('.success-msg').style.display = 'block';
+  document.getElementById('contact-form').reset();
 }
 </script>
 </body>
