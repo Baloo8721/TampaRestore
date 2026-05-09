@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
 const SUPABASE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
+const ANON_KEY = Deno.env.get('ANON_KEY') || ''
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,6 +20,18 @@ Deno.serve(async (req) => {
     const action = url.searchParams.get('action')
     const leadId = url.searchParams.get('lead_id')
     const contractorEmail = url.searchParams.get('email')
+    const providedApikey = url.searchParams.get('apikey')
+
+    // Validate apikey if provided, otherwise skip for backward compatibility
+    if (providedApikey && providedApikey !== ANON_KEY) {
+      return new Response(`
+        <!DOCTYPE html>
+        <html><body style="font-family: Arial; text-align: center; padding: 40px;">
+          <h2 style="color: red;">Unauthorized</h2>
+          <p>Invalid API key.</p>
+        </body></html>
+      `, { headers: { ...corsHeaders, 'Content-Type': 'text/html' } })
+    }
 
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''

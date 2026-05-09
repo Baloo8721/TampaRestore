@@ -9,6 +9,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
 const SUPABASE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
+const ANON_KEY = Deno.env.get('ANON_KEY') || ''
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -91,8 +92,8 @@ Deno.serve(async (req) => {
     // Build confirm/decline buttons if we have lead_id
     let buttonsHtml = ''
     if (leadId) {
-      const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
-      const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
+      const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}&apikey=${ANON_KEY}`
+      const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}&apikey=${ANON_KEY}`
       
       buttonsHtml = `
         <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
