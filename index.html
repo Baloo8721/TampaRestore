@@ -1196,7 +1196,7 @@ function sendToSupabase() {
   });
 
   // ALSO call edge function for emails
-  const sendEmails = fetch(SUPABASE_URL + '/functions/v1/submit-lead', {
+  const sendEmails = fetch(SUPABASE_URL + '/functions/v1/send-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
