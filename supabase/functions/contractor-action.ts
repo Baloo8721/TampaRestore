@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
             <p><strong>Phone:</strong> ${lead.phone}</p>
             <p><strong>City:</strong> ${lead.city}</p>
           </div>
-          ${action === 'confirm' || action === 'decline' ? `<p style="margin-top: 20px;"><a href="?action=undo&lead_id=${leadId}&email=${encodeURIComponent(lead.assigned_contractor_email || '')}" class="btn" style="background: #6b7280;">↩️ Undo / Change</a></p>` : ''}
+          ${action === 'confirm' || action === 'decline' ? `<p style="margin-top: 20px;"><a href="?action=undo&lead_id=${leadId}&email=${encodeURIComponent(lead.assigned_contractor_email || '')}&apikey=${ANON_KEY || ''}" class="btn" style="background: #6b7280;">↩️ Undo / Change</a></p>` : ''}
           <p style="margin-top: 30px; font-size: 12px; color: #999;">You can close this window</p>
         </div>
       </body></html>
