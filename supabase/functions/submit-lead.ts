@@ -149,7 +149,9 @@ Deno.serve(async (req) => {
 
 // Use SMTP directly (app passwords work with SMTP)
 async function sendGmailSMTP(to: string, from: string, password: string, subject: string, html: string) {
+  console.log('SMTP: Starting to', to, 'from', from)
   try {
+    console.log('SMTP: Connecting to smtp.gmail.com:587')
     const conn = await Deno.connect({ hostname: 'smtp.gmail.com', port: 587 })
     const enc = new TextEncoder()
     const dec = new TextDecoder()
@@ -164,9 +166,11 @@ async function sendGmailSMTP(to: string, from: string, password: string, subject
     await read()
     await send('EHLO localhost\r\n')
     await read()
+    console.log('SMTP: Sending STARTTLS')
     await send('STARTTLS\r\n')
     await read()
     
+    console.log('SMTP: Starting TLS')
     const tls = await Deno.startTls(conn, { hostname: 'smtp.gmail.com' })
     const tenc = new TextEncoder()
     const tdec = new TextDecoder()
@@ -176,6 +180,52 @@ async function sendGmailSMTP(to: string, from: string, password: string, subject
       const n = await tls.read(b); 
       return n > 0 ? tdec.decode(b.slice(0,n)) : '' 
     }
+    
+    console.log('SMTP: Sending EHLO')
+    await tsend('EHLO localhost\r\n')
+    await tread()
+    console.log('SMTP: AUTH LOGIN')
+    await tsend('AUTH LOGIN\r\n')
+    await tread()
+    console.log('SMTP: Sending username')
+    await tsend(btoa(from) + '\r\n')
+    await tread()
+    const authStep2 = await tread()
+    if (!authStep2.includes('334')) {
+      console.log('SMTP auth step 1 failed:', authStep2)
+      tls.close()
+      return { status: 500, error: 'Auth step 1 failed' }
+    }
+    console.log('SMTP: Sending password')
+    await tsend(btoa(password) + '\r\n')
+    const authResult = await tread()
+    console.log('SMTP auth result:', authResult)
+    if (!authResult.includes('235')) {
+      console.log('SMTP auth FAILED:', authResult)
+      tls.close()
+      return { status: 401, error: 'Auth failed: ' + authResult }
+    }
+    console.log('SMTP: Auth success, sending email')
+    
+    await tsend('MAIL FROM:<' + from + '>\r\n')
+    await tread()
+    await tsend('RCPT TO:<' + to + '>\r\n')
+    await tread()
+    await tsend('DATA\r\n')
+    
+    const msg = `From: <${from}>\r\nTo: <${to}>\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}\r\n.`
+    await tsend(msg + '\r\n')
+    await tread()
+    await tsend('QUIT\r\n')
+    tls.close()
+    
+    console.log('SMTP: DONE - email sent to:', to)
+    return { status: 200 }
+  } catch (e) {
+    console.log('SMTP EXCEPTION:', e.message)
+    return { status: 500, error: e.message }
+  }
+}
     
     await tsend('EHLO localhost\r\n')
     await tread()
