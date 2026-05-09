@@ -1,5 +1,5 @@
 // TampaRestore - Send Email Edge Function
-// Uses Gmail SMTP with App Password - WITH CONFIRM/DECLINE BUTTONS
+// Uses Gmail SMTP with App Password - WORKING CODE
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,9 +25,6 @@ Deno.serve(async (req) => {
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
-    
-    const supabaseUrl = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
-    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
 
     console.log('send-email: password set:', !!gmailAppPassword)
 
@@ -37,38 +34,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-
-    // Get most recent lead ID for action buttons
-    let leadId = ''
-    try {
-      const leadIdRes = await fetch(`${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=1`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': 'Bearer ' + supabaseKey,
-        }
-      })
-      const recentLeads = await leadIdRes.json()
-      if (recentLeads && recentLeads.length > 0) {
-        leadId = recentLeads[0].id
-        console.log('Got leadId for buttons:', leadId)
-      }
-    } catch (e) {
-      console.log('Could not get leadId')
-    }
-
-    // Build action URLs
-    const edgeFunctionUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1'
-    const confirmUrl = leadId ? `${edgeFunctionUrl}/contractor-action?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}` : ''
-    const declineUrl = leadId ? `${edgeFunctionUrl}/contractor-action?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}` : ''
-
-    const buttonsHtml = leadId ? `
-      <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:8px;">
-        <p style="margin-bottom:10px;"><strong>Quick Actions:</strong></p>
-        <a href="${confirmUrl}" style="display:inline-block; background:#059669; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; margin-right:10px; font-weight:bold;">[Confirm] I Contacted This Lead</a>
-        <a href="${declineUrl}" style="display:inline-block; background:#DC2626; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">[Decline] Pass to Next</a>
-      </div>
-      <p style="margin-top:10px; font-size:12px; color:#666;">Or reply with CONFIRMED or DECLINED</p>
-    ` : `<p style="margin-top:20px; color:#666;">Contact lead directly.</p>`
 
     const leadHtml = `
       <h2 style="color:#D92B2B;">NEW WATER DAMAGE LEAD</h2>
@@ -80,7 +45,6 @@ Deno.serve(async (req) => {
       <p><strong>Description:</strong> ${description || 'N/A'}</p>
       <hr>
       <p style="color:#D92B2B;font-weight:bold;">CALL THIS LEAD WITHIN 5 MINUTES!</p>
-      ${buttonsHtml}
     `
 
     const adminHtml = `
@@ -89,8 +53,6 @@ Deno.serve(async (req) => {
       <p><strong>Phone:</strong> ${phone}</p>
       <p><strong>City:</strong> ${city}</p>
       <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
-      <p><strong>Contractor:</strong> ${contractorEmail}</p>
-      <p><strong>Lead ID:</strong> ${leadId || 'N/A'}</p>
       <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
     `
 
