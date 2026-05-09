@@ -31,12 +31,15 @@ Deno.serve(async (req) => {
     }
 
     const timestamp = new Date().toISOString()
-    const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
-    const supabaseUrl = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
+    const adminEmail = 'tylerbelislefl@gmail.com'
+    const supabaseUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co'
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
-    const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
+    const gmailUser = 'tylerbelislefl@gmail.com'
     const edgeFunctionUrl = 'https://aqafvfzsybcqfxqklqsd.supabase.co/functions/v1'
+    
+    console.log('DEBUG - gmailAppPassword exists:', !!gmailAppPassword)
+    console.log('DEBUG - using from:', gmailUser)
 
     // Get next available contractor from DB
     let contractorEmail = 'ctbelisle@gmail.com'
@@ -132,22 +135,14 @@ Deno.serve(async (req) => {
       `
 
       // Email to contractor
-      try {
-        const cResult = await sendGmailEmail(contractorEmail, gmailUser, gmailAppPassword, 
-          `🚨 NEW LEAD — ${name} needs water damage help in ${city}`, contractorEmailHtml)
-        console.log('Contractor email result:', cResult.status, cResult.error || '')
-      } catch (e) {
-        console.error('Contractor email failed:', e.message)
-      }
+      const cResult = await sendGmailEmail(contractorEmail, gmailUser, gmailAppPassword, 
+        `🚨 NEW LEAD — ${name} needs water damage help in ${city}`, contractorEmailHtml)
+      console.log('Contractor email result:', cResult.status)
 
       // Email to admin
-      try {
-        const aResult = await sendGmailEmail(adminEmail, gmailUser, gmailAppPassword,
-          `📋 New Lead: ${name} - ${city}`, adminEmailHtml)
-        console.log('Admin email result:', aResult.status, aResult.error || '')
-      } catch (e) {
-        console.error('Admin email failed:', e.message)
-      }
+      const aResult = await sendGmailEmail(adminEmail, gmailUser, gmailAppPassword,
+        `📋 New Lead: ${name} - ${city}`, adminEmailHtml)
+      console.log('Admin email result:', aResult.status)
     } else {
       console.error('GMAIL_APP_PASSWORD not set - emails not sent')
     }
