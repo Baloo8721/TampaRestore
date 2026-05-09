@@ -60,35 +60,9 @@ Deno.serve(async (req) => {
       console.error('Contractor fetch failed:', e.message)
     }
 
-    // Write to Supabase using service role key (bypasses RLS)
-    const leadData = {
-      name,
-      phone,
-      email: email || null,
-      city,
-      state: 'FL',
-      lat: lat ? parseFloat(lat) : null,
-      lng: lng ? parseFloat(lng) : null,
-      damage_type: damageType,
-      description: description || null,
-      status: 'sent',
-      source: 'website',
-      sent_to_contractor_at: timestamp,
-      assigned_contractor_email: contractorEmail,
-    }
+    // NOTE: DB write is done by index.html directly - this function only sends emails
 
-    const insertRes = await fetch(`${supabaseUrl}/rest/v1/leads`, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + supabaseKey,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify([leadData])
-    })
-
-    // Get the inserted lead ID
+    // Try to get the most recent lead ID for action buttons (optional - won't break if fails)
     let leadId = ''
     try {
       const leadIdRes = await fetch(`${supabaseUrl}/rest/v1/leads?order=created_at.desc&limit=1`, {
@@ -100,9 +74,10 @@ Deno.serve(async (req) => {
       const recentLeads = await leadIdRes.json()
       if (recentLeads && recentLeads.length > 0) {
         leadId = recentLeads[0].id
+        console.log('Found leadId for email buttons:', leadId)
       }
     } catch (e) {
-      console.error('Failed to get lead ID:', e)
+      console.log('Could not get leadId for buttons (edge case)')
     }
 
     // Send emails via Gmail - ALWAYS try if password exists
