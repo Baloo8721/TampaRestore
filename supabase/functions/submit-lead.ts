@@ -160,8 +160,17 @@ Deno.serve(async (req) => {
   }
 })
 
+function b64Encode(str: string): string {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(str)
+  const binString = Array.from(data, (byte) => String.fromCharCode(byte)).join('')
+  return btoa(binString)
+}
+
 async function sendGmailEmail(to: string, from: string, password: string, subject: string, html: string) {
-  const credentials = btoa(`${from}:${password}`)
+  const credentials = b64Encode(`${from}:${password}`)
+  
+  const emailBody = `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`
   
   const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
@@ -170,20 +179,16 @@ async function sendGmailEmail(to: string, from: string, password: string, subjec
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      raw: btoa(
-        `To: ${to}\r\n` +
-        `Subject: ${subject}\r\n` +
-        `Content-Type: text/html; charset=utf-8\r\n\r\n` +
-        `${html}`
-      )
+      raw: b64Encode(emailBody)
     })
   })
   
   const result = { status: response.status }
   if (!response.ok) {
     const errorText = await response.text()
-    result.error = errorText
     console.log('Gmail API error:', errorText)
   }
+  return result
+}
   return result
 }
