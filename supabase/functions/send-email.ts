@@ -1,10 +1,14 @@
 // TampaRestore - Send Email Edge Function
-// Uses Gmail SMTP with App Password - WORKING CODE
+// Sends emails to contractor with Confirm/Decline buttons
+// Uses Gmail SMTP with App Password
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const SUPABASE_URL = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
+const SUPABASE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,10 +25,10 @@ Deno.serve(async (req) => {
     const damageType = params.get('damage-type') || ''
     const description = params.get('description') || ''
 
-    const contractorEmail = Deno.env.get('CONTRACTOR_EMAIL') || 'ctbelisle@gmail.com'
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
+    const actionBaseUrl = `${SUPABASE_URL}/functions/v1/contractor-action`
 
     console.log('send-email: password set:', !!gmailAppPassword)
 
@@ -35,24 +39,92 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Get lead_id from DB - find most recent lead matching name + phone
+    let leadId = ''
+    let contractorEmail = ''
+    
+    if (SUPABASE_KEY) {
+      // Query leads table for most recent lead with this phone
+      const leadRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/leads?phone=eq.${phone}&order=created_at.desc&limit=1`,
+        {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      const leads = await leadRes.json()
+      if (leads && leads.length > 0) {
+        leadId = leads[0].id
+        contractorEmail = leads[0].assigned_contractor_email || ''
+        console.log('Found lead:', leadId, 'contractor:', contractorEmail)
+      }
+    }
+
+    // If no contractor assigned, get from contractors table
+    if (!contractorEmail && SUPABASE_KEY) {
+      const contractorRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc&limit=1`,
+        {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      const contractors = await contractorRes.json()
+      if (contractors && contractors.length > 0) {
+        contractorEmail = contractors[0].email
+        console.log('Got contractor from DB:', contractorEmail)
+      }
+    }
+
+    // Fallback to default if no contractor found
+    if (!contractorEmail) {
+      contractorEmail = 'ctbelisle@gmail.com'
+      console.log('Using default contractor:', contractorEmail)
+    }
+
+    // Build confirm/decline buttons if we have lead_id
+    let buttonsHtml = ''
+    if (leadId) {
+      const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
+      const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}`
+      
+      buttonsHtml = `
+        <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
+          <p style="margin-bottom: 15px; font-size: 16px;"><strong>Quick Actions:</strong></p>
+          <a href="${confirmUrl}" style="display: inline-block; background: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPTED] I Will Call This Lead</a>
+          <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[DECLINE] Pass to Next Contractor</a>
+          <p style="margin-top: 15px; font-size: 12px; color: #666;">Or reply with CONFIRMED or DECLINED</p>
+        </div>
+      `
+    }
+
     const leadHtml = `
-      <h2 style="color:#D92B2B;">NEW WATER DAMAGE LEAD</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>
-      <p><strong>Email:</strong> ${email || 'N/A'}</p>
-      <p><strong>City:</strong> ${city}</p>
-      <p><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
-      <p><strong>Description:</strong> ${description || 'N/A'}</p>
-      <hr>
-      <p style="color:#D92B2B;font-weight:bold;">CALL THIS LEAD WITHIN 5 MINUTES!</p>
+      <h2 style="color: #D92B2B; font-size: 24px;">NEW WATER DAMAGE LEAD</h2>
+      <p style="font-size: 16px;"><strong>Name:</strong> ${name}</p>
+      <p style="font-size: 16px;"><strong>Phone:</strong> <a href="tel:${phone}" style="color: #059669; font-weight: bold;">${phone}</a></p>
+      <p style="font-size: 16px;"><strong>Email:</strong> ${email || 'N/A'}</p>
+      <p style="font-size: 16px;"><strong>City:</strong> ${city}</p>
+      <p style="font-size: 16px;"><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
+      <p style="font-size: 16px;"><strong>Description:</strong> ${description || 'N/A'}</p>
+      <hr style="margin: 20px 0;">
+      <p style="color: #D92B2B; font-weight: bold; font-size: 18px;">CALL THIS LEAD WITHIN 5 MINUTES!</p>
+      ${buttonsHtml}
     `
 
     const adminHtml = `
-      <h2>New Lead Received</h2>
+      <h2 style="font-size: 20px;">New Lead Received</h2>
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Phone:</strong> ${phone}</p>
       <p><strong>City:</strong> ${city}</p>
       <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
+      <p><strong>Contractor:</strong> ${contractorEmail}</p>
+      <p><strong>Lead ID:</strong> ${leadId || 'N/A'}</p>
       <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
     `
 
@@ -64,7 +136,7 @@ Deno.serve(async (req) => {
       `NEW LEAD - ${name} - ${city}`,
       leadHtml
     )
-    console.log('Contractor email result:', contractorStatus)
+    console.log('Contractor email result:', contractorStatus, 'to:', contractorEmail)
 
     // Send to admin
     const adminStatus = await sendEmailGmailSmtp(
@@ -79,8 +151,8 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'Emails sent',
-      contractorStatus,
-      adminStatus
+      leadId,
+      contractorEmail
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

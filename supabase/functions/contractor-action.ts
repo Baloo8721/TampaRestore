@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const SUPABASE_URL = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
+const SUPABASE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -17,8 +20,6 @@ Deno.serve(async (req) => {
     const leadId = url.searchParams.get('lead_id')
     const contractorEmail = url.searchParams.get('email')
 
-    const supabaseUrl = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
-    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY') || ''
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
 
@@ -33,10 +34,10 @@ Deno.serve(async (req) => {
     }
 
     // Get current lead data
-    const getLeadRes = await fetch(`${supabaseUrl}/rest/v1/leads?id=eq.${leadId}`, {
+    const getLeadRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
       headers: {
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + supabaseKey,
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
         'Content-Type': 'application/json'
       }
     })
@@ -56,9 +57,26 @@ Deno.serve(async (req) => {
     const timestamp = new Date().toISOString()
     let updates: Record<string, unknown> = { updated_at: timestamp }
 
-    // Get contractor list (from env or DB)
-    const contractorsEnv = Deno.env.get('CONTRACTOR_LIST') || 'ctbelisle@gmail.com'
-    const contractorList = contractorsEnv.split(',').map(e => e.trim())
+    // Get contractor list from DB
+    let contractorList: string[] = []
+    const contractorRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+    const contractors = await contractorRes.json()
+    if (contractors && contractors.length > 0) {
+      contractorList = contractors.map((c: any) => c.email)
+    }
+    // Fallback if no contractors in DB
+    if (contractorList.length === 0) {
+      contractorList = ['ctbelisle@gmail.com']
+    }
     
     // Find current contractor index
     const currentIndex = contractorList.indexOf(lead.assigned_contractor_email || '')
@@ -71,7 +89,9 @@ Deno.serve(async (req) => {
         ...updates,
         status: 'contacted',
         contractor_contacted_at: timestamp,
-        contractor_response_minutes: Math.round((new Date(timestamp).getTime() - new Date(lead.sent_to_contractor_at).getTime()) / 60000)
+        contractor_response_minutes: lead.sent_to_contractor_at 
+          ? Math.round((new Date(timestamp).getTime() - new Date(lead.sent_to_contractor_at).getTime()) / 60000)
+          : 0
       }
 
       // Send confirmation email to admin
@@ -79,6 +99,7 @@ Deno.serve(async (req) => {
         sendGmailNotification(adminEmail, gmailAppPassword, `✅ Lead Confirmed: ${lead.name}`, 
           `<p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
+           <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Response time:</strong> ${updates.contractor_response_minutes} minutes</p>`)
       }
 
@@ -98,8 +119,8 @@ Deno.serve(async (req) => {
         // Send email to next contractor
         if (gmailAppPassword) {
           const nextEmailBody = `
-            <h2 style="color:#D92B2B;">🚨 New Lead Assignment</h2>
-            <p>A lead was declined by the previous contractor. This lead is now assigned to you.</p>
+            <h2 style="color:#D92B2B;">🚨 LEAD PASSED TO YOU</h2>
+            <p>The previous contractor declined this lead. It's now assigned to you.</p>
             <hr>
             <p><strong>Name:</strong> ${lead.name}</p>
             <p><strong>Phone:</strong> <a href="tel:${lead.phone}">${lead.phone}</a></p>
@@ -113,6 +134,14 @@ Deno.serve(async (req) => {
         }
       } else {
         updates.status = 'no_contractor'
+        // Alert admin - no contractors available
+        if (gmailAppPassword) {
+          sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ NO CONTRACTORS AVAILABLE: ${lead.name}`,
+            `<p>This lead was declined but there are no other contractors in the rotation.</p>
+             <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
+             <p><strong>City:</strong> ${lead.city}</p>
+             <p>Please add more contractors in the admin dashboard.</p>`)
+        }
       }
 
       // Notify admin
@@ -135,11 +164,11 @@ Deno.serve(async (req) => {
     }
 
     // Update lead in DB
-    await fetch(`${supabaseUrl}/rest/v1/leads?id=eq.${leadId}`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
       method: 'PATCH',
       headers: {
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + supabaseKey,
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal'
       },
