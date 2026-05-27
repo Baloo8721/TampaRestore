@@ -14,7 +14,7 @@ Last Updated: May 8, 2026
 | Edge Function (submit-lead) | ✅ Receives form, saves to DB |
 | Edge Function (send-email) | ✅ Sends emails to contractor + admin |
 | Gmail SMTP | ✅ Both emails now working |
-| Admin Dashboard | ✅ Works (password: TampaRestore2026!) |
+| Admin Dashboard | ✅ Works (password-protected) |
 
 ---
 
