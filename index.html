@@ -1205,29 +1205,58 @@ function sendToSupabase() {
           '&description=' + encodeURIComponent(description)
   });
 
-  // Try saving in background with retries
+  // Try saving in background with retries (retry DNS up to 5 times over ~1 minute)
   function attemptSave(attempts = 0) {
     Promise.all([saveToDb(), sendEmail()])
       .then(([dbRes, emailRes]) => {
         console.log('DB:', dbRes.status, 'Email:', emailRes.status);
         if (dbRes.ok) {
-          // Remove from pending backup
           try {
             const pending = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
             localStorage.setItem('pendingLeads', JSON.stringify(pending.filter(l => l.phone !== phone)));
           } catch (e) {}
-        } else if (attempts < 3) {
+        } else if (attempts < 5) {
           setTimeout(() => attemptSave(attempts + 1), (attempts + 1) * 2000);
         }
       })
       .catch(() => {
-        if (attempts < 3) {
+        if (attempts < 5) {
           setTimeout(() => attemptSave(attempts + 1), (attempts + 1) * 2000);
         }
       });
   }
   attemptSave();
 }
+
+// On page load, try to sync any leads that failed to save previously
+window.addEventListener('load', () => {
+  try {
+    const pending = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
+    if (pending.length > 0) {
+      console.log('Syncing', pending.length, 'pending leads from localStorage');
+      pending.forEach((lead, idx) => {
+        setTimeout(() => {
+          fetch(SUPABASE_URL + '/rest/v1/leads', {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify([lead])
+          }).then(r => {
+            if (r.ok) {
+              const remaining = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
+              localStorage.setItem('pendingLeads', JSON.stringify(remaining.filter(l => l.phone !== lead.phone)));
+              console.log('Synced pending lead for', lead.name);
+            }
+          }).catch(() => {});
+        }, idx * 3000);
+      });
+    }
+  } catch (e) {}
+});
 </script>
 </body>
 </html>
