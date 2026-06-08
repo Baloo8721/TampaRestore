@@ -6,6 +6,8 @@
 <meta name="description" content="24/7 emergency water damage restoration referrals in Tampa & Pasco County. We connect you with licensed, insured local professionals. Free assessment, insurance handled.">
 <title>Tampa Water Damage Restoration | 24/7 Emergency Referral Network</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="dns-prefetch" href="//aqafvfzsybcqfxqklqsd.supabase.co">
+<link rel="preconnect" href="//aqafvfzsybcqfxqklqsd.supabase.co">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1129,29 +1131,19 @@ function submitForm() {
     return;
   }
 
-  // Get geolocation and send to Supabase via Netlify function
-  getLocationAndSend();
-}
-
-function getLocationAndSend() {
-  // Try to get location - fast timeout
+  // Capture geolocation in background (doesn't block form submission)
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         userLat = position.coords.latitude;
         userLng = position.coords.longitude;
-        sendToSupabase();
       },
-      () => {
-        userLat = '';
-        userLng = '';
-        sendToSupabase();
-      },
+      () => {},
       { timeout: 2000, maximumAge: 30000 }
     );
-  } else {
-    sendToSupabase();
   }
+
+  sendToSupabase();
 }
 
 function sendToSupabase() {
@@ -1162,28 +1154,33 @@ function sendToSupabase() {
   const damage_type = document.getElementById('fdamage')?.value || '';
   const description = document.getElementById('fdesc')?.value || '';
   const timestamp = new Date().toISOString();
-  
+
   const leadData = {
-    name: name,
-    phone: phone,
+    name, phone,
     email: email || null,
-    city: city,
-    state: 'FL',
+    city, state: 'FL',
     lat: userLat ? parseFloat(userLat) : null,
     lng: userLng ? parseFloat(userLng) : null,
     damage_type: damage_type,
     description: description || null,
-    status: 'sent',
-    source: 'website',
+    status: 'sent', source: 'website',
     sent_to_contractor_at: timestamp,
     assigned_contractor_email: 'ctbelisle@gmail.com'
   };
 
-  const btn = document.querySelector('.btn-submit');
-  btn.disabled = true;
-  btn.textContent = 'Submitting...';
+  // Show success to user instantly
+  document.querySelector('.success-msg').style.display = 'block';
+  document.getElementById('contact-form').reset();
 
-  const dbSave = fetch(SUPABASE_URL + '/rest/v1/leads', {
+  // Save to localStorage as backup
+  try {
+    const pending = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
+    pending.push(leadData);
+    localStorage.setItem('pendingLeads', JSON.stringify(pending));
+  } catch (e) {}
+
+  // Fire and forget to Supabase (doesn't block user)
+  const saveToDb = () => fetch(SUPABASE_URL + '/rest/v1/leads', {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
@@ -1194,7 +1191,7 @@ function sendToSupabase() {
     body: JSON.stringify([leadData])
   });
 
-  const emailSend = fetch(SUPABASE_URL + '/functions/v1/send-email', {
+  const sendEmail = () => fetch(SUPABASE_URL + '/functions/v1/send-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -1208,22 +1205,28 @@ function sendToSupabase() {
           '&description=' + encodeURIComponent(description)
   });
 
-  Promise.all([dbSave, emailSend])
-    .then(([dbRes, emailRes]) => {
-      console.log('DB insert:', dbRes.status, 'Email:', emailRes.status);
-      if (dbRes.ok) {
-        document.querySelector('.success-msg').style.display = 'block';
-        document.getElementById('contact-form').reset();
-      } else {
-        throw new Error('DB insert failed: ' + dbRes.status);
-      }
-    })
-    .catch(err => {
-      console.error('Form error:', err);
-      btn.disabled = false;
-      btn.textContent = '🚨 Connect Me With a Pro Now';
-      alert('Something went wrong. Please try again or call us directly.');
-    });
+  // Try saving in background with retries
+  function attemptSave(attempts = 0) {
+    Promise.all([saveToDb(), sendEmail()])
+      .then(([dbRes, emailRes]) => {
+        console.log('DB:', dbRes.status, 'Email:', emailRes.status);
+        if (dbRes.ok) {
+          // Remove from pending backup
+          try {
+            const pending = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
+            localStorage.setItem('pendingLeads', JSON.stringify(pending.filter(l => l.phone !== phone)));
+          } catch (e) {}
+        } else if (attempts < 3) {
+          setTimeout(() => attemptSave(attempts + 1), (attempts + 1) * 2000);
+        }
+      })
+      .catch(() => {
+        if (attempts < 3) {
+          setTimeout(() => attemptSave(attempts + 1), (attempts + 1) * 2000);
+        }
+      });
+  }
+  attemptSave();
 }
 </script>
 </body>
