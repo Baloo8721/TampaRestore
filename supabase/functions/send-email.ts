@@ -26,13 +26,14 @@ Deno.serve(async (req) => {
     const city = params.get('city') || ''
     const damageType = params.get('damage-type') || ''
     const description = params.get('description') || ''
+    const source = params.get('source') || 'website'
 
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
     const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
     const actionBaseUrl = `${SUPABASE_URL}/functions/v1/contractor-action`
 
-    console.log('send-email: password set:', !!gmailAppPassword)
+    console.log('send-email: password set:', !!gmailAppPassword, 'source:', source)
 
     if (!gmailAppPassword) {
       return new Response(JSON.stringify({ error: 'GMAIL_APP_PASSWORD not configured' }), {
@@ -41,12 +42,22 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Trade-specific config
+    const TRADE_CONFIG: Record<string, { name: string; emoji: string; color: string; header: string; subject: string }> = {
+      'website':  { name: 'Tampa Restore', emoji: '💧', color: '#D92B2B', header: 'NEW WATER DAMAGE LEAD', subject: 'New Lead' },
+      'handyman': { name: 'Handyman', emoji: '🔧', color: '#059669', header: 'NEW HANDYMAN SERVICE REQUEST', subject: 'Handyman Lead' },
+      'electrician': { name: 'Electrician', emoji: '⚡', color: '#D97706', header: 'NEW ELECTRICAL SERVICE REQUEST', subject: 'Electrician Lead' },
+      'hvac':    { name: 'HVAC', emoji: '❄️', color: '#2563EB', header: 'NEW HVAC SERVICE REQUEST', subject: 'HVAC Lead' },
+      'plumber': { name: 'Plumber', emoji: '🔩', color: '#0D9488', header: 'NEW PLUMBING SERVICE REQUEST', subject: 'Plumber Lead' },
+    }
+    const trade = TRADE_CONFIG[source] || TRADE_CONFIG['website']
+    const accentColor = trade.color
+
     // Get lead_id from DB - find most recent lead matching name + phone
     let leadId = ''
     let contractorEmail = ''
     
     if (SUPABASE_KEY) {
-      // Query leads table for most recent lead with this phone
       const leadRes = await fetch(
         `${SUPABASE_URL}/rest/v1/leads?phone=eq.${phone}&order=created_at.desc&limit=1`,
         {
@@ -65,10 +76,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If no contractor assigned, get from contractors table
+    // If no contractor assigned, get from contractors table (filtered by trade)
     if (!contractorEmail && SUPABASE_KEY) {
-      const contractorRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc&limit=1`,
+      // Try trade-specific contractors first
+      let contractorRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&trade=eq.${source}&order=priority.asc&limit=1`,
         {
           headers: {
             'apikey': SUPABASE_KEY,
@@ -77,10 +89,41 @@ Deno.serve(async (req) => {
           }
         }
       )
-      const contractors = await contractorRes.json()
+      let contractors = await contractorRes.json()
+
+      // Fallback to all-trade contractors (trade = '' or null)
+      if (!contractors || contractors.length === 0) {
+        contractorRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&or=(trade.eq.,trade.is.null)&order=priority.asc&limit=1`,
+          {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+        contractors = await contractorRes.json()
+      }
+
+      // Final fallback to any active contractor
+      if (!contractors || contractors.length === 0) {
+        contractorRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc&limit=1`,
+          {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+        contractors = await contractorRes.json()
+      }
+
       if (contractors && contractors.length > 0) {
         contractorEmail = contractors[0].email
-        console.log('Got contractor from DB:', contractorEmail)
+        console.log('Got contractor from DB:', contractorEmail, 'for trade:', source)
       }
     }
 
@@ -88,6 +131,40 @@ Deno.serve(async (req) => {
     if (!contractorEmail) {
       contractorEmail = 'ctbelisle@gmail.com'
       console.log('Using default contractor:', contractorEmail)
+    }
+
+    // Record events on the lead
+    if (leadId && SUPABASE_KEY) {
+      try {
+        const events = [{ type: 'sent', contractor: contractorEmail, timestamp: new Date().toISOString() }]
+        // Read existing events and append
+        const getRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}&select=events`,
+          {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+        const existing = await getRes.json()
+        if (existing && existing.length > 0 && Array.isArray(existing[0].events)) {
+          events.push(...existing[0].events)
+        }
+        await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ events })
+        })
+      } catch (evErr) {
+        console.error('Failed to record event:', evErr)
+      }
     }
 
     // Build confirm/decline buttons if we have lead_id
@@ -99,7 +176,7 @@ Deno.serve(async (req) => {
       buttonsHtml = `
         <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
           <p style="margin-bottom: 15px; font-size: 16px;"><strong>Quick Actions:</strong></p>
-          <a href="${confirmUrl}" style="display: inline-block; background: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPTED] I Will Call This Lead</a>
+          <a href="${confirmUrl}" style="display: inline-block; background: ${accentColor}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPTED] I Will Call This Lead</a>
           <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[DECLINE] Pass to Next Contractor</a>
           <p style="margin-top: 15px; font-size: 12px; color: #666;">Or reply with CONFIRMED or DECLINED</p>
         </div>
@@ -107,45 +184,60 @@ Deno.serve(async (req) => {
     }
 
     const leadHtml = `
-      <h2 style="color: #D92B2B; font-size: 24px;">NEW WATER DAMAGE LEAD</h2>
-      <p style="font-size: 16px;"><strong>Name:</strong> ${name}</p>
-      <p style="font-size: 16px;"><strong>Phone:</strong> <a href="tel:${phone}" style="color: #059669; font-weight: bold;">${phone}</a></p>
-      <p style="font-size: 16px;"><strong>Email:</strong> ${email || 'N/A'}</p>
-      <p style="font-size: 16px;"><strong>City:</strong> ${city}</p>
-      <p style="font-size: 16px;"><strong>Damage Type:</strong> ${damageType || 'N/A'}</p>
-      <p style="font-size: 16px;"><strong>Description:</strong> ${description || 'N/A'}</p>
-      <hr style="margin: 20px 0;">
-      <p style="color: #D92B2B; font-weight: bold; font-size: 18px;">CALL THIS LEAD WITHIN 5 MINUTES!</p>
-      ${buttonsHtml}
+      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <div style="background: ${accentColor}; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; font-size: 20px; margin: 0;">${trade.emoji} ${trade.header}</h1>
+        </div>
+        <div style="padding: 24px; background: white; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+          <p style="font-size: 16px;"><strong>Name:</strong> ${name}</p>
+          <p style="font-size: 16px;"><strong>Phone:</strong> <a href="tel:${phone}" style="color: ${accentColor}; font-weight: bold;">${phone}</a></p>
+          <p style="font-size: 16px;"><strong>Email:</strong> ${email || 'N/A'}</p>
+          <p style="font-size: 16px;"><strong>City:</strong> ${city}</p>
+          <p style="font-size: 16px;"><strong>Service:</strong> ${damageType || 'N/A'}</p>
+          <p style="font-size: 16px;"><strong>Description:</strong> ${description || 'N/A'}</p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: ${accentColor}; font-weight: bold; font-size: 18px;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+          ${buttonsHtml}
+        </div>
+      </div>
     `
 
     const adminHtml = `
-      <h2 style="font-size: 20px;">New Lead Received</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Phone:</strong> ${phone}</p>
-      <p><strong>City:</strong> ${city}</p>
-      <p><strong>Damage:</strong> ${damageType || 'N/A'}</p>
-      <p><strong>Contractor:</strong> ${contractorEmail}</p>
-      <p><strong>Lead ID:</strong> ${leadId || 'N/A'}</p>
-      <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <div style="background: ${accentColor}; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+          <h2 style="color: white; font-size: 18px; margin: 0;">${trade.emoji} New ${trade.name} Lead</h2>
+        </div>
+        <div style="padding: 20px; background: white; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>City:</strong> ${city}</p>
+          <p><strong>Service:</strong> ${damageType || 'N/A'}</p>
+          <p><strong>Source:</strong> <span style="color:${accentColor};font-weight:bold;">${trade.emoji} ${trade.name}</span></p>
+          <p><strong>Contractor:</strong> ${contractorEmail}</p>
+          <p><strong>Lead ID:</strong> ${leadId || 'N/A'}</p>
+          <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+      </div>
     `
 
     // Send to contractor
+    const contractorSubject = `${trade.emoji} ${trade.subject} - ${name} - ${city}`
     const contractorStatus = await sendEmailGmailSmtp(
       gmailUser,
       gmailAppPassword,
       contractorEmail,
-      `NEW LEAD - ${name} - ${city}`,
+      contractorSubject,
       leadHtml
     )
-    console.log('Contractor email result:', contractorStatus, 'to:', contractorEmail)
+    console.log('Contractor email result:', contractorStatus, 'to:', contractorEmail, 'subject:', contractorSubject)
 
     // Send to admin
+    const adminSubject = `${trade.emoji} New ${trade.name} Lead: ${name}`
     const adminStatus = await sendEmailGmailSmtp(
       gmailUser,
       gmailAppPassword,
       adminEmail,
-      `New Lead: ${name}`,
+      adminSubject,
       adminHtml
     )
     console.log('Admin email result:', adminStatus)

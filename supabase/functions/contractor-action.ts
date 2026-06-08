@@ -74,20 +74,62 @@ Deno.serve(async (req) => {
 
     console.log('Action:', action, 'leadId:', leadId)
 
-    // Get contractor list from DB
+    // Trade-specific config
+    const TRADE_CONFIG: Record<string, { name: string; emoji: string; color: string }> = {
+      'website':  { name: 'Tampa Restore', emoji: '💧', color: '#D92B2B' },
+      'handyman': { name: 'Handyman', emoji: '🔧', color: '#059669' },
+      'electrician': { name: 'Electrician', emoji: '⚡', color: '#D97706' },
+      'hvac':    { name: 'HVAC', emoji: '❄️', color: '#2563EB' },
+      'plumber': { name: 'Plumber', emoji: '🔩', color: '#0D9488' },
+    }
+    const leadSource = lead.source || 'website'
+    const trade = TRADE_CONFIG[leadSource] || TRADE_CONFIG['website']
+    const accentColor = trade.color
+
+    // Get contractor list from DB (filtered by lead's trade)
     let contractorList: string[] = []
-    console.log('Fetching contractors from:', `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`)
-    const contractorRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`,
-      {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type': 'application/json'
-        }
+    const tradeFilter = leadSource !== 'website' ? `&trade=eq.${leadSource}` : ''
+    const url = `${SUPABASE_URL}/rest/v1/contractors?active=eq.true${tradeFilter}&order=priority.asc`
+    console.log('Fetching contractors from:', url)
+    let contractorRes = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
       }
-    )
-    const contractors = await contractorRes.json()
+    })
+    let contractors = await contractorRes.json()
+    
+    // Fallback to all-trade contractors if no trade-specific ones
+    if (!contractors || contractors.length === 0) {
+      contractorRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&or=(trade.eq.,trade.is.null)&order=priority.asc`,
+        {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      contractors = await contractorRes.json()
+    }
+
+    // Final fallback to any active contractor
+    if (!contractors || contractors.length === 0) {
+      contractorRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`,
+        {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      contractors = await contractorRes.json()
+    }
+
     console.log('Contractors from DB:', contractors)
     if (contractors && contractors.length > 0) {
       contractorList = contractors.map((c: any) => c.email)
@@ -113,16 +155,23 @@ Deno.serve(async (req) => {
           : 0
       }
 
+      // Record event
+      recordEvent(leadId, 'confirmed', lead.assigned_contractor_email || '')
+
       // Send confirmation email to admin
       if (gmailAppPassword) {
-        await sendGmailNotification(adminEmail, gmailAppPassword, `✅ Lead Confirmed: ${lead.name}`, 
-          `<p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
+        await sendGmailNotification(adminEmail, gmailAppPassword, `✅ ${trade.emoji} Lead Confirmed: ${lead.name}`, 
+          `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
+           <p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
            <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Response time:</strong> ${updates.contractor_response_minutes} minutes</p>`)
       }
 
     } else if (action === 'decline') {
+      // Record decline event
+      recordEvent(leadId, 'declined', lead.assigned_contractor_email || '')
+
       updates = {
         ...updates,
         status: 'declined',
@@ -135,38 +184,47 @@ Deno.serve(async (req) => {
         updates.status = 'sent'
         updates.sent_to_contractor_at = timestamp
 
+        // Record sent event for next contractor
+        recordEvent(leadId, 'sent', nextContractor)
+
         // Send email to next contractor
         if (gmailAppPassword) {
-          // Build confirm/decline buttons for the next contractor email
           const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
           const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
           const nextButtonsHtml = `
             <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
               <p style="margin-bottom: 15px; font-size: 16px;"><strong>Quick Actions:</strong></p>
-              <a href="${confirmUrl}" style="display: inline-block; background: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPTED] I Will Call This Lead</a>
+              <a href="${confirmUrl}" style="display: inline-block; background: ${accentColor}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPTED] I Will Call This Lead</a>
               <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[DECLINE] Pass to Next Contractor</a>
             </div>
           `
           const nextEmailBody = `
-            <h2 style="color:#D92B2B; font-size: 24px;">🚨 LEAD PASSED TO YOU</h2>
-            <p>The previous contractor declined this lead. It's now assigned to you.</p>
-            <hr>
-            <p><strong>Name:</strong> ${lead.name}</p>
-            <p><strong>Phone:</strong> <a href="tel:${lead.phone}" style="color:#059669;font-weight:bold;">${lead.phone}</a></p>
-            <p><strong>City:</strong> ${lead.city}</p>
-            <p><strong>Damage Type:</strong> ${lead.damage_type || 'N/A'}</p>
-            <p><strong>Description:</strong> ${lead.description || 'N/A'}</p>
-            <hr>
-            <p style="color:#D92B2B;font-weight:bold;font-size:18px;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
-            ${nextButtonsHtml}
+            <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+              <div style="background: ${accentColor}; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; font-size: 20px; margin: 0;">${trade.emoji} LEAD PASSED TO YOU</h1>
+              </div>
+              <div style="padding: 24px; background: white; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+                <p>The previous contractor declined this lead. It's now assigned to you.</p>
+                <hr>
+                <p><strong>Name:</strong> ${lead.name}</p>
+                <p><strong>Phone:</strong> <a href="tel:${lead.phone}" style="color:${accentColor};font-weight:bold;">${lead.phone}</a></p>
+                <p><strong>City:</strong> ${lead.city}</p>
+                <p><strong>Service:</strong> ${lead.damage_type || 'N/A'}</p>
+                <p><strong>Description:</strong> ${lead.description || 'N/A'}</p>
+                <hr>
+                <p style="color:${accentColor};font-weight:bold;font-size:18px;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+                ${nextButtonsHtml}
+              </div>
+            </div>
           `
-          await sendGmailDirect(gmailAppPassword, nextContractor, `🚨 New Lead: ${lead.name}`, nextEmailBody)
+          await sendGmailDirect(gmailAppPassword, nextContractor, `${trade.emoji} Lead Passed: ${lead.name}`, nextEmailBody)
         }
       } else {
         updates.status = 'no_contractor'
         if (gmailAppPassword) {
-          await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ NO CONTRACTORS AVAILABLE: ${lead.name}`,
-            `<p>This lead was declined but there are no other contractors in the rotation.</p>
+          await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ ${trade.emoji} NO CONTRACTORS AVAILABLE: ${lead.name}`,
+            `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
+             <p>This lead was declined but there are no other contractors in the rotation.</p>
              <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
              <p><strong>City:</strong> ${lead.city}</p>
              <p>Please add more contractors in the admin dashboard.</p>`)
@@ -175,8 +233,9 @@ Deno.serve(async (req) => {
 
       // Notify admin
       if (gmailAppPassword) {
-        await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ Lead Declined: ${lead.name}`,
-          `<p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
+        await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ ${trade.emoji} Lead Declined: ${lead.name}`,
+          `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
+           <p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
            <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Next contractor:</strong> ${nextContractor || 'None available'}</p>`)
@@ -244,6 +303,34 @@ Deno.serve(async (req) => {
     `, { headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
   }
 })
+
+async function recordEvent(leadId: string, type: string, contractor: string) {
+  if (!leadId || !SUPABASE_KEY) return
+  try {
+    const getRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}&select=events`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+      }
+    })
+    const existing = await getRes.json()
+    const existingEvents = (existing && existing.length > 0 && Array.isArray(existing[0].events)) ? existing[0].events : []
+    const newEvent = { type, contractor, timestamp: new Date().toISOString() }
+    const events = [...existingEvents, newEvent]
+    await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ events })
+    })
+  } catch (evErr) {
+    console.error('Failed to record event:', evErr)
+  }
+}
 
 async function sendGmailNotification(to: string, password: string, subject: string, html: string) {
   // Use proper UTF-8 encoding

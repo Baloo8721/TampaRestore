@@ -63,6 +63,7 @@ exports.handler = async (event) => {
       city,
       'damage-type': damage_type || '',
       description: description || '',
+      source: source || 'website',
     }).toString()
 
     try {

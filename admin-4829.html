@@ -84,6 +84,7 @@
     .status-closed { background: #F3F4F6; border-color: #D1D5DB; }
     .status-paid { background: #D1FAE5; border-color: #34D399; color: #059669; font-weight: bold; }
     .status-junk { background: #FEE2E2; border-color: #FCA5A5; }
+    .status-no_contractor { background: #F3E8FF; border-color: #D8B4FE; }
     
     /* Analytics */
     .analytics-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -151,6 +152,8 @@
     .filter-btn.closed.active { background: #B45309; color: white; }
     .filter-btn.declined { background: #FEE2E2; color: #991B1B; }
     .filter-btn.declined.active { background: #DC2626; color: white; }
+    .filter-btn.no_contractor { background: #F3E8FF; color: #6B21A8; }
+    .filter-btn.no_contractor.active { background: #9333EA; color: white; }
     .filter-btn.junk { background: #F5F5F4; color: #57534E; }
     .filter-btn.junk.active { background: #78716C; color: white; }
     .filter-btn.urgent { background: var(--red); color: white; }
@@ -294,6 +297,7 @@
         <button class="filter-btn paid" data-filter="paid" onclick="setFilter('paid')">Paid</button>
         <button class="filter-btn closed" data-filter="closed" onclick="setFilter('closed')">Closed</button>
         <button class="filter-btn declined" data-filter="declined" onclick="setFilter('declined')">Declined</button>
+        <button class="filter-btn no_contractor" data-filter="no_contractor" onclick="setFilter('no_contractor')">No Contractor</button>
         <button class="filter-btn junk" data-filter="junk" onclick="setFilter('junk')">Junk</button>
       </div>
       
@@ -335,6 +339,14 @@
         <h3>👷 Contractors</h3>
         <button class="btn btn-small" id="add-contractor-btn" onclick="showAddContractor()">+ Add Contractor</button>
       </div>
+      <div class="filter-bar" style="margin-bottom:12px;">
+        <button class="filter-btn active" data-filter-contractor="" onclick="setContractorTradeFilter('')">All Trades</button>
+        <button class="source-btn source-website" style="font-size:11px;padding:4px 10px;" data-filter-contractor="website" onclick="setContractorTradeFilter('website')">💧 Tampa Restore</button>
+        <button class="source-btn source-handyman" style="font-size:11px;padding:4px 10px;" data-filter-contractor="handyman" onclick="setContractorTradeFilter('handyman')">🔧 Handyman</button>
+        <button class="source-btn source-electrician" style="font-size:11px;padding:4px 10px;" data-filter-contractor="electrician" onclick="setContractorTradeFilter('electrician')">⚡ Electrician</button>
+        <button class="source-btn source-hvac" style="font-size:11px;padding:4px 10px;" data-filter-contractor="hvac" onclick="setContractorTradeFilter('hvac')">❄️ HVAC</button>
+        <button class="source-btn source-plumber" style="font-size:11px;padding:4px 10px;" data-filter-contractor="plumber" onclick="setContractorTradeFilter('plumber')">🔩 Plumber</button>
+      </div>
       <table class="leads-table" id="contractors-table">
         <thead>
           <tr>
@@ -343,12 +355,13 @@
             <th>Email</th>
             <th>Phone</th>
             <th>Price/Lead</th>
+            <th>Trade</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="contractors-tbody">
-          <tr><td colspan="7" class="loading">Loading...</td></tr>
+          <tr><td colspan="8" class="loading">Loading...</td></tr>
         </tbody>
       </table>
       <p id="contractor-count" style="font-size:12px;color:var(--gray);margin-top:8px;"></p>
@@ -400,6 +413,7 @@ let allLeads = [];
 let currentFilter = '';
 let currentSourceFilter = '';
 let currentUser = null;
+let contractorTradeFilter = '';
 
 // Check for existing session on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -503,7 +517,7 @@ let allContractors = [];
 
 async function loadContractors() {
   const tbody = document.getElementById('contractors-tbody');
-  tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading...</td></tr>';
   
   try {
     const response = await callApi('GET', '/rest/v1/contractors?order=priority.asc');
@@ -516,30 +530,48 @@ async function loadContractors() {
   }
 }
 
+const TRADE_LABELS = {'':'All Trades','website':'💧 Tampa Restore','handyman':'🔧 Handyman','electrician':'⚡ Electrician','hvac':'❄️ HVAC','plumber':'🔩 Plumber'};
+const TRADE_COLORS = {'':'#6B7280','website':'#DC2626','handyman':'#059669','electrician':'#D97706','hvac':'#2563EB','plumber':'#0D9488'};
+
+function getTradeLabel(trade) { return TRADE_LABELS[trade] || trade || 'All Trades'; }
+function getTradeColor(trade) { return TRADE_COLORS[trade] || '#6B7280'; }
+
 function renderContractors() {
   const tbody = document.getElementById('contractors-tbody');
   const countEl = document.getElementById('contractor-count');
   
-  const sorted = [...allContractors].sort((a, b) => a.priority - b.priority);
+  let filtered = [...allContractors];
+  if (contractorTradeFilter) {
+    filtered = filtered.filter(c => (c.trade || '') === contractorTradeFilter);
+  }
+  const sorted = filtered.sort((a, b) => a.priority - b.priority);
   
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No contractors. Click "Add Contractor" to add one.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No contractors. Click "Add Contractor" to add one.</td></tr>';
     countEl.textContent = '';
     return;
   }
   
-  tbody.innerHTML = sorted.map(c => `
+  const allForTrade = contractorTradeFilter
+    ? allContractors.filter(c => (c.trade || '') === contractorTradeFilter)
+    : allContractors;
+  const maxForTrade = Math.max(allForTrade.length, 10);
+
+  tbody.innerHTML = sorted.map(c => {
+    const tradeColor = getTradeColor(c.trade);
+    return `
     <tr data-id="${c.id}">
       <td style="text-align:center;">
-        <input type="number" min="1" max="${Math.max(sorted.length, 10)}" value="${c.priority + 1}"
+        <input type="number" min="1" max="${maxForTrade}" value="${c.priority + 1}"
           style="width:48px;text-align:center;padding:4px;border:1px solid #ddd;border-radius:4px;font-size:13px;"
-          onchange="reorderContractor('${c.id}', this.value, ${sorted.length})"
+          onchange="reorderContractor('${c.id}', this.value, ${maxForTrade})"
           title="Click to change position" />
       </td>
       <td><strong>${c.name || 'N/A'}</strong></td>
       <td>${c.email || 'N/A'}</td>
       <td>${c.phone || '-'}</td>
       <td>$${c.price_per_lead || 75}</td>
+      <td><span class="source-badge" style="background:${tradeColor}22;color:${tradeColor};">${getTradeLabel(c.trade)}</span></td>
       <td>
         <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${c.active ? '#D1FAE5' : '#FEE2E2'}; color: ${c.active ? '#059669' : '#991B1B'};">
           ${c.active ? 'ACTIVE' : 'INACTIVE'}
@@ -553,23 +585,38 @@ function renderContractors() {
         <button class="action-btn delete" onclick="deleteContractor('${c.id}')">🗑️</button>
       </td>
     </tr>
-  `).join('');
+  `}).join('');
   
-  countEl.textContent = `Showing ${sorted.length}/10 contractors in contact order`;
+  // Count per trade
+  const tradeCounts = {};
+  sorted.forEach(c => { const t = c.trade || ''; tradeCounts[t] = (tradeCounts[t] || 0) + 1; });
+  const countsStr = Object.entries(tradeCounts).map(([t, n]) => `${getTradeLabel(t)}: ${n}/10`).join(' | ');
+  countEl.textContent = `Contractors — ${countsStr}`;
 }
 
 function showAddContractor(contractor = null) {
-  if (!contractor && allContractors.length >= 10) {
-    alert('Maximum of 10 contractors reached. Delete one to add another.');
-    return;
-  }
   const isEdit = !!contractor;
+  const trade = contractor ? (contractor.trade || '') : '';
+  
+  // Check max per trade (10)
+  if (!isEdit) {
+    const countForTrade = allContractors.filter(c => (c.trade || '') === trade).length;
+    if (countForTrade >= 10) {
+      alert(`Maximum of 10 contractors per trade reached for ${getTradeLabel(trade)}. Change the trade or delete one first.`);
+      return;
+    }
+  }
+  
   const modal = document.getElementById('lead-modal');
   const modalTitle = document.getElementById('modal-title');
   const modalBody = document.getElementById('modal-body');
   const modalFooter = document.getElementById('modal-footer');
   
   modalTitle.textContent = isEdit ? '✏️ Edit Contractor' : '➕ Add Contractor';
+  
+  const tradeOptions = Object.entries(TRADE_LABELS).map(([val, label]) =>
+    `<option value="${val}" ${val === trade ? 'selected' : ''}>${label}</option>`
+  ).join('');
   
   modalBody.innerHTML = `
     <form id="contractor-form">
@@ -590,8 +637,14 @@ function showAddContractor(contractor = null) {
         <input type="number" id="contractor-price" value="${contractor ? contractor.price_per_lead || 75 : 75}" />
       </div>
       <div class="form-group">
+        <label>Trade</label>
+        <select id="contractor-trade" onchange="updateContractorPriorityHint(this.value)">
+          ${tradeOptions}
+        </select>
+      </div>
+      <div class="form-group">
         <label>Position (1 = first contacted)</label>
-        <input type="number" id="contractor-priority" value="${contractor ? contractor.priority + 1 : allContractors.length + 1}" min="1" max="10" />
+        <input type="number" id="contractor-priority" value="${contractor ? contractor.priority + 1 : allContractors.filter(c => (c.trade || '') === trade).length + 1}" min="1" max="10" />
       </div>
       <div class="form-group">
         <label>
@@ -610,6 +663,14 @@ function showAddContractor(contractor = null) {
   modal.classList.add('active');
 }
 
+function updateContractorPriorityHint(trade) {
+  const count = allContractors.filter(c => (c.trade || '') === trade).length;
+  const priorityInput = document.getElementById('contractor-priority');
+  if (priorityInput && !priorityInput.dataset.userSet) {
+    priorityInput.value = count + 1;
+  }
+}
+
 function editContractor(id) {
   const contractor = allContractors.find(c => c.id === id);
   if (contractor) showAddContractor(contractor);
@@ -620,6 +681,7 @@ async function saveContractor(id) {
   const email = document.getElementById('contractor-email').value;
   const phone = document.getElementById('contractor-phone').value;
   const price = parseFloat(document.getElementById('contractor-price').value) || 75;
+  const trade = document.getElementById('contractor-trade').value;
   const pos = parseInt(document.getElementById('contractor-priority').value) || 1;
   const active = document.getElementById('contractor-active').checked;
   const priority = Math.max(0, Math.min(9, pos - 1));
@@ -634,6 +696,7 @@ async function saveContractor(id) {
     email,
     phone: phone || null,
     price_per_lead: price,
+    trade: trade || null,
     priority,
     active,
     updated_at: new Date().toISOString()
@@ -764,7 +827,8 @@ async function loadLeads() {
       revenue_amount: lead.revenue_amount || '',
       source: lead.source || 'website',
       source_label: {website:'💧 Tampa Restore',handyman:'🔧 Handyman',electrician:'⚡ Electrician',hvac:'❄️ HVAC',plumber:'🔩 Plumber'}[lead.source || 'website'] || lead.source,
-      notes: lead.notes || ''
+      notes: lead.notes || '',
+      events: lead.events || []
     }));
     
     renderLeads();
@@ -864,6 +928,7 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
               ${status !== 'paid' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'paid\')">💰 Mark Paid</button>' : ''}
               ${status !== 'closed' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'closed\')">🔒 Mark Closed</button>' : ''}
               <div class="divider"></div>
+              ${status !== 'no_contractor' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'no_contractor\')" style="color:#6B7280;">⚠️ Mark No Contractor</button>' : ''}
               ${status !== 'declined' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'declined\')" style="color:#DC2626;">✕ Mark Declined</button>' : ''}
               ${status !== 'junk' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'junk\')" style="color:#78716C;">🗑️ Mark Junk</button>' : ''}
             </div>
@@ -891,6 +956,14 @@ function setSourceFilter(source) {
     btn.classList.toggle('active', btn.dataset.source === source);
   });
   renderLeads();
+}
+
+function setContractorTradeFilter(trade) {
+  contractorTradeFilter = trade;
+  document.querySelectorAll('[data-filter-contractor]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filterContractor === trade);
+  });
+  renderContractors();
 }
 
 async function updateLeadStatus(leadId, newStatus) {
@@ -996,6 +1069,7 @@ function viewLead(leadId) {
         <div><strong>Created:</strong> ${dateStr}</div>
         <div><strong>ID:</strong> ${lead.id}</div>
       </div>
+      ${renderLeadEvents(lead)}
     </form>
   `;
   
@@ -1056,6 +1130,33 @@ function deleteLead(leadId) {
 
 function closeModal() {
   document.getElementById('lead-modal').classList.remove('active');
+}
+
+function renderLeadEvents(lead) {
+  const events = lead.events || [];
+  if (!events || events.length === 0) return '';
+  
+  const eventColors = { sent: '#3B82F6', confirmed: '#059669', declined: '#DC2626', no_contractor: '#6B7280' };
+  const eventIcons = { sent: '📤', confirmed: '✅', declined: '✕', no_contractor: '⚠️' };
+  
+  const sorted = [...events].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  return `
+    <div style="margin-top: 16px; padding: 12px; background: #F8FAFC; border-radius: 6px; font-size: 13px; border: 1px solid #E2E8F0;">
+      <div style="font-weight: 600; margin-bottom: 8px; font-size: 14px;">📋 Lead History</div>
+      ${sorted.map(ev => {
+        const color = eventColors[ev.type] || '#6B7280';
+        const icon = eventIcons[ev.type] || '•';
+        const time = ev.timestamp ? new Date(ev.timestamp).toLocaleString() : '';
+        return `<div style="padding: 4px 0; display: flex; align-items: center; gap: 8px;">
+          <span style="color:${color};font-weight:bold;">${icon}</span>
+          <span style="color:${color};font-weight:600;text-transform:capitalize;">${ev.type}</span>
+          <span style="color:#64748B;">by ${ev.contractor}</span>
+          <span style="color:#94A3B8;font-size:11px;margin-left:auto;">${time}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
 }
 
 function escapeHtml(text) {
