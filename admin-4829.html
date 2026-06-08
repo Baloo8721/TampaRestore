@@ -70,6 +70,11 @@
     .leads-table th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--gray); padding: 12px 8px; border-bottom: 2px solid var(--light-gray); background: var(--off-white); }
     .leads-table td { padding: 12px 8px; font-size: 14px; border-bottom: 1px solid var(--light-gray); vertical-align: middle; }
     .leads-table tr:hover { background: #FAFAFA; }
+    .col-check { width: 32px; text-align: center; }
+    .col-check input { cursor: pointer; }
+    .bulk-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; min-height: 32px; }
+    .bulk-bar .selected-count { font-size: 13px; color: var(--gray); }
+    .bulk-bar .selected-count strong { color: var(--navy); }
     
     .lead-name { font-weight: 600; }
     .lead-city { color: var(--gray); }
@@ -315,9 +320,15 @@
       
       <div id="status-msg"></div>
       
+      <div class="bulk-bar" id="bulk-bar">
+        <span class="selected-count" id="selected-count">0 selected</span>
+        <button class="btn btn-small btn-danger" id="bulk-delete-btn" onclick="deleteSelectedLeads()" style="display:none;">🗑️ Delete Selected</button>
+      </div>
+      
       <table class="leads-table">
         <thead>
           <tr>
+            <th class="col-check"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
             <th>Name</th>
             <th>Phone</th>
             <th>City</th>
@@ -330,7 +341,7 @@
           </tr>
         </thead>
         <tbody id="leads-tbody">
-          <tr><td colspan="8" class="loading">Loading...</td></tr>
+          <tr><td colspan="10" class="loading">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -412,6 +423,7 @@ async function callApi(method, path, body) {
 }
 
 let allLeads = [];
+let selectedLeads = new Set();
 let currentFilter = '';
 let currentSourceFilter = '';
 let currentUser = null;
@@ -800,8 +812,10 @@ async function reorderContractor(movedId, newPosStr, totalCount) {
 async function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
   const statusMsg = document.getElementById('status-msg');
-  tbody.innerHTML = '<tr><td colspan="9" class="loading">Fetching leads...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" class="loading">Fetching leads...</td></tr>';
   statusMsg.innerHTML = '';
+  selectedLeads.clear();
+  updateBulkBar();
   
   try {
     const response = await callApi('GET', '/rest/v1/leads?order=created_at.desc');
@@ -842,7 +856,7 @@ async function loadLeads() {
     
   } catch (err) {
     console.error('Error:', err);
-    tbody.innerHTML = '<tr><td colspan="9" class="error-state">Error: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="error-state">Error: ' + err.message + '</td></tr>';
     statusMsg.innerHTML = '<p class="error-msg">Error loading leads: ' + err.message + '</p>';
   }
 }
@@ -851,7 +865,7 @@ function renderLeads() {
   const tbody = document.getElementById('leads-tbody');
   
   if (allLeads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No leads yet. Go get some!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No leads yet. Go get some!</td></tr>';
     return;
   }
   
@@ -908,8 +922,11 @@ function renderLeads() {
     
 const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk', 'declined', 'no_contractor'];
     
+    const checked = selectedLeads.has(lead.id) ? 'checked' : '';
+
     return `
       <tr class="${rowClass}">
+        <td class="col-check"><input type="checkbox" ${checked} onchange="toggleLeadSelection('${lead.id}', this)"></td>
         <td class="lead-name">${lead.name || 'N/A'}</td>
         <td>${lead.phone || 'N/A'}</td>
         <td class="lead-city">${lead.city || 'N/A'}</td>
@@ -1121,13 +1138,85 @@ function deleteLead(leadId) {
   callApi('DELETE', `/rest/v1/leads?id=eq.${leadId}`).then(response => {
     if (response.ok) {
       allLeads = allLeads.filter(l => l.id !== leadId);
+      selectedLeads.delete(leadId);
       renderLeads();
       updateStats();
+      updateBulkBar();
       document.getElementById('status-msg').innerHTML = '<p class="error-msg">Lead deleted</p>';
     }
   }).catch(err => {
     console.error('Error deleting:', err);
     alert('Error deleting: ' + err.message);
+  });
+}
+
+function updateBulkBar() {
+  const count = selectedLeads.size;
+  document.getElementById('selected-count').textContent = count + ' selected';
+  document.getElementById('bulk-delete-btn').style.display = count > 0 ? '' : 'none';
+}
+
+function toggleSelectAll(checkbox) {
+  const filteredIds = getFilteredLeadIds();
+  if (checkbox.checked) {
+    filteredIds.forEach(id => selectedLeads.add(id));
+  } else {
+    filteredIds.forEach(id => selectedLeads.delete(id));
+  }
+  updateBulkBar();
+  renderLeads();
+}
+
+function toggleLeadSelection(leadId, checkbox) {
+  if (checkbox.checked) {
+    selectedLeads.add(leadId);
+  } else {
+    selectedLeads.delete(leadId);
+  }
+  const allCheckbox = document.getElementById('select-all');
+  if (allCheckbox) {
+    const filteredIds = getFilteredLeadIds();
+    allCheckbox.checked = filteredIds.length > 0 && filteredIds.every(id => selectedLeads.has(id));
+  }
+  updateBulkBar();
+}
+
+function getFilteredLeadIds() {
+  let filtered = allLeads;
+  if (currentFilter === 'needs_response') {
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    filtered = allLeads.filter(l =>
+      l.status === 'sent' &&
+      !l.contractor_contacted_at &&
+      l.sent_to_contractor_at &&
+      new Date(l.sent_to_contractor_at).getTime() < fiveMinAgo
+    );
+  } else if (currentFilter && currentFilter !== 'all') {
+    filtered = allLeads.filter(l => l.status === currentFilter);
+  }
+  if (currentSourceFilter) {
+    filtered = filtered.filter(l => l.source === currentSourceFilter);
+  }
+  return filtered.map(l => l.id);
+}
+
+function deleteSelectedLeads() {
+  const ids = [...selectedLeads];
+  if (ids.length === 0) return;
+  if (!confirm('Delete ' + ids.length + ' lead' + (ids.length > 1 ? 's' : '') + '? This cannot be undone.')) return;
+  
+  const promises = ids.map(id =>
+    callApi('DELETE', `/rest/v1/leads?id=eq.${id}`).then(r => r.ok ? id : null)
+  );
+  
+  Promise.all(promises).then(results => {
+    const deleted = results.filter(Boolean);
+    deleted.forEach(id => selectedLeads.delete(id));
+    allLeads = allLeads.filter(l => !deleted.includes(l.id));
+    renderLeads();
+    updateStats();
+    updateBulkBar();
+    document.getElementById('status-msg').innerHTML = '<p class="error-msg">Deleted ' + deleted.length + ' lead' + (deleted.length > 1 ? 's' : '') + '</p>';
   });
 }
 
