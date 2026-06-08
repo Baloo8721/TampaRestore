@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     }
 
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'tylerbelislefl@gmail.com'
+    const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
     const actionBaseUrl = `${SUPABASE_URL}/functions/v1/contractor-action`
 
@@ -178,7 +179,7 @@ Deno.serve(async (req) => {
       recordEvent(leadId, 'confirmed', lead.assigned_contractor_email || '')
 
       if (gmailAppPassword) {
-        await sendGmailNotification(adminEmail, gmailAppPassword, `✅ ${trade.emoji} Lead Confirmed: ${lead.name}`, 
+        await sendEmail(gmailUser, gmailAppPassword, adminEmail, `✅ ${trade.emoji} Lead Confirmed: ${lead.name}`, 
           `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
            <p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
@@ -245,12 +246,12 @@ Deno.serve(async (req) => {
               </div>
             </div>
           `
-          await sendGmailDirect(gmailAppPassword, nextContractor, `${trade.emoji} Lead Passed: ${lead.name}`, nextEmailBody)
+          await sendEmail(gmailUser, gmailAppPassword, nextContractor, `${trade.emoji} Lead Passed: ${lead.name}`, nextEmailBody)
         }
       } else {
         updates.status = 'no_contractor'
         if (gmailAppPassword) {
-          await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ ${trade.emoji} NO CONTRACTORS AVAILABLE: ${lead.name}`,
+          await sendEmail(gmailUser, gmailAppPassword, adminEmail, `⚠️ ${trade.emoji} NO CONTRACTORS AVAILABLE: ${lead.name}`,
             `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
              <p>This lead was declined but there are no other contractors in the rotation.</p>
              <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
@@ -260,7 +261,7 @@ Deno.serve(async (req) => {
       }
 
       if (gmailAppPassword) {
-        await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ ${trade.emoji} Lead Declined: ${lead.name}`,
+        await sendEmail(gmailUser, gmailAppPassword, adminEmail, `⚠️ ${trade.emoji} Lead Declined: ${lead.name}`,
           `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
            <p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
@@ -373,37 +374,59 @@ async function recordEvent(leadId: string, type: string, contractor: string) {
   }
 }
 
-async function sendGmailNotification(to: string, password: string, subject: string, html: string) {
-  // Use proper UTF-8 encoding
-  const utf8Bytes = new TextEncoder().encode(`To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`)
-  const base64 = btoa(String.fromCharCode(...utf8Bytes))
-  const credentials = btoa(`tylerbelislefl@gmail.com:${password}`)
-  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${credentials}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      raw: base64
-    })
-  })
-  return { status: response.status }
-}
+async function sendEmail(user: string, password: string, to: string, subject: string, html: string) {
+  try {
+    const conn = await Deno.connect({ hostname: 'smtp.gmail.com', port: 587 })
+    const encoder = new TextEncoder()
+    const decoder = new TextDecoder()
+    const readResponse = async (): Promise<string> => {
+      const buffer = new Uint8Array(1024)
+      const n = await conn.read(buffer)
+      return decoder.decode(buffer.slice(0, n))
+    }
+    const send = async (data: string) => { await conn.write(encoder.encode(data)) }
 
-async function sendGmailDirect(password: string, to: string, subject: string, html: string) {
-  const utf8Bytes = new TextEncoder().encode(`To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}`)
-  const base64 = btoa(String.fromCharCode(...utf8Bytes))
-  const credentials = btoa(`tylerbelislefl@gmail.com:${password}`)
-  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${credentials}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      raw: base64
-    })
-  })
-  return { status: response.status }
+    await readResponse()
+    await send('EHLO localhost\r\n')
+    await readResponse()
+    await send('STARTTLS\r\n')
+    await readResponse()
+
+    const tlsConn = await Deno.startTls(conn, { hostname: 'smtp.gmail.com' })
+    const tlsEncoder = new TextEncoder()
+    const tlsDecoder = new TextDecoder()
+    const tlsSend = async (data: string) => { await tlsConn.write(tlsEncoder.encode(data)) }
+    const tlsRead = async (): Promise<string> => {
+      const buffer = new Uint8Array(1024)
+      const n = await tlsConn.read(buffer)
+      return tlsDecoder.decode(buffer.slice(0, n))
+    }
+
+    await tlsSend('EHLO localhost\r\n')
+    await tlsRead()
+    await tlsSend('AUTH LOGIN\r\n')
+    await tlsRead()
+    await tlsSend(btoa(user) + '\r\n')
+    await tlsRead()
+    await tlsSend(btoa(password) + '\r\n')
+    const authResponse = await tlsRead()
+    if (!authResponse.includes('235')) {
+      tlsConn.close()
+      throw new Error('SMTP auth failed: ' + authResponse)
+    }
+    await tlsSend('MAIL FROM:<' + user + '>\r\n')
+    await tlsRead()
+    await tlsSend('RCPT TO:<' + to + '>\r\n')
+    await tlsRead()
+    await tlsSend('DATA\r\n')
+    const message = `From: <${user}>\r\nTo: <${to}>\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}\r\n.`
+    await tlsSend(message + '\r\n')
+    await tlsRead()
+    await tlsSend('QUIT\r\n')
+    tlsConn.close()
+    return true
+  } catch (e) {
+    console.error('sendEmail failed:', e)
+    return false
+  }
 }
