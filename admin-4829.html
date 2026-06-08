@@ -308,9 +308,19 @@
 </div>
 
 <script>
-// Supabase config
-const SUPABASE_URL = 'https://aqafvfzsybcqfxqklqsd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWZ2ZnpzeWJjcWZ4cWtscXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU1ODAsImV4cCI6MjA5MzgzMTU4MH0.VUO2Uaf6IlM_cr-UwJ5YdQuinjasQehfoxe6dxqLecg';
+const PROXY_URL = 'https://candid-empanada-1cbbe5.netlify.app/.netlify/functions/admin-proxy';
+
+async function callApi(method, path, body) {
+  const response = await fetch(PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ method, path, body })
+  });
+  const text = await response.text();
+  let data;
+  try { data = JSON.parse(text); } catch (e) { data = text; }
+  return { ok: response.ok, status: response.status, json: async () => data, text: async () => text };
+}
 
 let allLeads = [];
 let currentFilter = '';
@@ -351,18 +361,7 @@ async function login() {
   loginError.style.display = 'none';
   
   try {
-    // Use Supabase Auth API directly (no eval)
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY
-      },
-      body: JSON.stringify({
-        email: email,
-        password: password
-      })
-    });
+    const response = await callApi('POST', '/auth/v1/token?grant_type=password', { email, password });
     
     const data = await response.json();
     
@@ -419,14 +418,7 @@ async function loadContractors() {
   tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
   
   try {
-    const response = await fetch(SUPABASE_URL + '/rest/v1/contractors?order=priority.asc', {
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-    
+    const response = await callApi('GET', '/rest/v1/contractors?order=priority.asc');
     const data = await response.json();
     allContractors = data || [];
     renderContractors();
@@ -562,16 +554,7 @@ async function saveContractor(id) {
   try {
     if (id) {
       const oldPriority = allContractors.find(c => c.id === id)?.priority || 0;
-      await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(data)
-      });
+      await callApi('PATCH', `/rest/v1/contractors?id=eq.${id}`, data);
       if (oldPriority !== priority) {
         const sorted = [...allContractors].sort((a, b) => a.priority - b.priority);
         const otherUpdates = sorted
@@ -586,16 +569,7 @@ async function saveContractor(id) {
           })
           .filter(Boolean);
         await Promise.all(otherUpdates.map(u =>
-          fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${u.id}`, {
-            method: 'PATCH',
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ priority: u.priority, updated_at: new Date().toISOString() })
-          })
+          callApi('PATCH', `/rest/v1/contractors?id=eq.${u.id}`, { priority: u.priority, updated_at: new Date().toISOString() })
         ));
       }
     } else {
@@ -603,28 +577,10 @@ async function saveContractor(id) {
       const shiftDown = sorted.filter(c => c.priority >= priority);
       if (shiftDown.length > 0) {
         for (const c of shiftDown) {
-          await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${c.id}`, {
-            method: 'PATCH',
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ priority: c.priority + 1, updated_at: new Date().toISOString() })
-          });
+          await callApi('PATCH', `/rest/v1/contractors?id=eq.${c.id}`, { priority: c.priority + 1, updated_at: new Date().toISOString() });
         }
       }
-      await fetch(`${SUPABASE_URL}/rest/v1/contractors`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(data)
-      });
+      await callApi('POST', '/rest/v1/contractors', data);
     }
     
     closeModal();
@@ -637,30 +593,14 @@ async function saveContractor(id) {
 }
 
 async function toggleContractor(id, makeActive) {
-  await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
-    method: 'PATCH',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({ active: makeActive, updated_at: new Date().toISOString() })
-  });
+  await callApi('PATCH', `/rest/v1/contractors?id=eq.${id}`, { active: makeActive, updated_at: new Date().toISOString() });
   loadContractors();
 }
 
 async function deleteContractor(id) {
   if (!confirm('Are you sure you want to DELETE this contractor?')) return;
   
-  await fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${id}`, {
-    method: 'DELETE',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'Prefer': 'return=minimal'
-    }
-  });
+  await callApi('DELETE', `/rest/v1/contractors?id=eq.${id}`);
   loadContractors();
 }
 
@@ -697,16 +637,7 @@ async function reorderContractor(movedId, newPosStr, totalCount) {
   }
   
   await Promise.all(updates.map(u =>
-    fetch(`${SUPABASE_URL}/rest/v1/contractors?id=eq.${u.id}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ priority: u.priority, updated_at: new Date().toISOString() })
-    })
+    callApi('PATCH', `/rest/v1/contractors?id=eq.${u.id}`, { priority: u.priority, updated_at: new Date().toISOString() })
   ));
   
   loadContractors();
@@ -719,13 +650,7 @@ async function loadLeads() {
   statusMsg.innerHTML = '';
   
   try {
-    const response = await fetch(SUPABASE_URL + '/rest/v1/leads?order=created_at.desc', {
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
+    const response = await callApi('GET', '/rest/v1/leads?order=created_at.desc');
     
     if (!response.ok) {
       throw new Error('API error: ' + response.status);
@@ -848,19 +773,7 @@ function setFilter(filter) {
 
 async function updateLeadStatus(leadId, newStatus) {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      })
-    });
+    const response = await callApi('PATCH', `/rest/v1/leads?id=eq.${leadId}`, { status: newStatus, updated_at: new Date().toISOString() });
     
     if (response.ok) {
       const lead = allLeads.find(l => l.id === leadId);
@@ -960,16 +873,7 @@ async function saveLead(leadId) {
   };
   
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(updates)
-    });
+    const response = await callApi('PATCH', `/rest/v1/leads?id=eq.${leadId}`, updates);
     
     if (response.ok) {
       const lead = allLeads.find(l => l.id === leadId);
@@ -988,14 +892,7 @@ async function saveLead(leadId) {
 function deleteLead(leadId) {
   if (!confirm('Are you sure you want to DELETE this lead? This cannot be undone.')) return;
   
-  fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
-    method: 'DELETE',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'Prefer': 'return=minimal'
-    }
-  }).then(response => {
+  callApi('DELETE', `/rest/v1/leads?id=eq.${leadId}`).then(response => {
     if (response.ok) {
       allLeads = allLeads.filter(l => l.id !== leadId);
       renderLeads();
