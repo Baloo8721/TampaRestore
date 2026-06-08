@@ -135,6 +135,15 @@
     .filter-btn { padding: 6px 14px; font-size: 12px; cursor: pointer; background: var(--light-gray); color: var(--gray); border: none; border-radius: 20px; }
     .filter-btn:hover { background: var(--gray); color: var(--white); }
     .filter-btn.active { background: var(--navy); color: var(--white); }
+    .filter-btn.urgent { background: var(--red); color: white; }
+    .filter-btn.urgent.active { background: var(--red-dark); }
+    
+    .row-ok { border-left: 4px solid var(--green); }
+    .row-warning { border-left: 4px solid var(--yellow); }
+    .row-overdue { border-left: 4px solid var(--red); background: #FEF2F2; }
+    
+    .btn-contact { background: var(--green); color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .btn-contact:hover { background: #047857; }
     
     @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
@@ -223,15 +232,15 @@
       
       <!-- Filters -->
       <div class="filter-bar">
-        <button class="filter-btn active" onclick="setFilter('all')">All</button>
-        <button class="filter-btn" onclick="setFilter('new')">New</button>
-        <button class="filter-btn" onclick="setFilter('sent')">Sent</button>
-        <button class="filter-btn" onclick="setFilter('contacted')">Contacted</button>
-        <button class="filter-btn" onclick="setFilter('scheduled')">Scheduled</button>
-        <button class="filter-btn" onclick="setFilter('paid')">Paid</button>
-        <button class="filter-btn" onclick="setFilter('closed')">Closed</button>
-        <button class="filter-btn" onclick="setFilter('junk')">Junk</button>
-        <button class="filter-btn" onclick="setFilter('declined')">Declined</button>
+        <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+        <button class="filter-btn urgent" data-filter="needs_response" onclick="setFilter('needs_response')">🔔 Needs Response</button>
+        <button class="filter-btn" data-filter="sent" onclick="setFilter('sent')">Sent</button>
+        <button class="filter-btn" data-filter="contacted" onclick="setFilter('contacted')">Contacted</button>
+        <button class="filter-btn" data-filter="scheduled" onclick="setFilter('scheduled')">Scheduled</button>
+        <button class="filter-btn" data-filter="paid" onclick="setFilter('paid')">Paid</button>
+        <button class="filter-btn" data-filter="closed" onclick="setFilter('closed')">Closed</button>
+        <button class="filter-btn" data-filter="declined" onclick="setFilter('declined')">Declined</button>
+        <button class="filter-btn" data-filter="junk" onclick="setFilter('junk')">Junk</button>
       </div>
       
       <div id="status-msg"></div>
@@ -335,6 +344,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (session.expires_at > Date.now()) {
         currentUser = session.user;
         showDashboard(currentUser);
+        startAutoRefresh();
       } else {
         localStorage.removeItem('tampa_admin_session');
       }
@@ -381,6 +391,7 @@ async function login() {
     localStorage.setItem('tampa_admin_session', JSON.stringify(sessionData));
     
     showDashboard(currentUser);
+    startAutoRefresh();
     
   } catch (err) {
     console.error('Login error:', err);
@@ -389,6 +400,16 @@ async function login() {
     loginBtn.disabled = false;
     loginBtn.textContent = 'Login';
   }
+}
+
+let autoRefreshInterval = null;
+
+function startAutoRefresh() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+  autoRefreshInterval = setInterval(() => {
+    loadLeads();
+    loadContractors();
+  }, 30000);
 }
 
 function showDashboard(user) {
@@ -400,6 +421,7 @@ function showDashboard(user) {
 }
 
 function logout() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
   localStorage.removeItem('tampa_admin_session');
   currentUser = null;
   document.getElementById('login-screen').style.display = 'flex';
@@ -658,8 +680,6 @@ async function loadLeads() {
     
     const data = await response.json();
     
-    console.log('loadLeads: type=', typeof data, 'isArray=', Array.isArray(data), 'len=', data?.length, 'first=', data?.[0]?.name, data?.[0]?.created_at);
-    
     allLeads = (data || []).map(lead => ({
       id: lead.id,
       name: lead.name || 'Unknown',
@@ -696,15 +716,21 @@ async function loadLeads() {
 function renderLeads() {
   const tbody = document.getElementById('leads-tbody');
   
-  console.log('renderLeads: count=', allLeads.length, 'filter=', currentFilter, 'newest=', allLeads[0]?.name, allLeads[0]?.created_at);
-  
   if (allLeads.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No leads yet. Go get some!</td></tr>';
     return;
   }
   
   let filtered = allLeads;
-  if (currentFilter && currentFilter !== 'all') {
+  if (currentFilter === 'needs_response') {
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    filtered = allLeads.filter(l =>
+      l.status === 'sent' &&
+      !l.contractor_contacted_at &&
+      l.sent_to_contractor_at &&
+      new Date(l.sent_to_contractor_at).getTime() < fiveMinAgo
+    );
+  } else if (currentFilter && currentFilter !== 'all') {
     filtered = allLeads.filter(l => l.status === currentFilter);
   }
   
@@ -717,32 +743,38 @@ function renderLeads() {
     
     let responseTime = '-';
     let responseColor = '';
+    let rowClass = '';
+    let minutesSinceSent = 0;
     if (lead.sent_to_contractor_at) {
       const sentTime = new Date(lead.sent_to_contractor_at);
       const now = new Date();
-      const minutes = Math.round((now - sentTime) / 60000);
+      minutesSinceSent = Math.round((now - sentTime) / 60000);
       
       if (lead.contractor_contacted_at) {
-        // Already contacted - show actual response time
-        const responseMins = lead.contractor_response_minutes || minutes;
+        const responseMins = lead.contractor_response_minutes || minutesSinceSent;
         responseTime = `✓ ${responseMins} min`;
         responseColor = responseMins <= 5 ? 'color:#059669;font-weight:bold;' : 'color:#D97706;font-weight:bold;';
+        rowClass = responseMins <= 5 ? 'row-ok' : 'row-warning';
       } else {
-        // Still pending - show time since sent
-        if (minutes < 60) {
-          responseTime = minutes + ' min';
-          responseColor = minutes <= 5 ? 'color:#059669;' : minutes <= 30 ? 'color:#D97706;' : 'color:#DC2626;';
+        if (minutesSinceSent < 60) {
+          responseTime = minutesSinceSent + ' min';
+          if (minutesSinceSent <= 5) { responseColor = 'color:#059669;'; rowClass = 'row-ok'; }
+          else if (minutesSinceSent <= 30) { responseColor = 'color:#D97706;'; rowClass = 'row-warning'; }
+          else { responseColor = 'color:#DC2626;font-weight:bold;'; rowClass = 'row-overdue'; }
         } else {
-          responseTime = Math.round(minutes/60) + ' hr';
+          responseTime = Math.round(minutesSinceSent/60) + ' hr';
           responseColor = 'color:#DC2626;font-weight:bold;';
+          rowClass = 'row-overdue';
         }
       }
     }
     
 const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk', 'declined', 'no_contractor'];
     
+    const isSentUncontacted = status === 'sent' && !lead.contractor_contacted_at;
+
     return `
-      <tr>
+      <tr class="${rowClass}">
         <td class="lead-name">${lead.name || 'N/A'}</td>
         <td>${lead.phone || 'N/A'}</td>
         <td class="lead-city">${lead.city || 'N/A'}</td>
@@ -755,6 +787,7 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
         <td style="font-size:12px; ${responseColor}">${responseTime}</td>
         <td class="lead-date">${date}<br>${time}</td>
         <td>
+          ${isSentUncontacted ? `<button class="btn-contact" onclick="updateLeadStatus('${lead.id}', 'contacted')">✓ Accept</button>` : ''}
           <button class="action-btn call" title="Call" onclick="callPhone('${lead.phone}')">📞</button>
           <button class="action-btn" title="View/Edit" onclick="viewLead('${lead.id}')">👁️</button>
           <button class="action-btn delete" title="Delete" onclick="deleteLead('${lead.id}')">🗑️</button>
@@ -767,21 +800,27 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
 function setFilter(filter) {
   currentFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.textContent.toLowerCase() === filter || (filter === 'all' && btn.textContent === 'All')) {
-      btn.classList.add('active');
-    }
+    btn.classList.toggle('active', btn.dataset.filter === filter);
   });
   renderLeads();
 }
 
 async function updateLeadStatus(leadId, newStatus) {
   try {
-    const response = await callApi('PATCH', `/rest/v1/leads?id=eq.${leadId}`, { status: newStatus, updated_at: new Date().toISOString() });
+    const now = new Date().toISOString();
+    const updates = { status: newStatus, updated_at: now };
+    if (newStatus === 'contacted') {
+      updates.contractor_contacted_at = now;
+    }
+    const response = await callApi('PATCH', `/rest/v1/leads?id=eq.${leadId}`, updates);
     
     if (response.ok) {
       const lead = allLeads.find(l => l.id === leadId);
-      if (lead) lead.status = newStatus;
+      if (lead) {
+        lead.status = newStatus;
+        if (newStatus === 'contacted') lead.contractor_contacted_at = now;
+      }
+      renderLeads();
       updateStats();
     }
   } catch (err) {
