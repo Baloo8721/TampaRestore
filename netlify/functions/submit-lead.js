@@ -18,7 +18,7 @@ exports.handler = async (event) => {
 
   try {
     const data = JSON.parse(event.body)
-    const { name, phone, email, city, damage_type, description, lat, lng } = data
+    const { name, phone, email, city, damage_type, description, lat, lng, source } = data
 
     if (!name || !phone || !city) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) }
@@ -35,7 +35,7 @@ exports.handler = async (event) => {
       damage_type: damage_type || null,
       description: description || null,
       status: 'sent',
-      source: 'website',
+      source: source || 'website',
       sent_to_contractor_at: timestamp,
       assigned_contractor_email: 'ctbelisle@gmail.com',
     }

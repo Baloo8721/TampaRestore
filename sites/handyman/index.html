@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Fast, reliable handyman services in Tampa Bay. Repairs, assembly, painting, and more. Same-day service available.">
+<title>Handyman Tampa | Expert Home Repair Services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="dns-prefetch" href="//candid-empanada-1cbbe5.netlify.app">
+<link rel="preconnect" href="//candid-empanada-1cbbe5.netlify.app">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#059669;--primary-dark:#047857;--primary-light:#D1FAE5;--navy:#0A1628;--navy-light:#162A50;--white:#FFF;--off-white:#F5F3EE;--gray:#8A96A8;--light-gray:#E8EAF0;--text:#1A1E2E}
+html{scroll-behavior:smooth}
+body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--text)}
+header{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;border-bottom:2px solid var(--primary)}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;color:var(--white);letter-spacing:.03em;text-transform:uppercase;text-decoration:none}
+.logo span{color:var(--primary)}
+.header-right{display:flex;align-items:center;gap:14px}
+.live-badge{display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:#6EE7B7;text-transform:uppercase;letter-spacing:.06em}
+.pulse-dot{width:8px;height:8px;border-radius:50%;background:#6EE7B7;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.btn-call{background:var(--primary);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:.05em;text-transform:uppercase;padding:10px 20px;border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:background .15s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)}
+.btn-call:hover{background:var(--primary-dark)}
+.hero{margin-top:64px;min-height:calc(100vh - 64px);background:var(--navy);display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(5,150,99,.04) 40px,rgba(5,150,99,.04) 41px);pointer-events:none}
+.hero-left{padding:80px 5% 80px 8%;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+.tag{display:inline-flex;align-items:center;gap:8px;background:rgba(5,150,99,.15);border:1px solid rgba(5,150,99,.4);color:#6EE7B7;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;width:fit-content;margin-bottom:28px;animation:fadeInUp .6s ease forwards}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.hero-h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(44px,5.5vw,72px);line-height:.92;text-transform:uppercase;color:var(--white);margin-bottom:20px;animation:fadeInUp .6s .1s ease both}
+.hero-h1 .accent{color:var(--primary);display:block}
+.hero-sub{font-size:17px;color:#8FA8C8;line-height:1.65;max-width:420px;margin-bottom:30px;animation:fadeInUp .6s .2s ease both}
+.hero-sub strong{color:var(--white);font-weight:600}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--primary);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.04em;text-transform:uppercase;padding:18px 32px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;margin-bottom:16px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(5,150,99,.5)}
+.phone-icon{animation:ring 4s 3s infinite;display:inline-block}
+@keyframes ring{0%,100%{transform:rotate(0)}5%{transform:rotate(15deg)}10%{transform:rotate(-15deg)}15%{transform:rotate(10deg)}20%{transform:rotate(0)}}
+.trust-line{display:flex;gap:20px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:13px;color:#6A86A8}
+.trust-item .check{color:#6EE7B7}
+.hero-right{padding:60px 8% 60px 4%;display:flex;align-items:center;justify-content:center;position:relative;z-index:2}
+.form-card{background:var(--white);width:100%;max-width:400px;padding:36px;position:relative}
+.form-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--primary)}
+.form-card h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;text-transform:uppercase;color:var(--text);margin-bottom:6px}
+.form-intro{font-size:14px;color:var(--gray);margin-bottom:22px;line-height:1.5}
+.form-intro strong{color:var(--primary)}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--light-gray);background:#FAFAFA;font-family:'Barlow',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color .15s;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);background:var(--white)}
+.field textarea{resize:vertical;min-height:75px}
+.btn-submit{width:100%;background:var(--primary);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;letter-spacing:.04em;text-transform:uppercase;padding:16px;border:none;cursor:pointer;transition:all .15s;margin-top:4px}
+.btn-submit:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.form-footer{text-align:center;font-size:11px;color:#B0BAC8;margin-top:10px}
+.success-msg{display:none;background:var(--primary-light);border:2px solid var(--primary);padding:24px;text-align:center}
+.success-msg h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;text-transform:uppercase;color:#065F46;margin-bottom:8px}
+.success-msg p{font-size:14px;color:#047857;line-height:1.6}
+
+.bar{padding:14px 5%;display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap}
+.bar-item{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.04em}
+.bar-primary{background:var(--primary)}
+.bar-primary .bar-item{color:var(--white)}
+.bar-dark{background:var(--navy-light);border-top:2px solid rgba(5,150,99,.3);border-bottom:2px solid rgba(5,150,99,.3)}
+.bar-dark .bar-item{color:rgba(255,255,255,.75);font-weight:600;font-size:15px}
+.bar-dark .bar-item strong{color:#6EE7B7}
+.section{padding:72px 8%}
+.section-header{text-align:center;margin-bottom:44px}
+.section-tag{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:12px}
+.section-tag::before,.section-tag::after{content:'—';margin:0 8px;opacity:.5}
+.section-h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(30px,4vw,44px);text-transform:uppercase;color:var(--navy);letter-spacing:.02em;line-height:1}
+
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.step{text-align:center}
+.step-num{width:56px;height:56px;border-radius:50%;background:var(--primary);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;color:var(--white);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.step h4{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;text-transform:uppercase;color:var(--navy);margin-bottom:6px}
+.step p{font-size:13px;color:var(--gray);line-height:1.65}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.card{background:var(--white);padding:30px 24px;position:relative;overflow:hidden;transition:transform .2s}
+.card:hover{transform:translateY(-4px)}
+.card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--primary);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.card:hover::before{transform:scaleX(1)}
+.card-icon{font-size:30px;margin-bottom:14px;display:block}
+.card h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;color:var(--navy);margin-bottom:6px}
+.card p{font-size:13px;color:var(--gray);line-height:1.65}
+
+.areas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:36px}
+.area-card{background:var(--off-white);padding:22px 18px;text-align:center;border-bottom:3px solid transparent;transition:all .2s}
+.area-card:hover{border-color:var(--primary);background:var(--white)}
+.area-card h4{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;text-transform:uppercase;color:var(--navy);margin-bottom:4px}
+.area-card p{font-size:12px;color:var(--gray)}
+
+.cta{background:var(--primary);padding:64px 8%;text-align:center;position:relative;overflow:hidden}
+.cta::before{content:'CALL NOW';position:absolute;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:200px;color:rgba(255,255,255,.05);top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none}
+.cta h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(36px,5vw,56px);text-transform:uppercase;color:var(--white);line-height:.95;margin-bottom:14px;position:relative}
+.cta p{font-size:17px;color:rgba(255,255,255,.85);margin-bottom:30px;position:relative}
+.btn-white{display:inline-flex;align-items:center;gap:12px;background:var(--white);color:var(--primary);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;letter-spacing:.04em;text-transform:uppercase;padding:20px 44px;text-decoration:none;position:relative;transition:all .15s}
+.btn-white:hover{transform:scale(1.03);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+
+.disclaimer{background:#060D1A;padding:24px 8%;border-top:1px solid rgba(255,255,255,.05)}
+.disclaimer p{font-size:12px;color:#3A4A5C;line-height:1.7;text-align:center;max-width:900px;margin:0 auto}
+footer{background:#070E1A;padding:32px 8%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.footer-links{display:flex;gap:24px;align-items:center}
+.footer-links a{font-size:13px;color:#3A4A5C;text-decoration:none;transition:color .15s}
+.footer-links a:hover{color:var(--gray)}
+.footer-copy{font-size:12px;color:#2D3748}
+
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .hero-right{padding:0 6% 60px}
+  .steps{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr 1fr}
+  .areas-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .header-right .live-badge{display:none}
+  .steps,.grid{grid-template-columns:1fr}
+  .areas-grid{grid-template-columns:1fr 1fr}
+  .bar{gap:16px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="#" class="logo">Handyman<span>Tampa</span></a>
+  <div class="header-right">
+    <div class="live-badge"><div class="pulse-dot"></div>Operators Standing By</div>
+    <a href="tel:+18135550000" class="btn-call">📞 (813) 555-0000</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="tag">🔧 Tampa Bay — Same-Day Handyman Service</div>
+    <h1 class="hero-h1">Your Trusted<span class="accent">Tampa Handyman</span></h1>
+    <p class="hero-sub">One call handles it all — <strong>repairs, assembly, painting, and more</strong>. Fast, reliable service from experienced local pros.</p>
+    <div>
+      <a href="tel:+18135550000" class="btn-primary"><span class="phone-icon">📞</span>Call (813) 555-0000</a>
+      <div class="trust-line">
+        <div class="trust-item"><span class="check">✓</span> Same-day service</div>
+        <div class="trust-item"><span class="check">✓</span> Licensed & insured</div>
+        <div class="trust-item"><span class="check">✓</span> Free estimates</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="form-card">
+      <h2>Book a Handyman</h2>
+      <p class="form-intro">Tell us what you need and we'll match you with a local pro — <strong>fast and free.</strong></p>
+      <form id="contact-form" name="lead-form" onsubmit="return false;">
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="fname" name="name" placeholder="John Smith" />
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="fphone" name="phone" placeholder="(813) 555-0000" />
+        </div>
+        <div class="field">
+          <label>Email (optional)</label>
+          <input type="email" id="femail" name="email" placeholder="you@email.com" />
+        </div>
+        <div class="field">
+          <label>Your City</label>
+          <select id="fcity" name="city">
+            <option value="">Select your city...</option>
+            <option>Tampa</option><option>Wesley Chapel</option><option>Zephyrhills</option>
+            <option>Land O' Lakes</option><option>New Port Richey</option><option>Dade City</option>
+            <option>Spring Hill</option><option>Lutz</option><option>Other Pasco / Hillsborough</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Service Needed</label>
+          <select id="fdamage" name="service-type">
+            <option value="">Select a service...</option>
+            <option>General Repair &amp; Maintenance</option>
+            <option>Plumbing Repairs</option>
+            <option>Electrical Repairs</option>
+            <option>Drywall &amp; Painting</option>
+            <option>Furniture Assembly</option>
+            <option>TV Mounting &amp; Installation</option>
+            <option>Pressure Washing</option>
+            <option>Other Handyman Services</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Brief Description (optional)</label>
+          <textarea id="fdesc" name="description" placeholder="e.g. Need a faucet replaced and drywall patched..."></textarea>
+        </div>
+        <button type="button" class="btn-submit" onclick="submitForm()">🔧 Get a Free Quote</button>
+        <p class="form-footer">🔒 Your information is private and never sold. By submitting you agree to be contacted by a local handyman service.</p>
+      </form>
+      <div class="success-msg" id="success-msg">
+        <h3>✅ Request Received!</h3>
+        <p>A local handyman will reach out shortly. For immediate help, call <strong>(813) 555-0000</strong> now.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="bar bar-dark">
+  <div class="bar-item">HandymanTampa is a <strong>free referral service</strong> — we connect you with vetted, licensed local handymen at no cost to you.</div>
+</div>
+
+<div class="bar bar-primary">
+  <div class="bar-item">⚡ Same-Day Service</div>
+  <div class="bar-item">🛡️ Licensed & Insured</div>
+  <div class="bar-item">📍 Tampa Bay Coverage</div>
+  <div class="bar-item">✅ Free Estimates</div>
+</div>
+
+<section class="section" style="background:var(--white)">
+  <div class="section-header">
+    <div class="section-tag">Simple Process</div>
+    <h2 class="section-h2">How It Works</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>Tell Us What You Need</h4>
+      <p>Call or fill out the form — describe the job and your location. Takes less than 2 minutes.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>We Match You</h4>
+      <p>We connect you with the best available licensed handyman who fits your specific job.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Get a Free Quote</h4>
+      <p>Your matched pro reaches out with transparent, upfront pricing — no hidden fees.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>Job Done Right</h4>
+      <p>The work gets done on your schedule, and we follow up to make sure you're satisfied.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <div class="section-tag">Services</div>
+    <h2 class="section-h2">What We Handle</h2>
+  </div>
+  <div class="grid">
+    <div class="card"><span class="card-icon">🔧</span><h3>General Repairs</h3><p>From squeaky doors to broken tiles — we fix it all. No job is too small for our experienced team.</p></div>
+    <div class="card"><span class="card-icon">🔩</span><h3>Furniture Assembly</h3><p>Flat-pack furniture got you frustrated? We assemble IKEA, Wayfair, and more quickly and correctly.</p></div>
+    <div class="card"><span class="card-icon">🎨</span><h3>Drywall & Painting</h3><p>Patch holes, repair texture, and refresh any room with professional-quality painting and finish work.</p></div>
+    <div class="card"><span class="card-icon">🔌</span><h3>Electrical Repairs</h3><p>Light fixtures, switches, outlets, and ceiling fans installed or repaired by qualified pros.</p></div>
+    <div class="card"><span class="card-icon">🔧</span><h3>Plumbing Repairs</h3><p>Faucet replacements, toilet repairs, drain cleaning, and minor plumbing fixes done right.</p></div>
+    <div class="card"><span class="card-icon">📺</span><h3>TV Mounting</h3><p>Secure, level TV mounting on any wall surface including hidden cable management.</p></div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--white)">
+  <div class="section-header">
+    <div class="section-tag">Coverage</div>
+    <h2 class="section-h2">We Serve All of Tampa Bay</h2>
+  </div>
+  <div class="areas-grid">
+    <div class="area-card"><h4>Tampa</h4><p>Hillsborough County</p></div>
+    <div class="area-card"><h4>Wesley Chapel</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Zephyrhills</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Land O' Lakes</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>New Port Richey</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Dade City</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Spring Hill</h4><p>Hernando County</p></div>
+    <div class="area-card"><h4>Lutz</h4><p>Hillsborough / Pasco</p></div>
+  </div>
+</section>
+
+<section class="cta">
+  <h2>Need Something Fixed?<br>We've Got You Covered.</h2>
+  <p>Call now for a free quote — same-day service available throughout Tampa Bay.</p>
+  <a href="tel:+18135550000" class="btn-white">📞 Call (813) 555-0000</a>
+</section>
+
+<div class="disclaimer">
+  <p>HandymanTampa is a <strong>free contractor referral and marketing service</strong>, not a licensed handyman service. We connect homeowners with independent, third-party handymen who are licensed and insured. HandymanTampa does not perform handyman work and is not responsible for the work of referred contractors. All contractors in our network are independently licensed and insured. By submitting your information, you consent to be contacted by a local handyman. This site is operated by [YOUR LLC NAME], a Florida limited liability company. For questions, contact us at [YOUR EMAIL].</p>
+</div>
+
+<footer>
+  <a href="#" class="logo">Handyman<span>Tampa</span></a>
+  <div class="footer-links">
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms of Service</a>
+    <a href="#">Service Areas</a>
+    <a href="tel:+18135550000">Call Now</a>
+  </div>
+  <div class="footer-copy">© 2026 Handyman Tampa. All rights reserved.</div>
+</footer>
+
+<script>
+function submitForm() {
+  const n=document.getElementById('fname').value.trim(),p=document.getElementById('fphone').value.trim(),c=document.getElementById('fcity').value;
+  if(!n||!p||!c){alert('Please enter your name, phone number, and city so we can connect you with a local handyman.');return}
+  const d={name:n,phone:p,email:document.getElementById('femail')?.value||null,city:document.getElementById('fcity')?.value,damage_type:document.getElementById('fdamage')?.value||'',description:document.getElementById('fdesc')?.value||'',source:'handyman'};
+  document.querySelector('.success-msg').style.display='block';
+  document.getElementById('contact-form').reset();
+  fetch('https://candid-empanada-1cbbe5.netlify.app/.netlify/functions/submit-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(()=>{});
+}
+</script>
+</body>
+</html>

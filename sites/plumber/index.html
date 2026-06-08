@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Reliable plumbers in Tampa Bay. Leak repair, drain cleaning, water heater service, and emergency plumbing. 24/7 available.">
+<title>Plumber Tampa | Expert Plumbing Services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="dns-prefetch" href="//aqafvfzsybcqfxqklqsd.supabase.co">
+<link rel="preconnect" href="//aqafvfzsybcqfxqklqsd.supabase.co">
+<link rel="dns-prefetch" href="//candid-empanada-1cbbe5.netlify.app">
+<link rel="preconnect" href="//candid-empanada-1cbbe5.netlify.app">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--teal:#0D9488;--teal-dark:#0F766E;--teal-light:#CCFBF1;--navy:#0A1628;--navy-light:#162A50;--white:#FFF;--off-white:#F5F3EE;--gray:#8A96A8;--light-gray:#E8EAF0;--text:#1A1E2E;--green:#059669;--green-light:#ECFDF5}
+  html{scroll-behavior:smooth}
+  body{font-family:'Barlow',sans-serif;background:var(--off-white);color:var(--text);overflow-x:hidden}
+
+  header{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;border-bottom:2px solid var(--teal)}
+  .logo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;color:var(--white);letter-spacing:.03em;text-transform:uppercase;text-decoration:none}
+  .logo span{color:var(--teal)}
+  .header-right{display:flex;align-items:center;gap:14px}
+  .live-badge{display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;color:#6EE7B7;text-transform:uppercase;letter-spacing:.06em}
+  .pulse-dot{width:8px;height:8px;border-radius:50%;background:#6EE7B7;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+  .btn-call{background:var(--teal);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:.05em;text-transform:uppercase;padding:10px 20px;border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:background .15s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)}
+  .btn-call:hover{background:var(--teal-dark)}
+
+  .hero{margin-top:64px;min-height:calc(100vh - 64px);background:linear-gradient(135deg,var(--navy) 0%,#0B2A36 50%,var(--navy) 100%);display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(13,148,136,.04) 40px,rgba(13,148,136,.04) 41px);pointer-events:none}
+  .hero-left{padding:80px 5% 80px 8%;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+  .emergency-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(13,148,136,.15);border:1px solid rgba(13,148,136,.4);color:#5EEAD4;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;width:fit-content;margin-bottom:28px;animation:fadeInUp .6s ease forwards}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .hero-h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(50px,5.5vw,78px);line-height:.92;text-transform:uppercase;color:var(--white);margin-bottom:24px;animation:fadeInUp .6s .1s ease both}
+  .hero-h1 .accent{color:#5EEAD4;display:block}
+  .hero-sub{font-size:17px;color:#8FA8C8;line-height:1.65;max-width:420px;margin-bottom:36px;animation:fadeInUp .6s .2s ease both}
+  .hero-sub strong{color:var(--white);font-weight:600}
+  .cta-stack{display:flex;flex-direction:column;gap:12px;animation:fadeInUp .6s .3s ease both}
+  .btn-primary{display:flex;align-items:center;gap:10px;background:var(--teal);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:.04em;text-transform:uppercase;padding:20px 36px;border:none;cursor:pointer;text-decoration:none;width:fit-content;transition:all .15s}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(13,148,136,.5)}
+  .phone-icon{animation:ring 4s 3s infinite;display:inline-block}
+  @keyframes ring{0%,100%{transform:rotate(0)}5%{transform:rotate(15deg)}10%{transform:rotate(-15deg)}15%{transform:rotate(10deg)}20%{transform:rotate(0)}}
+  .trust-line{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .trust-item{display:flex;align-items:center;gap:6px;font-size:13px;color:#6A86A8}
+  .trust-item .check{color:#6EE7B7}
+
+  .hero-right{padding:60px 8% 60px 4%;display:flex;align-items:center;justify-content:center;position:relative;z-index:2}
+  .form-card{background:var(--white);width:100%;max-width:400px;padding:36px;position:relative}
+  .form-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--teal)}
+  .form-card h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;text-transform:uppercase;color:var(--text);margin-bottom:6px}
+  .form-card .form-intro{font-size:14px;color:var(--gray);margin-bottom:22px;line-height:1.5}
+  .form-card .form-intro strong{color:var(--teal)}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--light-gray);background:#FAFAFA;font-family:'Barlow',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color .15s;-webkit-appearance:none}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);background:var(--white)}
+  .field textarea{resize:vertical;min-height:75px}
+  .btn-submit{width:100%;background:var(--teal);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;letter-spacing:.04em;text-transform:uppercase;padding:16px;border:none;cursor:pointer;transition:all .15s;margin-top:4px}
+  .btn-submit:hover{background:var(--teal-dark);transform:translateY(-1px)}
+  .form-footer{text-align:center;font-size:11px;color:#B0BAC8;margin-top:10px;line-height:1.5}
+  .success-msg{display:none;background:var(--green-light);border:2px solid var(--green);padding:24px;text-align:center}
+  .success-msg h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;text-transform:uppercase;color:#065F46;margin-bottom:8px}
+  .success-msg p{font-size:14px;color:#047857;line-height:1.6}
+
+  .urgency-bar{background:var(--teal);padding:14px 5%;display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap}
+  .urgency-item{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--white);text-transform:uppercase;letter-spacing:.04em}
+
+  .services{background:var(--off-white);padding:80px 8%}
+  .section-header{text-align:center;margin-bottom:52px}
+  .section-tag{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+  .section-tag::before,.section-tag::after{content:'—';margin:0 8px;opacity:.5}
+  .section-h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(34px,4vw,50px);text-transform:uppercase;color:var(--navy);letter-spacing:.02em;line-height:1}
+  .services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+  .service-card{background:var(--white);padding:34px 26px;position:relative;overflow:hidden;transition:transform .2s}
+  .service-card:hover{transform:translateY(-4px)}
+  .service-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--teal);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+  .service-card:hover::before{transform:scaleX(1)}
+  .service-icon{font-size:34px;margin-bottom:16px;display:block}
+  .service-card h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:21px;text-transform:uppercase;color:var(--navy);margin-bottom:8px}
+  .service-card p{font-size:14px;color:var(--gray);line-height:1.7}
+
+  .areas{background:var(--white);padding:80px 8%}
+  .areas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:48px}
+  .area-card{background:var(--off-white);padding:24px 20px;text-align:center;border-bottom:3px solid transparent;transition:all .2s;cursor:default}
+  .area-card:hover{border-color:var(--teal);background:var(--white)}
+  .area-card h4{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;text-transform:uppercase;color:var(--navy);margin-bottom:4px}
+  .area-card p{font-size:13px;color:var(--gray)}
+
+  .bottom-cta{background:var(--teal);padding:80px 8%;text-align:center;position:relative;overflow:hidden}
+  .bottom-cta::before{content:'CALL NOW';position:absolute;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:200px;color:rgba(255,255,255,.05);top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none}
+  .bottom-cta h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(40px,5vw,66px);text-transform:uppercase;color:var(--white);line-height:.95;margin-bottom:16px;position:relative}
+  .bottom-cta p{font-size:18px;color:rgba(255,255,255,.8);margin-bottom:36px;position:relative}
+  .btn-white{display:inline-flex;align-items:center;gap:12px;background:var(--white);color:var(--teal);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;letter-spacing:.04em;text-transform:uppercase;padding:22px 48px;text-decoration:none;position:relative;transition:all .15s}
+  .btn-white:hover{transform:scale(1.03);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+
+  .disclaimer{background:#060D1A;padding:28px 8%;border-top:1px solid rgba(255,255,255,.05)}
+  .disclaimer p{font-size:12px;color:#3A4A5C;line-height:1.7;text-align:center;max-width:900px;margin:0 auto}
+
+  footer{background:#070E1A;padding:36px 8%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;border-top:1px solid rgba(255,255,255,.04)}
+  .footer-links{display:flex;gap:24px;align-items:center}
+  .footer-links a{font-size:13px;color:#3A4A5C;text-decoration:none;transition:color .15s}
+  .footer-links a:hover{color:var(--gray)}
+  .footer-copy{font-size:12px;color:#2D3748}
+
+  @media(max-width:900px){
+    .hero{grid-template-columns:1fr}
+    .hero-right{padding:0 6% 60px}
+    .services-grid{grid-template-columns:1fr 1fr}
+    .areas-grid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:600px){
+    .header-right .live-badge{display:none}
+    .services-grid{grid-template-columns:1fr}
+    .areas-grid{grid-template-columns:1fr 1fr}
+    .urgency-bar{gap:16px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="#" class="logo">Plumber<span>Tampa</span></a>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="pulse-dot"></div>
+      Operators Standing By
+    </div>
+    <a href="tel:+1YOURNUMBER" class="btn-call">📞 (YOUR NUMBER)</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="emergency-tag">🔧 Tampa Bay — 24/7 Emergency Plumbing</div>
+    <h1 class="hero-h1">
+      Tampa's Go-To
+      <span class="accent">Plumbing Team</span>
+    </h1>
+    <p class="hero-sub">
+      From leaky faucets to burst pipes — we handle it all. <strong>Fast, reliable, and affordable.</strong>
+    </p>
+    <div class="cta-stack">
+      <a href="tel:+1YOURNUMBER" class="btn-primary">
+        <span class="phone-icon">📞</span>
+        Call for Immediate Help
+      </a>
+      <div class="trust-line">
+        <div class="trust-item"><span class="check">✓</span> Free estimate</div>
+        <div class="trust-item"><span class="check">✓</span> Licensed plumbers</div>
+        <div class="trust-item"><span class="check">✓</span> Same-day service</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="form-card">
+      <h2>Get Help Now</h2>
+      <p class="form-intro">We'll connect you with a licensed plumber and they'll call you back in <strong>under 5 minutes.</strong></p>
+      <form id="contact-form" name="lead-form" onsubmit="return false;">
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="fname" name="name" placeholder="John Smith" />
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="fphone" name="phone" placeholder="(813) 555-0000" />
+        </div>
+        <div class="field">
+          <label>Email (optional)</label>
+          <input type="email" id="femail" name="email" placeholder="you@email.com" />
+        </div>
+        <div class="field">
+          <label>Your City</label>
+          <select id="fcity" name="city">
+            <option value="">Select your city...</option>
+            <option>Tampa</option>
+            <option>Wesley Chapel</option>
+            <option>Zephyrhills</option>
+            <option>Land O' Lakes</option>
+            <option>New Port Richey</option>
+            <option>Dade City</option>
+            <option>Spring Hill</option>
+            <option>Lutz</option>
+            <option>Other Pasco / Hillsborough</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Type of Plumbing Issue</label>
+          <select id="fdamage" name="damage-type">
+            <option value="">What's the issue?</option>
+            <option>Leak Detection & Repair</option>
+            <option>Drain Cleaning & Snaking</option>
+            <option>Water Heater Repair/Install</option>
+            <option>Pipe Repair & Replacement</option>
+            <option>Toilet & Sink Repair</option>
+            <option>Sewer Line Service</option>
+            <option>Emergency Plumbing</option>
+            <option>Other Plumbing Work</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Brief Description (optional)</label>
+          <textarea id="fdesc" name="description" placeholder="e.g. Kitchen sink leaking, water under cabinet..."></textarea>
+        </div>
+        <button type="button" class="btn-submit" onclick="submitForm()">🔧 Connect With a Plumber Now</button>
+        <p class="form-footer">🔒 Your information is private and never sold. By submitting you agree to be contacted by a local plumbing contractor.</p>
+      </form>
+      <div class="success-msg" id="success-msg">
+        <h3>✅ Request Received!</h3>
+        <p>A licensed plumber will call you within <strong>5 minutes</strong>. For immediate help, call <strong>(YOUR NUMBER)</strong> now.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="urgency-bar">
+  <div class="urgency-item">⚡ Same-Day Service</div>
+  <div class="urgency-item">🛡️ Licensed & Insured</div>
+  <div class="urgency-item">📍 Tampa Bay Coverage</div>
+  <div class="urgency-item">✅ Upfront Pricing</div>
+</div>
+
+<section class="services">
+  <div class="section-header">
+    <div class="section-tag">Services</div>
+    <h2 class="section-h2">Expert Plumbing Services</h2>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <span class="service-icon">🔍</span>
+      <h3>Leak Detection & Repair</h3>
+      <p>Hidden leaks waste water and damage your home. We use advanced technology to locate and fix leaks fast — in walls, under slabs, and outdoors.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🌀</span>
+      <h3>Drain Cleaning & Snaking</h3>
+      <p>Slow or clogged drains? Our professional drain cleaning and snaking removes buildup, tree roots, and blockages to restore flow.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🔥</span>
+      <h3>Water Heater Repair/Install</h3>
+      <p>No hot water? We repair and install all types — tank, tankless, and hybrid. Fast service to get your hot water back.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🔧</span>
+      <h3>Pipe Repair & Replacement</h3>
+      <p>Burst, corroded, or leaking pipes can cause major damage. We handle repiping, pipe repair, and slab leak fixes.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🚽</span>
+      <h3>Toilet & Sink Repair</h3>
+      <p>Running toilets, clogged sinks, garbage disposal issues, and faucet replacements — we fix it all.</p>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🏠</span>
+      <h3>Sewer Line Service</h3>
+      <p>Sewer line backups and breaks are serious. We offer camera inspections, hydro-jetting, and full sewer line repair or replacement.</p>
+    </div>
+  </div>
+</section>
+
+<section class="areas">
+  <div class="section-header">
+    <div class="section-tag">Coverage</div>
+    <h2 class="section-h2">We Serve All of Tampa Bay</h2>
+  </div>
+  <div class="areas-grid">
+    <div class="area-card"><h4>Tampa</h4><p>Hillsborough County</p></div>
+    <div class="area-card"><h4>Wesley Chapel</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Zephyrhills</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Land O' Lakes</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>New Port Richey</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Dade City</h4><p>Pasco County</p></div>
+    <div class="area-card"><h4>Spring Hill</h4><p>Hernando County</p></div>
+    <div class="area-card"><h4>Lutz</h4><p>Hillsborough / Pasco</p></div>
+  </div>
+</section>
+
+<section class="bottom-cta">
+  <h2>Plumbing Problem?<br>We'll Get It Fixed.</h2>
+  <p>Call now — our referral service is completely free to homeowners.</p>
+  <a href="tel:+1YOURNUMBER" class="btn-white">
+    📞 Call for Immediate Help
+  </a>
+</section>
+
+<div class="disclaimer">
+  <p>
+    Plumber Tampa is a <strong>free contractor referral and marketing service</strong>, not a licensed plumbing contractor. We connect homeowners with independent, third-party plumbing contractors who are licensed and insured in the State of Florida. Plumber Tampa does not perform plumbing work and is not responsible for the work of referred contractors. All contractors in our network are independently licensed and insured. By submitting your information, you consent to be contacted by a local plumbing contractor. This site is operated by [YOUR LLC NAME], a Florida limited liability company. For questions, contact us at [YOUR EMAIL].
+  </p>
+</div>
+
+<footer>
+  <a href="#" class="logo">Plumber<span>Tampa</span></a>
+  <div class="footer-links">
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms of Service</a>
+    <a href="#">Service Areas</a>
+    <a href="tel:+1YOURNUMBER">Call Now</a>
+  </div>
+  <div class="footer-copy">© 2026 Plumber Tampa. All rights reserved.</div>
+</footer>
+
+<script>
+let userLat = '';
+let userLng = '';
+
+function submitForm() {
+  const name = document.getElementById('fname').value.trim();
+  const phone = document.getElementById('fphone').value.trim();
+  const city = document.getElementById('fcity').value;
+
+  if (!name || !phone || !city) {
+    alert('Please enter your name, phone number, and city so we can connect you with a local plumber.');
+    return;
+  }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (p) => { userLat = p.coords.latitude; userLng = p.coords.longitude; },
+      () => {},
+      { timeout: 2000, maximumAge: 30000 }
+    );
+  }
+
+  const form = document.getElementById('contact-form');
+  const data = {
+    name, phone,
+    email: document.getElementById('femail')?.value || null,
+    city: document.getElementById('fcity')?.value,
+    damage_type: document.getElementById('fdamage')?.value || '',
+    description: document.getElementById('fdesc')?.value || '',
+    lat: userLat || null,
+    lng: userLng || null,
+    source: 'plumber',
+  };
+
+  document.querySelector('.success-msg').style.display = 'block';
+  form.reset();
+
+  fetch('https://candid-empanada-1cbbe5.netlify.app/.netlify/functions/submit-lead', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>

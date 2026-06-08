@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="24/7 emergency water damage restoration referrals in Tampa & Pasco County. We connect you with licensed, insured local professionals. Free assessment, insurance handled.">
-<title>Tampa Water Damage Restoration | 24/7 Emergency Referral Network</title>
+<meta name="description" content="Professional HVAC services in Tampa Bay. AC repair, installation, furnace service, and more. Same-day service available.">
+<title>HVAC Tampa | Heating & Cooling Services</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="dns-prefetch" href="//aqafvfzsybcqfxqklqsd.supabase.co">
 <link rel="preconnect" href="//aqafvfzsybcqfxqklqsd.supabase.co">
@@ -15,9 +15,9 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --red: #D92B2B;
-    --red-dark: #A51F1F;
-    --red-light: #FF3B3B;
+    --primary: #2563EB;
+    --primary-dark: #1D4ED8;
+    --primary-light: #DBEAFE;
     --navy: #0A1628;
     --navy-mid: #0F2040;
     --navy-light: #162A50;
@@ -38,7 +38,6 @@
     overflow-x: hidden;
   }
 
-  /* ── HEADER ── */
   header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -49,7 +48,7 @@
     justify-content: space-between;
     padding: 0 5%;
     height: 64px;
-    border-bottom: 2px solid var(--red);
+    border-bottom: 2px solid var(--primary);
   }
 
   .logo {
@@ -61,7 +60,7 @@
     text-transform: uppercase;
     text-decoration: none;
   }
-  .logo span { color: var(--red-light); }
+  .logo span { color: var(--primary); }
 
   .header-right {
     display: flex;
@@ -94,7 +93,7 @@
   }
 
   .btn-call {
-    background: var(--red);
+    background: var(--primary);
     color: var(--white);
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
@@ -109,9 +108,8 @@
     transition: background 0.15s;
     clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
   }
-  .btn-call:hover { background: var(--red-light); }
+  .btn-call:hover { background: var(--primary-dark); }
 
-  /* ── HERO ── */
   .hero {
     margin-top: 64px;
     min-height: calc(100vh - 64px);
@@ -126,12 +124,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-      -45deg,
-      transparent, transparent 40px,
-      rgba(217,43,43,0.04) 40px,
-      rgba(217,43,43,0.04) 41px
-    );
+    background: linear-gradient(135deg, rgba(37,99,235,0.12) 0%, transparent 50%, rgba(37,99,235,0.06) 100%);
     pointer-events: none;
   }
 
@@ -148,9 +141,9 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(217,43,43,0.15);
-    border: 1px solid rgba(217,43,43,0.4);
-    color: #FF8080;
+    background: rgba(37,99,235,0.15);
+    border: 1px solid rgba(37,99,235,0.4);
+    color: var(--primary-light);
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 600;
     font-size: 13px;
@@ -177,7 +170,7 @@
     margin-bottom: 24px;
     animation: fadeInUp 0.6s 0.1s ease both;
   }
-  .hero-h1 .accent { color: var(--red-light); display: block; }
+  .hero-h1 .accent { color: var(--primary); display: block; }
 
   .hero-sub {
     font-size: 17px;
@@ -200,7 +193,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: var(--red);
+    background: var(--primary);
     color: var(--white);
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 800;
@@ -216,7 +209,7 @@
     position: relative;
     overflow: hidden;
   }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(217,43,43,0.5); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.5); }
 
   .phone-icon { animation: ring 4s 3s infinite; display:inline-block; }
   @keyframes ring {
@@ -242,7 +235,6 @@
   }
   .trust-item .check { color: #6EE7B7; }
 
-  /* ── HERO FORM ── */
   .hero-right {
     padding: 60px 8% 60px 4%;
     display: flex;
@@ -264,7 +256,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: var(--red);
+    background: var(--primary);
   }
 
   .form-card h2 {
@@ -281,7 +273,7 @@
     margin-bottom: 22px;
     line-height: 1.5;
   }
-  .form-card .form-intro strong { color: var(--red); }
+  .form-card .form-intro strong { color: var(--primary); }
 
   .field { margin-bottom: 13px; }
   .field label {
@@ -309,12 +301,12 @@
   }
   .field input:focus,
   .field select:focus,
-  .field textarea:focus { border-color: var(--red); background: var(--white); }
+  .field textarea:focus { border-color: var(--primary); background: var(--white); }
   .field textarea { resize: vertical; min-height: 75px; }
 
   .btn-submit {
     width: 100%;
-    background: var(--red);
+    background: var(--primary);
     color: var(--white);
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 800;
@@ -327,7 +319,7 @@
     transition: all 0.15s;
     margin-top: 4px;
   }
-  .btn-submit:hover { background: var(--red-dark); transform: translateY(-1px); }
+  .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
   .form-footer {
     text-align: center;
@@ -354,11 +346,10 @@
   }
   .success-msg p { font-size: 14px; color: #047857; line-height: 1.6; }
 
-  /* ── REFERRAL PROMISE BANNER ── */
   .promise-bar {
     background: var(--navy-light);
-    border-top: 2px solid rgba(217,43,43,0.3);
-    border-bottom: 2px solid rgba(217,43,43,0.3);
+    border-top: 2px solid rgba(37,99,235,0.3);
+    border-bottom: 2px solid rgba(37,99,235,0.3);
     padding: 18px 5%;
     display: flex;
     align-items: center;
@@ -377,9 +368,8 @@
   }
   .promise-text strong { color: #6EE7B7; }
 
-  /* ── URGENCY BAR ── */
   .urgency-bar {
-    background: var(--red);
+    background: var(--primary);
     padding: 14px 5%;
     display: flex;
     align-items: center;
@@ -399,8 +389,7 @@
     letter-spacing: 0.04em;
   }
 
-  /* ── HOW IT WORKS ── */
-  .how-it-works {
+  .benefits {
     background: var(--white);
     padding: 80px 8%;
   }
@@ -413,7 +402,7 @@
     font-size: 13px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--red);
+    color: var(--primary);
     margin-bottom: 12px;
   }
   .section-tag::before, .section-tag::after { content: '—'; margin: 0 8px; opacity: 0.5; }
@@ -427,78 +416,32 @@
     line-height: 1;
   }
 
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    position: relative;
-  }
-  .steps::before {
-    content: '';
-    position: absolute;
-    top: 32px;
-    left: 12.5%; right: 12.5%;
-    height: 2px;
-    background: linear-gradient(90deg, var(--red), rgba(217,43,43,0.15));
-  }
-  .step { padding: 0 20px; text-align: center; }
-  .step-num {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    background: var(--red);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 26px;
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
-    position: relative;
-    z-index: 1;
-  }
-  .step h4 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800;
-    font-size: 18px;
-    text-transform: uppercase;
-    color: var(--navy);
-    margin-bottom: 8px;
-  }
-  .step p { font-size: 13px; color: var(--gray); line-height: 1.65; }
-
-  /* ── WHAT WE CONNECT YOU TO ── */
-  .services {
-    background: var(--off-white);
-    padding: 80px 8%;
-  }
-
-  .services-grid {
+  .benefits-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 2px;
   }
-  .service-card {
-    background: var(--white);
+  .benefit-card {
+    background: var(--off-white);
     padding: 34px 26px;
     position: relative;
     overflow: hidden;
     transition: transform 0.2s;
   }
-  .service-card:hover { transform: translateY(-4px); }
-  .service-card::before {
+  .benefit-card:hover { transform: translateY(-4px); }
+  .benefit-card::before {
     content: '';
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 3px;
-    background: var(--red);
+    background: var(--primary);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s;
   }
-  .service-card:hover::before { transform: scaleX(1); }
-  .service-icon { font-size: 34px; margin-bottom: 16px; display: block; }
-  .service-card h3 {
+  .benefit-card:hover::before { transform: scaleX(1); }
+  .benefit-icon { font-size: 34px; margin-bottom: 16px; display: block; }
+  .benefit-card h3 {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 800;
     font-size: 21px;
@@ -506,9 +449,8 @@
     color: var(--navy);
     margin-bottom: 8px;
   }
-  .service-card p { font-size: 14px; color: var(--gray); line-height: 1.7; }
+  .benefit-card p { font-size: 14px; color: var(--gray); line-height: 1.7; }
 
-  /* ── PARTNER PROMISE ── */
   .partner-promise {
     background: var(--navy);
     padding: 80px 8%;
@@ -527,7 +469,7 @@
     line-height: 0.95;
     margin-bottom: 20px;
   }
-  .pp-text h2 em { color: var(--red-light); font-style: normal; display: block; }
+  .pp-text h2 em { color: var(--primary); font-style: normal; display: block; }
   .pp-text p { font-size: 16px; color: #6A86A8; line-height: 1.7; margin-bottom: 28px; }
 
   .pp-list { display: flex; flex-direction: column; gap: 14px; }
@@ -541,7 +483,7 @@
   }
   .pp-check {
     width: 26px; height: 26px;
-    background: var(--red);
+    background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -573,7 +515,6 @@
   }
   .cred-box-sub { font-size: 12px; color: #4A6080; line-height: 1.5; }
 
-  /* ── SERVICE AREAS ── */
   .areas {
     background: var(--white);
     padding: 80px 8%;
@@ -592,7 +533,7 @@
     transition: all 0.2s;
     cursor: default;
   }
-  .area-card:hover { border-color: var(--red); background: var(--white); }
+  .area-card:hover { border-color: var(--primary); background: var(--white); }
   .area-card h4 {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 800;
@@ -603,7 +544,6 @@
   }
   .area-card p { font-size: 13px; color: var(--gray); }
 
-  /* ── INSURANCE ── */
   .insurance {
     background: var(--off-white);
     padding: 60px 8%;
@@ -637,50 +577,15 @@
     letter-spacing: 0.04em;
   }
 
-  /* ── TESTIMONIALS ── */
-  .testimonials {
-    background: var(--navy);
-    padding: 80px 8%;
-  }
-  .testimonials .section-h2 { color: var(--white); }
-  .reviews-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    margin-top: 48px;
-  }
-  .review-card {
-    background: var(--navy-light);
-    padding: 30px 26px;
-  }
-  .stars { color: #F59E0B; font-size: 17px; margin-bottom: 14px; letter-spacing: 2px; }
-  .review-text { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.75; margin-bottom: 20px; font-style: italic; }
-  .review-author { display: flex; align-items: center; gap: 12px; }
-  .author-avatar {
-    width: 38px; height: 38px;
-    background: var(--red);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    color: var(--white);
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-  .author-name { font-weight: 600; font-size: 14px; color: var(--white); }
-  .author-loc { font-size: 12px; color: #4A6080; margin-top: 2px; }
-
-  /* ── BOTTOM CTA ── */
   .bottom-cta {
-    background: var(--red);
+    background: var(--primary);
     padding: 80px 8%;
     text-align: center;
     position: relative;
     overflow: hidden;
   }
   .bottom-cta::before {
-    content: 'ACT NOW';
+    content: 'CALL NOW';
     position: absolute;
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 900;
@@ -707,7 +612,7 @@
     align-items: center;
     gap: 12px;
     background: var(--white);
-    color: var(--red);
+    color: var(--primary);
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 900;
     font-size: 26px;
@@ -720,7 +625,6 @@
   }
   .btn-white:hover { transform: scale(1.03); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
 
-  /* ── DISCLAIMER ── */
   .disclaimer {
     background: #060D1A;
     padding: 28px 8%;
@@ -736,7 +640,6 @@
   }
   .disclaimer p a { color: #4A6080; text-decoration: underline; }
 
-  /* ── FOOTER ── */
   footer {
     background: #070E1A;
     padding: 36px 8%;
@@ -752,21 +655,16 @@
   .footer-links a:hover { color: var(--gray); }
   .footer-copy { font-size: 12px; color: #2D3748; }
 
-  /* ── RESPONSIVE ── */
   @media (max-width: 900px) {
     .hero { grid-template-columns: 1fr; }
     .hero-right { padding: 0 6% 60px; }
-    .steps { grid-template-columns: 1fr 1fr; }
-    .steps::before { display: none; }
-    .services-grid { grid-template-columns: 1fr 1fr; }
+    .benefits-grid { grid-template-columns: 1fr 1fr; }
     .partner-promise { grid-template-columns: 1fr; gap: 40px; }
     .areas-grid { grid-template-columns: repeat(2, 1fr); }
-    .reviews-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
     .header-right .live-badge { display: none; }
-    .services-grid { grid-template-columns: 1fr; }
-    .steps { grid-template-columns: 1fr; }
+    .benefits-grid { grid-template-columns: 1fr; }
     .areas-grid { grid-template-columns: 1fr 1fr; }
     .credential-boxes { grid-template-columns: 1fr 1fr; }
     .urgency-bar { gap: 16px; }
@@ -775,9 +673,8 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
-  <a href="#" class="logo">Tampa<span>Restore</span></a>
+  <a href="#" class="logo">HVAC<span>Tampa</span></a>
   <div class="header-right">
     <div class="live-badge">
       <div class="pulse-dot"></div>
@@ -787,35 +684,33 @@
   </div>
 </header>
 
-<!-- HERO -->
 <section class="hero">
   <div class="hero-left">
-    <div class="emergency-tag">🚨 Tampa & Pasco County — 24/7 Emergency Network</div>
+    <div class="emergency-tag">❄️ Tampa Bay — Same-Day HVAC Service</div>
     <h1 class="hero-h1">
-      Water Damage?
-      <span class="accent">Help Is On</span>
-      The Way.
+      Stay Cool. Stay Warm.
+      <span class="accent">Tampa's HVAC Pros</span>
     </h1>
     <p class="hero-sub">
-      We connect Tampa Bay homeowners with <strong>licensed, certified local restoration professionals</strong> — fast. Free assessment, insurance handled, 60-minute response guaranteed.
+      Expert AC repair, installation, and maintenance — <strong>keeping your home comfortable year-round</strong>. Licensed, insured, and ready today.
     </p>
     <div class="cta-stack">
       <a href="tel:+1YOURNUMBER" class="btn-primary">
         <span class="phone-icon">📞</span>
-        Call for Immediate Help
+        Call for Fast Service
       </a>
       <div class="trust-line">
-        <div class="trust-item"><span class="check">✓</span> Free assessment</div>
-        <div class="trust-item"><span class="check">✓</span> Licensed pros only</div>
-        <div class="trust-item"><span class="check">✓</span> All insurance accepted</div>
+        <div class="trust-item"><span class="check">✓</span> Free estimates</div>
+        <div class="trust-item"><span class="check">✓</span> Licensed pros</div>
+        <div class="trust-item"><span class="check">✓</span> Same-day service</div>
       </div>
     </div>
   </div>
 
   <div class="hero-right">
     <div class="form-card">
-      <h2>Request Help Now</h2>
-      <p class="form-intro">We'll match you with a certified local pro and they'll call you back in <strong>under 5 minutes.</strong></p>
+      <h2>Get a Free Quote</h2>
+      <p class="form-intro">Tell us what you need and a local HVAC pro will reach out to you <strong>within minutes.</strong></p>
       <form id="contact-form" name="lead-form" onsubmit="return false;">
         <div class="field">
           <label>Your Name</label>
@@ -845,123 +740,90 @@
           </select>
         </div>
         <div class="field">
-          <label>Type of Damage</label>
+          <label>Service Needed</label>
           <select id="fdamage" name="damage-type">
-            <option value="">What happened?</option>
-            <option>Flooding / Standing Water</option>
-            <option>Burst or Leaking Pipe</option>
-            <option>Storm / Hurricane Damage</option>
-            <option>Sewage Backup</option>
-            <option>Roof Leak</option>
-            <option>Appliance Leak</option>
-            <option>Other</option>
+            <option value="">What do you need?</option>
+            <option>AC Repair & Service</option>
+            <option>AC Installation & Replacement</option>
+            <option>Furnace Repair & Service</option>
+            <option>Thermostat Replacement</option>
+            <option>Duct Cleaning & Sealing</option>
+            <option>Indoor Air Quality</option>
+            <option>Emergency HVAC Service</option>
+            <option>Other HVAC Work</option>
           </select>
         </div>
         <div class="field">
           <label>Brief Description (optional)</label>
-          <textarea id="fdesc" name="description" placeholder="e.g. Pipe burst in kitchen, water in 2 rooms..."></textarea>
+          <textarea id="fdesc" name="description" placeholder="e.g. AC blowing warm air, need new furnace install..."></textarea>
         </div>
-        <button type="button" class="btn-submit" onclick="submitForm()">🚨 Connect Me With a Pro Now</button>
-        <p class="form-footer">🔒 Your information is private and never sold. By submitting you agree to be contacted by a local restoration contractor.</p>
+        <button type="button" class="btn-submit" onclick="submitForm()">❄️ Get My Free Quote</button>
+        <p class="form-footer">🔒 Your information is private and never sold. By submitting you agree to be contacted by a local HVAC professional.</p>
       </form>
       <div class="success-msg" id="success-msg">
         <h3>✅ Request Received!</h3>
-        <p>A licensed local technician will call you within <strong>5 minutes</strong>. For immediate help, call <strong>(YOUR NUMBER)</strong> now.</p>
+        <p>A local HVAC pro will call you within <strong>minutes</strong>. For immediate help, call <strong>(YOUR NUMBER)</strong> now.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- REFERRAL PROMISE BANNER -->
 <div class="promise-bar">
   <p class="promise-text">
-    TampaRestore is a <strong>free referral service</strong> — we connect you with vetted, licensed local restoration contractors at no cost to you.
+    HVAC Tampa is a <strong>free referral service</strong> — we connect you with vetted, licensed local HVAC contractors at no cost to you.
   </p>
 </div>
 
-<!-- URGENCY BAR -->
 <div class="urgency-bar">
-  <div class="urgency-item">⚡ Same-Day Response</div>
-  <div class="urgency-item">🛡️ All Insurance Accepted</div>
+  <div class="urgency-item">⚡ Same-Day Service</div>
+  <div class="urgency-item">🛡️ Licensed & Insured</div>
   <div class="urgency-item">📍 Tampa Bay Coverage</div>
-  <div class="urgency-item">✅ Licensed Pros Only</div>
+  <div class="urgency-item">✅ Free Estimates</div>
 </div>
 
-<!-- HOW IT WORKS -->
-<section class="how-it-works">
+<section class="benefits">
   <div class="section-header">
-    <div class="section-tag">Simple Process</div>
-    <h2 class="section-h2">How TampaRestore Works</h2>
+    <div class="section-tag">Why Choose Us</div>
+    <h2 class="section-h2">Tampa Bay's Trusted HVAC Network</h2>
   </div>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <h4>Call or Submit</h4>
-      <p>Tell us your location and what happened — takes under 2 minutes. Available 24 hours a day, 7 days a week.</p>
+  <div class="benefits-grid">
+    <div class="benefit-card">
+      <span class="benefit-icon">❄️</span>
+      <h3>AC Repair & Service</h3>
+      <p>Fast diagnosis and repair for all makes and models. From refrigerant recharge to compressor replacement, we've got you covered.</p>
     </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <h4>We Match You</h4>
-      <p>We connect you with the best available licensed, insured restoration contractor in your area — immediately.</p>
+    <div class="benefit-card">
+      <span class="benefit-icon">🔧</span>
+      <h3>Installation & Replacement</h3>
+      <p>Expert installation of energy-efficient systems that lower your bills. We help you choose the right unit for your home and budget.</p>
     </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <h4>Pro Arrives Fast</h4>
-      <p>Your matched contractor arrives within 60 minutes with all the equipment needed to start work right away.</p>
+    <div class="benefit-card">
+      <span class="benefit-icon">🔥</span>
+      <h3>Furnace & Heating</h3>
+      <p>Keep your family warm when temperatures drop. Full furnace repair, maintenance, and installation services across Tampa Bay.</p>
     </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <h4>Fully Restored</h4>
-      <p>Water extracted, structure dried, mold prevented. Your contractor handles all insurance documentation.</p>
+    <div class="benefit-card">
+      <span class="benefit-icon">🌡️</span>
+      <h3>Thermostat Replacement</h3>
+      <p>Upgrade to a smart thermostat for better comfort and energy savings. Professional setup and integration with your existing system.</p>
+    </div>
+    <div class="benefit-card">
+      <span class="benefit-icon">💨</span>
+      <h3>Duct Cleaning & Sealing</h3>
+      <p>Improve air quality and system efficiency with thorough duct cleaning and professional sealing to eliminate leaks and contaminants.</p>
+    </div>
+    <div class="benefit-card">
+      <span class="benefit-icon">🌿</span>
+      <h3>Indoor Air Quality</h3>
+      <p>Air purifiers, humidifiers, and ventilation solutions that help your family breathe cleaner, healthier air all year long.</p>
     </div>
   </div>
 </section>
 
-<!-- SERVICES -->
-<section class="services">
-  <div class="section-header">
-    <div class="section-tag">Services</div>
-    <h2 class="section-h2">What Our Partner Contractors Handle</h2>
-  </div>
-  <div class="services-grid">
-    <div class="service-card">
-      <span class="service-icon">💧</span>
-      <h3>Water Extraction</h3>
-      <p>Industrial pumps and vacuums remove standing water immediately — protecting floors, walls, and your belongings from further damage.</p>
-    </div>
-    <div class="service-card">
-      <span class="service-icon">💨</span>
-      <h3>Structural Drying</h3>
-      <p>Commercial dehumidifiers and air movers dry walls, subfloors, and framing thoroughly — preventing warping and long-term issues.</p>
-    </div>
-    <div class="service-card">
-      <span class="service-icon">🦠</span>
-      <h3>Mold Prevention</h3>
-      <p>Antimicrobial treatments applied within the critical 24–48 hour window stop mold growth before it becomes a larger problem.</p>
-    </div>
-    <div class="service-card">
-      <span class="service-icon">🚽</span>
-      <h3>Sewage Cleanup</h3>
-      <p>Biohazard-trained technicians safely remove and fully disinfect sewage backups following all EPA and OSHA protocols.</p>
-    </div>
-    <div class="service-card">
-      <span class="service-icon">🌪️</span>
-      <h3>Storm & Flood Damage</h3>
-      <p>Hurricane season is real in Tampa Bay. Our network responds immediately to storm flooding, roof leaks, and wind-driven water intrusion.</p>
-    </div>
-    <div class="service-card">
-      <span class="service-icon">🏗️</span>
-      <h3>Full Reconstruction</h3>
-      <p>Drywall, flooring, cabinets, paint — our partner contractors restore your home to pre-damage condition, start to finish.</p>
-    </div>
-  </div>
-</section>
-
-<!-- PARTNER PROMISE -->
 <section class="partner-promise">
   <div class="pp-text">
-    <h2>Every Pro We Send Is <em>Fully Vetted</em></h2>
-    <p>We don't refer just anyone. Every contractor in the TampaRestore network has been screened and must meet strict standards before we connect them with homeowners.</p>
+    <h2>Every HVAC Pro We Refer Is <em>Fully Vetted</em></h2>
+    <p>We don't refer just anyone. Every contractor in the HVAC Tampa network has been screened and must meet strict standards before we connect them with homeowners.</p>
     <div class="pp-list">
       <div class="pp-item">
         <div class="pp-check">✓</div>
@@ -973,7 +835,7 @@
       </div>
       <div class="pp-item">
         <div class="pp-check">✓</div>
-        <div>IICRC certified technicians — the industry gold standard for water restoration</div>
+        <div>EPA-certified technicians for safe refrigerant handling and system service</div>
       </div>
       <div class="pp-item">
         <div class="pp-check">✓</div>
@@ -981,7 +843,7 @@
       </div>
       <div class="pp-item">
         <div class="pp-check">✓</div>
-        <div>Insurance billing expertise — they work directly with your adjuster</div>
+        <div>Upfront pricing and warranty on all parts and labor</div>
       </div>
     </div>
   </div>
@@ -993,8 +855,8 @@
     </div>
     <div class="cred-box">
       <span class="cred-box-icon">🏅</span>
-      <div class="cred-box-title">IICRC Certified</div>
-      <div class="cred-box-sub">Industry-standard certification for restoration</div>
+      <div class="cred-box-title">EPA Certified</div>
+      <div class="cred-box-sub">Safe refrigerant handling and system service</div>
     </div>
     <div class="cred-box">
       <span class="cred-box-icon">🛡️</span>
@@ -1003,17 +865,16 @@
     </div>
     <div class="cred-box">
       <span class="cred-box-icon">⭐</span>
-      <div class="cred-box-title">Reviewed</div>
-      <div class="cred-box-sub">Only contractors with proven 5-star track records</div>
+      <div class="cred-box-title">Top Rated</div>
+      <div class="cred-box-sub">Only contractors with proven track records</div>
     </div>
   </div>
 </section>
 
-<!-- SERVICE AREAS -->
 <section class="areas">
   <div class="section-header">
     <div class="section-tag">Coverage</div>
-    <h2 class="section-h2">We Serve All of Tampa Bay</h2>
+    <h2 class="section-h2">Proudly Serving Tampa Bay</h2>
   </div>
   <div class="areas-grid">
     <div class="area-card"><h4>Tampa</h4><p>Hillsborough County</p></div>
@@ -1027,91 +888,44 @@
   </div>
 </section>
 
-<!-- INSURANCE -->
 <section class="insurance">
-  <h2>All Major Insurance Accepted</h2>
-  <p>Our partner contractors handle direct insurance billing — they document the damage, file the claim, and work with your adjuster so you don't have to.</p>
+  <h2>Financing & Payment Options Available</h2>
+  <p>Many of our partner contractors offer flexible financing options and accept all major credit cards — making HVAC repairs and upgrades more affordable than ever.</p>
   <div class="insurance-logos">
-    <div class="ins-badge">State Farm</div>
-    <div class="ins-badge">Allstate</div>
-    <div class="ins-badge">USAA</div>
-    <div class="ins-badge">Citizens</div>
-    <div class="ins-badge">Progressive</div>
-    <div class="ins-badge">Nationwide</div>
-    <div class="ins-badge">Universal</div>
-    <div class="ins-badge">+ All Others</div>
+    <div class="ins-badge">Synchrony</div>
+    <div class="ins-badge">Well Fargo</div>
+    <div class="ins-badge">GreenSky</div>
+    <div class="ins-badge">Visa</div>
+    <div class="ins-badge">Mastercard</div>
+    <div class="ins-badge">Discover</div>
+    <div class="ins-badge">Cash / Check</div>
+    <div class="ins-badge">+ More Options</div>
   </div>
 </section>
 
-<!-- TESTIMONIALS -->
-<section class="testimonials">
-  <div class="section-header">
-    <div class="section-tag">Reviews</div>
-    <h2 class="section-h2">What Tampa Bay Homeowners Say</h2>
-  </div>
-  <div class="reviews-grid">
-    <div class="review-card">
-      <div class="stars">★★★★★</div>
-      <p class="review-text">"Pipe burst at 11pm and they had a crew at my house in under an hour. The contractor they sent handled my State Farm claim completely. Incredible service."</p>
-      <div class="review-author">
-        <div class="author-avatar">MR</div>
-        <div>
-          <div class="author-name">Mike R.</div>
-          <div class="author-loc">Wesley Chapel, FL</div>
-        </div>
-      </div>
-    </div>
-    <div class="review-card">
-      <div class="stars">★★★★★</div>
-      <p class="review-text">"TampaRestore connected me with an amazing crew after storm flooding hit our first floor. They were there fast, professional, and insurance covered everything."</p>
-      <div class="review-author">
-        <div class="author-avatar">SL</div>
-        <div>
-          <div class="author-name">Sandra L.</div>
-          <div class="author-loc">New Port Richey, FL</div>
-        </div>
-      </div>
-    </div>
-    <div class="review-card">
-      <div class="stars">★★★★★</div>
-      <p class="review-text">"Water heater leaked while we were on vacation. Came home to a disaster. The contractor TampaRestore sent restored our floors and drywall better than new."</p>
-      <div class="review-author">
-        <div class="author-avatar">JT</div>
-        <div>
-          <div class="author-name">James T.</div>
-          <div class="author-loc">Zephyrhills, FL</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- BOTTOM CTA -->
 <section class="bottom-cta">
-  <h2>Water Damage Gets Worse<br>Every Hour You Wait.</h2>
-  <p>Call now — our referral service is completely free to homeowners.</p>
+  <h2>Don't Wait — Comfort<br>Can't Afford to Wait.</h2>
+  <p>Get your free estimate from a licensed Tampa Bay HVAC pro today.</p>
   <a href="tel:+1YOURNUMBER" class="btn-white">
-    📞 Call for Immediate Help
+    📞 Call for Fast Service
   </a>
 </section>
 
-<!-- LEGAL DISCLAIMER -->
 <div class="disclaimer">
   <p>
-    TampaRestore is a <strong>free contractor referral and marketing service</strong>, not a licensed restoration contractor. We connect homeowners with independent, third-party restoration contractors who are licensed and insured in the State of Florida. TampaRestore does not perform restoration work and is not responsible for the work of referred contractors. All contractors in our network are independently licensed and insured. By submitting your information, you consent to be contacted by a local restoration contractor. This site is operated by [YOUR LLC NAME], a Florida limited liability company. For questions, contact us at [YOUR EMAIL].
+    HVAC Tampa is a <strong>free contractor referral and marketing service</strong>, not a licensed HVAC contractor. We connect homeowners with independent, third-party HVAC contractors who are licensed and insured in the State of Florida. HVAC Tampa does not perform HVAC work and is not responsible for the work of referred contractors. All contractors in our network are independently licensed and insured. By submitting your information, you consent to be contacted by a local HVAC contractor. This site is operated by [YOUR LLC NAME], a Florida limited liability company. For questions, contact us at [YOUR EMAIL].
   </p>
 </div>
 
-<!-- FOOTER -->
 <footer>
-  <a href="#" class="logo">Tampa<span>Restore</span></a>
+  <a href="#" class="logo">HVAC<span>Tampa</span></a>
   <div class="footer-links">
     <a href="#">Privacy Policy</a>
     <a href="#">Terms of Service</a>
     <a href="#">Service Areas</a>
     <a href="tel:+1YOURNUMBER">Call Now</a>
   </div>
-  <div class="footer-copy">© 2026 [YOUR LLC NAME]. All rights reserved.</div>
+  <div class="footer-copy">© 2026 HVAC Tampa. All rights reserved.</div>
 </footer>
 
 <script>
@@ -1124,7 +938,7 @@ function submitForm() {
   const city = document.getElementById('fcity').value;
 
   if (!name || !phone || !city) {
-    alert('Please enter your name, phone number, and city so we can connect you with a local pro.');
+    alert('Please enter your name, phone number, and city so we can connect you with a local HVAC pro.');
     return;
   }
 
@@ -1145,7 +959,7 @@ function submitForm() {
     description: document.getElementById('fdesc')?.value || '',
     lat: userLat || null,
     lng: userLng || null,
-    source: 'website',
+    source: 'hvac',
   };
 
   document.querySelector('.success-msg').style.display = 'block';
