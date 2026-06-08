@@ -135,6 +135,20 @@
     .filter-btn { padding: 6px 14px; font-size: 12px; cursor: pointer; background: var(--light-gray); color: var(--gray); border: none; border-radius: 20px; }
     .filter-btn:hover { background: var(--gray); color: var(--white); }
     .filter-btn.active { background: var(--navy); color: var(--white); }
+    .filter-btn.sent { background: #FEF3C7; color: #92400E; }
+    .filter-btn.sent.active { background: #F59E0B; color: white; }
+    .filter-btn.contacted { background: #DBEAFE; color: #1E40AF; }
+    .filter-btn.contacted.active { background: #3B82F6; color: white; }
+    .filter-btn.scheduled { background: #FFEDD5; color: #9A3412; }
+    .filter-btn.scheduled.active { background: #F97316; color: white; }
+    .filter-btn.paid { background: #D1FAE5; color: #065F46; }
+    .filter-btn.paid.active { background: #059669; color: white; }
+    .filter-btn.closed { background: #FEF3C7; color: #78350F; }
+    .filter-btn.closed.active { background: #B45309; color: white; }
+    .filter-btn.declined { background: #FEE2E2; color: #991B1B; }
+    .filter-btn.declined.active { background: #DC2626; color: white; }
+    .filter-btn.junk { background: #F5F5F4; color: #57534E; }
+    .filter-btn.junk.active { background: #78716C; color: white; }
     .filter-btn.urgent { background: var(--red); color: white; }
     .filter-btn.urgent.active { background: var(--red-dark); }
     
@@ -142,8 +156,14 @@
     .row-warning { border-left: 4px solid var(--yellow); }
     .row-overdue { border-left: 4px solid var(--red); background: #FEF2F2; }
     
-    .btn-contact { background: var(--green); color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: 600; }
-    .btn-contact:hover { background: #047857; }
+    .status-btn-wrap { position: relative; display: inline-block; }
+    .status-trigger { background: var(--navy); color: white; border: none; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .status-trigger:hover { background: var(--red); }
+    .status-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 100; background: white; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 140px; padding: 4px 0; margin-top: 4px; }
+    .status-menu.show { display: block; }
+    .status-menu button { display: block; width: 100%; text-align: left; padding: 8px 14px; font-size: 12px; border: none; background: none; cursor: pointer; white-space: nowrap; }
+    .status-menu button:hover { background: #F5F5F4; }
+    .status-menu .divider { height: 1px; background: #E5E7EB; margin: 4px 0; }
     
     @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
@@ -234,13 +254,13 @@
       <div class="filter-bar">
         <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
         <button class="filter-btn urgent" data-filter="needs_response" onclick="setFilter('needs_response')">🔔 Needs Response</button>
-        <button class="filter-btn" data-filter="sent" onclick="setFilter('sent')">Sent</button>
-        <button class="filter-btn" data-filter="contacted" onclick="setFilter('contacted')">Contacted</button>
-        <button class="filter-btn" data-filter="scheduled" onclick="setFilter('scheduled')">Scheduled</button>
-        <button class="filter-btn" data-filter="paid" onclick="setFilter('paid')">Paid</button>
-        <button class="filter-btn" data-filter="closed" onclick="setFilter('closed')">Closed</button>
-        <button class="filter-btn" data-filter="declined" onclick="setFilter('declined')">Declined</button>
-        <button class="filter-btn" data-filter="junk" onclick="setFilter('junk')">Junk</button>
+        <button class="filter-btn sent" data-filter="sent" onclick="setFilter('sent')">Sent</button>
+        <button class="filter-btn contacted" data-filter="contacted" onclick="setFilter('contacted')">Contacted</button>
+        <button class="filter-btn scheduled" data-filter="scheduled" onclick="setFilter('scheduled')">Scheduled</button>
+        <button class="filter-btn paid" data-filter="paid" onclick="setFilter('paid')">Paid</button>
+        <button class="filter-btn closed" data-filter="closed" onclick="setFilter('closed')">Closed</button>
+        <button class="filter-btn declined" data-filter="declined" onclick="setFilter('declined')">Declined</button>
+        <button class="filter-btn junk" data-filter="junk" onclick="setFilter('junk')">Junk</button>
       </div>
       
       <div id="status-msg"></div>
@@ -771,8 +791,6 @@ function renderLeads() {
     
 const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk', 'declined', 'no_contractor'];
     
-    const isSentUncontacted = status === 'sent' && !lead.contractor_contacted_at;
-
     return `
       <tr class="${rowClass}">
         <td class="lead-name">${lead.name || 'N/A'}</td>
@@ -787,7 +805,18 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
         <td style="font-size:12px; ${responseColor}">${responseTime}</td>
         <td class="lead-date">${date}<br>${time}</td>
         <td>
-          ${isSentUncontacted ? `<button class="btn-contact" onclick="updateLeadStatus('${lead.id}', 'contacted')">✓ Accept</button>` : ''}
+          <div class="status-btn-wrap">
+            <button class="status-trigger" onclick="toggleStatusMenu('${lead.id}')">⚡</button>
+            <div class="status-menu" id="menu-${lead.id}">
+              ${status !== 'contacted' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'contacted\')">✓ Mark Contacted</button>' : ''}
+              ${status !== 'scheduled' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'scheduled\')">📅 Mark Scheduled</button>' : ''}
+              ${status !== 'paid' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'paid\')">💰 Mark Paid</button>' : ''}
+              ${status !== 'closed' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'closed\')">🔒 Mark Closed</button>' : ''}
+              <div class="divider"></div>
+              ${status !== 'declined' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'declined\')" style="color:#DC2626;">✕ Mark Declined</button>' : ''}
+              ${status !== 'junk' ? '<button onclick="updateLeadStatusFromMenu(\'' + lead.id + '\',\'junk\')" style="color:#78716C;">🗑️ Mark Junk</button>' : ''}
+            </div>
+          </div>
           <button class="action-btn call" title="Call" onclick="callPhone('${lead.phone}')">📞</button>
           <button class="action-btn" title="View/Edit" onclick="viewLead('${lead.id}')">👁️</button>
           <button class="action-btn delete" title="Delete" onclick="deleteLead('${lead.id}')">🗑️</button>
@@ -827,6 +856,24 @@ async function updateLeadStatus(leadId, newStatus) {
     console.error('Error updating status:', err);
   }
 }
+
+function toggleStatusMenu(leadId) {
+  const menu = document.getElementById('menu-' + leadId);
+  const allMenus = document.querySelectorAll('.status-menu');
+  allMenus.forEach(m => { if (m !== menu) m.classList.remove('show'); });
+  menu.classList.toggle('show');
+}
+
+function updateLeadStatusFromMenu(leadId, newStatus) {
+  document.getElementById('menu-' + leadId).classList.remove('show');
+  updateLeadStatus(leadId, newStatus);
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.status-btn-wrap')) {
+    document.querySelectorAll('.status-menu.show').forEach(m => m.classList.remove('show'));
+  }
+});
 
 function callPhone(phone) {
   window.location.href = 'tel:' + phone.replace(/\D/g, '');
