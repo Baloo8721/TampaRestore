@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="dns-prefetch" href="//aqafvfzsybcqfxqklqsd.supabase.co">
 <link rel="preconnect" href="//aqafvfzsybcqfxqklqsd.supabase.co">
+<link rel="dns-prefetch" href="//tamparestore.netlify.app">
+<link rel="preconnect" href="//tamparestore.netlify.app">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1113,11 +1115,6 @@
 </footer>
 
 <script>
-// Supabase configuration - these are PUBLIC safe (anon key is designed for browser/client use)
-const SUPABASE_URL = 'https://aqafvfzsybcqfxqklqsd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWZ2ZnpzeWJjcWZ4cWtscXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTU1ODAsImV4cCI6MjA5MzgzMTU4MH0.VUO2Uaf6IlM_cr-UwJ5YdQuinjasQehfoxe6dxqLecg';
-
-// Geolocation variables
 let userLat = '';
 let userLng = '';
 
@@ -1131,132 +1128,34 @@ function submitForm() {
     return;
   }
 
-  // Capture geolocation in background (doesn't block form submission)
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        userLat = position.coords.latitude;
-        userLng = position.coords.longitude;
-      },
+      (p) => { userLat = p.coords.latitude; userLng = p.coords.longitude; },
       () => {},
       { timeout: 2000, maximumAge: 30000 }
     );
   }
 
-  sendToSupabase();
-}
-
-function sendToSupabase() {
-  const name = document.getElementById('fname')?.value || '';
-  const phone = document.getElementById('fphone')?.value || '';
-  const email = document.getElementById('femail')?.value || '';
-  const city = document.getElementById('fcity')?.value || '';
-  const damage_type = document.getElementById('fdamage')?.value || '';
-  const description = document.getElementById('fdesc')?.value || '';
-  const timestamp = new Date().toISOString();
-
-  const leadData = {
+  const form = document.getElementById('contact-form');
+  const data = {
     name, phone,
-    email: email || null,
-    city, state: 'FL',
-    lat: userLat ? parseFloat(userLat) : null,
-    lng: userLng ? parseFloat(userLng) : null,
-    damage_type: damage_type,
-    description: description || null,
-    status: 'sent', source: 'website',
-    sent_to_contractor_at: timestamp,
-    assigned_contractor_email: 'ctbelisle@gmail.com'
+    email: document.getElementById('femail')?.value || null,
+    city: document.getElementById('fcity')?.value,
+    damage_type: document.getElementById('fdamage')?.value || '',
+    description: document.getElementById('fdesc')?.value || '',
+    lat: userLat || null,
+    lng: userLng || null,
   };
 
-  // Show success to user instantly
   document.querySelector('.success-msg').style.display = 'block';
-  document.getElementById('contact-form').reset();
+  form.reset();
 
-  // Save to localStorage as backup
-  try {
-    const pending = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
-    pending.push(leadData);
-    localStorage.setItem('pendingLeads', JSON.stringify(pending));
-  } catch (e) {}
-
-  // Fire and forget to Supabase (doesn't block user)
-  const saveToDb = () => fetch(SUPABASE_URL + '/rest/v1/leads', {
+  fetch('/.netlify/functions/submit-lead', {
     method: 'POST',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify([leadData])
-  });
-
-  const sendEmail = () => fetch(SUPABASE_URL + '/functions/v1/send-email', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-    },
-    body: 'name=' + encodeURIComponent(name) + 
-          '&phone=' + encodeURIComponent(phone) + 
-          '&email=' + encodeURIComponent(email) + 
-          '&city=' + encodeURIComponent(city) + 
-          '&damage-type=' + encodeURIComponent(damage_type) + 
-          '&description=' + encodeURIComponent(description)
-  });
-
-  // Try saving in background with retries (retry DNS up to 5 times over ~1 minute)
-  function attemptSave(attempts = 0) {
-    Promise.all([saveToDb(), sendEmail()])
-      .then(([dbRes, emailRes]) => {
-        console.log('DB:', dbRes.status, 'Email:', emailRes.status);
-        if (dbRes.ok) {
-          try {
-            const pending = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
-            localStorage.setItem('pendingLeads', JSON.stringify(pending.filter(l => l.phone !== phone)));
-          } catch (e) {}
-        } else if (attempts < 5) {
-          setTimeout(() => attemptSave(attempts + 1), (attempts + 1) * 2000);
-        }
-      })
-      .catch(() => {
-        if (attempts < 5) {
-          setTimeout(() => attemptSave(attempts + 1), (attempts + 1) * 2000);
-        }
-      });
-  }
-  attemptSave();
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {});
 }
-
-// On page load, try to sync any leads that failed to save previously
-window.addEventListener('load', () => {
-  try {
-    const pending = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
-    if (pending.length > 0) {
-      console.log('Syncing', pending.length, 'pending leads from localStorage');
-      pending.forEach((lead, idx) => {
-        setTimeout(() => {
-          fetch(SUPABASE_URL + '/rest/v1/leads', {
-            method: 'POST',
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify([lead])
-          }).then(r => {
-            if (r.ok) {
-              const remaining = JSON.parse(localStorage.getItem('pendingLeads') || '[]');
-              localStorage.setItem('pendingLeads', JSON.stringify(remaining.filter(l => l.phone !== lead.phone)));
-              console.log('Synced pending lead for', lead.name);
-            }
-          }).catch(() => {});
-        }, idx * 3000);
-      });
-    }
-  } catch (e) {}
-});
 </script>
 </body>
 </html>
