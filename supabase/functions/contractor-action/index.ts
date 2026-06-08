@@ -145,7 +145,27 @@ Deno.serve(async (req) => {
       ? contractorList[currentIndex + 1] 
       : null
 
+    // === STATE VALIDATION ===
+    const isAssignedToThem = lead.assigned_contractor_email === contractorEmail
+    const leadStatus = lead.status || 'new'
+    const terminalStatuses = ['scheduled', 'closed', 'paid', 'junk']
+
     if (action === 'confirm') {
+      // Validate: can confirm if sent (normal), declined (changed mind), or no_contractor (last resort)
+      const confirmAllowed = ['sent', 'declined', 'no_contractor'].includes(leadStatus)
+      if (!confirmAllowed) {
+        return htmlResponse(`${accentColor}`, `✅ Lead Already Handled`,
+          `<p>This lead status is <strong>${leadStatus}</strong> and has already been handled.</p>
+           <p>No changes were made.</p>
+           <p style="color:#666;font-size:13px;margin-top:20px;">If you need to pass this lead to another contractor, use the Decline button instead.</p>`)
+      }
+      if (!isAssignedToThem && leadStatus !== 'no_contractor') {
+        return htmlResponse(`${accentColor}`, `⏭️ Lead Passed to Another Contractor`,
+          `<p>This lead is now assigned to <strong>${lead.assigned_contractor_email || 'another contractor'}</strong>.</p>
+           <p>Your old link is no longer valid.</p>`)
+      }
+
+      // --- Accept flow ---
       updates = {
         ...updates,
         status: 'contacted',
@@ -155,10 +175,8 @@ Deno.serve(async (req) => {
           : 0
       }
 
-      // Record event
       recordEvent(leadId, 'confirmed', lead.assigned_contractor_email || '')
 
-      // Send confirmation email to admin
       if (gmailAppPassword) {
         await sendGmailNotification(adminEmail, gmailAppPassword, `✅ ${trade.emoji} Lead Confirmed: ${lead.name}`, 
           `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
@@ -169,7 +187,20 @@ Deno.serve(async (req) => {
       }
 
     } else if (action === 'decline') {
-      // Record decline event
+      // Validate: can decline if sent (normal), contacted (accepted but can't do job), or no_contractor (revive and decline)
+      const declineAllowed = ['sent', 'contacted', 'no_contractor'].includes(leadStatus)
+      if (!declineAllowed) {
+        return htmlResponse(`#DC2626`, `✕ Lead Already Declined or Closed`,
+          `<p>This lead status is <strong>${leadStatus}</strong> and cannot be declined again.</p>
+           <p>The lead has already been passed to the next available contractor.</p>`)
+      }
+      if (!isAssignedToThem && leadStatus !== 'no_contractor') {
+        return htmlResponse(`#DC2626`, `⏭️ Lead Already Handled by Another Contractor`,
+          `<p>This lead is assigned to <strong>${lead.assigned_contractor_email || 'another contractor'}</strong>.</p>
+           <p>Your old link is no longer active.</p>`)
+      }
+
+      // --- Decline flow ---
       recordEvent(leadId, 'declined', lead.assigned_contractor_email || '')
 
       updates = {
@@ -178,16 +209,13 @@ Deno.serve(async (req) => {
         notes: (lead.notes || '') + `\n[${timestamp}] Declined by ${lead.assigned_contractor_email}`
       }
 
-      // If there's a next contractor, assign to them
       if (nextContractor) {
         updates.assigned_contractor_email = nextContractor
         updates.status = 'sent'
         updates.sent_to_contractor_at = timestamp
 
-        // Record sent event for next contractor
         recordEvent(leadId, 'sent', nextContractor)
 
-        // Send email to next contractor
         if (gmailAppPassword) {
           const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
           const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
@@ -231,7 +259,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Notify admin
       if (gmailAppPassword) {
         await sendGmailNotification(adminEmail, gmailAppPassword, `⚠️ ${trade.emoji} Lead Declined: ${lead.name}`,
           `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
@@ -242,7 +269,6 @@ Deno.serve(async (req) => {
       }
 
     } else if (action === 'undo') {
-      // Reset back to sent status
       updates = {
         ...updates,
         status: 'sent',
@@ -303,6 +329,21 @@ Deno.serve(async (req) => {
     `, { headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
   }
 })
+
+function htmlResponse(color: string, title: string, bodyHtml: string): Response {
+  return new Response(`
+    <!DOCTYPE html>
+    <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+      .card { max-width: 480px; margin: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+      .header { background: ${color}; padding: 20px; text-align: center; }
+      .header h1 { color: white; font-size: 20px; margin: 0; }
+      .body { padding: 24px; font-size: 15px; line-height: 1.6; color: #333; text-align: center; }
+    </style></head>
+    <body><div class="card"><div class="header"><h1>${title}</h1></div><div class="body">${bodyHtml}</div></div></body></html>
+  `, { headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
+}
 
 async function recordEvent(leadId: string, type: string, contractor: string) {
   if (!leadId || !SUPABASE_KEY) return
