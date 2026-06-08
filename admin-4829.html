@@ -658,6 +658,8 @@ async function loadLeads() {
     
     const data = await response.json();
     
+    console.log('loadLeads: type=', typeof data, 'isArray=', Array.isArray(data), 'len=', data?.length, 'first=', data?.[0]?.name, data?.[0]?.created_at);
+    
     allLeads = (data || []).map(lead => ({
       id: lead.id,
       name: lead.name || 'Unknown',
@@ -693,6 +695,8 @@ async function loadLeads() {
 
 function renderLeads() {
   const tbody = document.getElementById('leads-tbody');
+  
+  console.log('renderLeads: count=', allLeads.length, 'filter=', currentFilter, 'newest=', allLeads[0]?.name, allLeads[0]?.created_at);
   
   if (allLeads.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No leads yet. Go get some!</td></tr>';
