@@ -700,7 +700,7 @@ function renderLeads() {
   }
   
   let filtered = allLeads;
-  if (currentFilter !== 'all') {
+  if (currentFilter && currentFilter !== 'all') {
     filtered = allLeads.filter(l => l.status === currentFilter);
   }
   
