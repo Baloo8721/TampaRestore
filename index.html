@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="dns-prefetch" href="//aqafvfzsybcqfxqklqsd.supabase.co">
 <link rel="preconnect" href="//aqafvfzsybcqfxqklqsd.supabase.co">
-<link rel="dns-prefetch" href="//tamparestore.netlify.app">
-<link rel="preconnect" href="//tamparestore.netlify.app">
+<link rel="dns-prefetch" href="//candid-empanada-1cbbe5.netlify.app">
+<link rel="preconnect" href="//candid-empanada-1cbbe5.netlify.app">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1150,7 +1150,7 @@ function submitForm() {
   document.querySelector('.success-msg').style.display = 'block';
   form.reset();
 
-  fetch('/.netlify/functions/submit-lead', {
+  fetch('https://candid-empanada-1cbbe5.netlify.app/.netlify/functions/submit-lead', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
