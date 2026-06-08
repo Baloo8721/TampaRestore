@@ -264,9 +264,11 @@
       </div>
       
       <div>
-        <div style="font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; margin-bottom: 10px;">💥 By Service Type</div>
-        <div class="analytics-grid" id="damage-analytics">
-          <div class="analytics-card"><div class="analytics-num">-</div><div class="analytics-label">Loading...</div></div>
+        <div onclick="toggleSection('damage')" style="font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; margin-bottom: 10px; cursor: pointer; user-select: none;">💥 By Service Type <span id="toggle-damage" style="font-size:10px;color:#94A3B8;">▲</span></div>
+        <div id="collapse-damage">
+          <div class="analytics-grid" id="damage-analytics">
+            <div class="analytics-card"><div class="analytics-num">-</div><div class="analytics-label">Loading...</div></div>
+          </div>
         </div>
       </div>
       
@@ -498,6 +500,7 @@ function showDashboard(user) {
   document.getElementById('user-email').textContent = user.email;
   loadLeads();
   loadContractors();
+  setTimeout(restoreToggles, 500);
 }
 
 function logout() {
@@ -1157,6 +1160,26 @@ function renderLeadEvents(lead) {
       }).join('')}
     </div>
   `;
+}
+
+function toggleSection(name) {
+  const el = document.getElementById('collapse-' + name);
+  const span = document.getElementById('toggle-' + name);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? '' : 'none';
+  span.textContent = isHidden ? '▲' : '▼';
+  try { localStorage.setItem('toggle_' + name, isHidden ? 'shown' : 'hidden'); } catch(e) {}
+}
+
+// Restore saved toggle states on load
+function restoreToggles() {
+  try {
+    ['damage'].forEach(name => {
+      const state = localStorage.getItem('toggle_' + name);
+      if (state === 'hidden') toggleSection(name);
+    });
+  } catch(e) {}
 }
 
 function escapeHtml(text) {
