@@ -65,14 +65,22 @@ exports.handler = async (event) => {
       description: description || '',
     }).toString()
 
-    fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: emailBody,
-    }).catch(e => console.error('Email send failed:', e))
+    try {
+      const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: emailBody,
+      })
+      if (!emailRes.ok) {
+        const errText = await emailRes.text()
+        console.error('Email send returned:', emailRes.status, errText)
+      }
+    } catch (emailErr) {
+      console.error('Email send failed:', emailErr)
+    }
 
     return {
       statusCode: 200,
