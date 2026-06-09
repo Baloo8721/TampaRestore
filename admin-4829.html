@@ -920,6 +920,9 @@ function renderLeads() {
       }
     }
     
+    const attemptNum = (lead.events || []).filter(e => e.type === 'sent').length;
+    const attemptLabel = attemptNum > 0 ? `#${attemptNum}` : '';
+    
 const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid', 'junk', 'declined', 'no_contractor'];
     
     const checked = selectedLeads.has(lead.id) ? 'checked' : '';
@@ -937,7 +940,7 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
             ${statusOptions.map(s => `<option value="${s}" ${s === status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
         </td>
-        <td style="font-size:12px; ${responseColor}">${responseTime}</td>
+        <td style="font-size:12px; ${responseColor}">${attemptLabel ? `<span style="font-weight:700;margin-right:3px;">${attemptLabel}</span>` : ''}${responseTime}</td>
         <td class="lead-date">${date}<br>${time}</td>
         <td>
           <div class="status-btn-wrap">
