@@ -541,15 +541,17 @@ async function loadContractors() {
     const data = await response.json();
     allContractors = data || [];
     
-    // Enrich with pending commission counts
-    for (const c of allContractors) {
-      try {
-        const commRes = await callApi('GET', `/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(c.email)}&status=eq.pending&select=id`);
-        const comms = await commRes.json();
-        c.pending_count = Array.isArray(comms) ? comms.length : 0;
-      } catch {
-        c.pending_count = 0;
+    // Fetch all pending commissions in one call and map by email
+    try {
+      const commRes = await callApi('GET', '/rest/v1/commissions?status=eq.pending&select=contractor_email,id');
+      const allComms = await commRes.json();
+      const pendingCounts = {};
+      if (Array.isArray(allComms)) {
+        allComms.forEach(c => { pendingCounts[c.contractor_email] = (pendingCounts[c.contractor_email] || 0) + 1; });
       }
+      allContractors.forEach(c => { c.pending_count = pendingCounts[c.email] || 0; });
+    } catch {
+      allContractors.forEach(c => { c.pending_count = 0; });
     }
     
     renderContractors();
@@ -853,7 +855,7 @@ async function showPaymentHistory(contractorId) {
 
   let commissions = [];
   try {
-    const response = await callApi('GET', `/rest/v1/commissions?contractor_id=eq.${contractorId}&order=created_at.desc`);
+    const response = await callApi('GET', `/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractor.email)}&order=created_at.desc`);
     commissions = await response.json();
   } catch (e) {
     // no commissions yet
