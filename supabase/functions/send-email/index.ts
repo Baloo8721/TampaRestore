@@ -85,10 +85,18 @@ Deno.serve(async (req) => {
         if (available.length > 0) {
           contractorEmail = available[0].email
         } else {
-          console.log('All contractors gate-blocked for trade:', source)
+          // All blocked — assign the one with fewest pending as last resort
+          const pendingCounts = await Promise.all(contractors.map(async (c: any) => ({
+            email: c.email,
+            pending: await countPendingCommissions(c.email)
+          })))
+          pendingCounts.sort((a: any, b: any) => a.pending - b.pending)
+          contractorEmail = pendingCounts[0]?.email || contractors[0]?.email
+
+          console.log('All contractors gate-blocked for trade:', source, 'assigning least-blocked:', contractorEmail)
           await supFetchEmail(gmailUser, gmailAppPassword, adminEmail,
-            `⚠️ All ${source} contractors blocked for ${name}`,
-            `<p>All active contractors have 3+ unpaid invoices.</p>
+            `⚠️ All ${source} contractors blocked — assigned ${contractorEmail}`,
+            `<p>All active contractors have 3+ unpaid invoices. Assigned to <strong>${contractorEmail}</strong> (fewest pending).</p>
              <p><strong>Lead:</strong> ${name} - ${phone}</p>
              <p><strong>City:</strong> ${city}</p>
              <p>Resolve outstanding payments or add more contractors.</p>`)
@@ -96,7 +104,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fallback
+    // Final fallback
     if (!contractorEmail) {
       contractorEmail = 'ctbelisle@gmail.com'
     }
@@ -230,7 +238,7 @@ async function getAvailableContractors(contractors: any[]): Promise<any[]> {
     const pending = await countPendingCommissions(c.email)
     if (pending < MAX_PENDING_COMMISSIONS) available.push(c)
   }
-  return available.length > 0 ? available : contractors
+  return available
 }
 
 async function supFetch(path: string, options?: RequestInit): Promise<Response> {
