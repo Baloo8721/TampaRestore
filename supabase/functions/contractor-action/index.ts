@@ -199,22 +199,54 @@ Deno.serve(async (req) => {
            <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Response time:</strong> ${updates.contractor_response_minutes} minutes</p>`)
 
-        // Always send payment info to non-auto-pay contractors
+        // === EMAIL 2: Full lead details + payment info ===
         const contrRes = await fetch(`${SUPABASE_URL}/rest/v1/contractors?email=eq.${encodeURIComponent(lead.assigned_contractor_email || '')}&limit=1`, {
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
         })
         const contrs = await contrRes.json()
         const contractor = contrs && contrs.length > 0 ? contrs[0] : null
+        const price = contractor?.price_per_lead || 75
         const hasAutoPay = contractor?.auto_pay === true && !!contractor?.stripe_customer_id && !!contractor?.stripe_payment_method_id
 
-        if (!hasAutoPay) {
+        let paymentStatusHtml = ''
+        let commissionCreated = false
+        const commissionId = crypto.randomUUID()
+
+        if (hasAutoPay && STRIPE_SECRET_KEY) {
+          const charged = await attemptCharge(commissionId, leadId, lead.assigned_contractor_email || '', leadSource, price, contractor)
+          commissionCreated = true
+
+          if (charged) {
+            paymentStatusHtml = `
+              <div style="padding:16px;background:#D1FAE5;border-radius:8px;text-align:center;margin-bottom:16px;">
+                <p style="font-weight:bold;color:#059669;font-size:16px;">✅ Charged $${price} to your card</p>
+              </div>`
+          }
+        }
+
+        if (!paymentStatusHtml) {
+          if (!commissionCreated) {
+            await supFetch('/rest/v1/commissions', {
+              method: 'POST',
+              body: JSON.stringify({
+                id: commissionId,
+                lead_id: leadId,
+                contractor_email: lead.assigned_contractor_email || '',
+                trade: leadSource,
+                amount: price,
+                status: 'pending',
+                created_at: new Date().toISOString(),
+              })
+            })
+          }
+
           const pendingCommissions = await getPendingCommissions(lead.assigned_contractor_email || '')
           const totalOwed = pendingCommissions.reduce((s: number, c: any) => s + (c.amount || 0), 0)
           const count = pendingCommissions.length
 
           let payButtonHtml = ''
-          if (STRIPE_SECRET_KEY && pendingCommissions.length > 0) {
-            const commissionIds = pendingCommissions.map((c: any) => c.id).join(',')
+          if (STRIPE_SECRET_KEY) {
+            const allIds = pendingCommissions.map((c: any) => c.id).join(',')
             const successUrl = `https://baloo8721.github.io/TampaRestore/thank-you.html?action=paid`
             const cancelUrl = `${SUPABASE_URL}/functions/v1/contractor-action?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(lead.assigned_contractor_email || '')}`
 
@@ -223,59 +255,62 @@ Deno.serve(async (req) => {
               customer: contractor?.stripe_customer_id || undefined,
               payment_intent_data: {
                 setup_future_usage: 'off_session',
-                metadata: {
-                  commission_ids: commissionIds,
-                  contractor_email: lead.assigned_contractor_email || '',
-                },
+                metadata: { commission_ids: allIds, contractor_email: lead.assigned_contractor_email || '' },
               },
               line_items: [{
                 price_data: {
                   currency: 'usd',
                   product_data: {
-                    name: `${count > 0 ? count + ' ' : ''}${trade.emoji} Unpaid Lead${count !== 1 ? 's' : ''}`,
-                    description: totalOwed > 0 ? `Total: $${totalOwed}` : `1 lead at $${contractor?.price_per_lead || 75}`,
+                    name: `${count} ${trade.emoji} Unpaid Lead${count !== 1 ? 's' : ''}`,
+                    description: `Total: $${totalOwed}`,
                   },
-                  unit_amount: Math.round((totalOwed || contractor?.price_per_lead || 75) * 100),
+                  unit_amount: Math.round(totalOwed * 100),
                 },
                 quantity: 1,
               }],
-              metadata: {
-                commission_ids: commissionIds,
-                contractor_email: lead.assigned_contractor_email || '',
-              },
+              metadata: { commission_ids: allIds, contractor_email: lead.assigned_contractor_email || '' },
               success_url: successUrl,
               cancel_url: cancelUrl,
             })
 
             if (session?.url) {
               payButtonHtml = `
-                <div style="margin-top:24px;text-align:center;">
-                  <a href="${session.url}" style="display:inline-block;background:#059669;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">💳 Pay $${totalOwed || contractor?.price_per_lead || 75} Now</a>
-                </div>
-              `
+                <div style="margin-top:16px;text-align:center;">
+                  <a href="${session.url}" style="display:inline-block;background:#059669;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">💳 Pay $${totalOwed} Now</a>
+                </div>`
             }
           }
 
-          const hasCard = !!contractor?.stripe_customer_id
           const creditMsg = count >= 3
-            ? `<p style="color:#DC2626;font-weight:bold;">You have ${count} unpaid leads — you'll be paused from receiving new leads until you pay.</p>`
-            : `<p style="color:#666;">Unpaid leads: ${count}/3. Pay to keep receiving leads.</p>`
+            ? `<p style="color:#DC2626;font-weight:bold;">You have ${count} unpaid leads — you're paused from receiving new leads until you pay.</p>`
+            : `<p style="color:#666;">Unpaid: ${count}/3. Pay to keep receiving leads.</p>`
 
-          await sendEmail(gmailUser, gmailAppPassword, lead.assigned_contractor_email || '',
-            `${trade.emoji} Payment for ${trade.name} lead - ${lead.name}`,
-            `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
-              <div style="background:#059669;padding:20px;text-align:center;border-radius:8px 8px 0 0;">
-                <h1 style="color:white;font-size:18px;margin:0;">${trade.emoji} Lead payment</h1>
-              </div>
-              <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
-                <p>Thanks for accepting the lead for <strong>${lead.name}</strong> in ${lead.city}.</p>
-                ${count > 0 ? `<p>You have <strong>${count}</strong> unpaid lead${count > 1 ? 's' : ''} totaling <strong>$${totalOwed}</strong>.</p>` : '<p>A payment is needed for this lead.</p>'}
-                ${creditMsg}
-                ${payButtonHtml || '<p style="color:#D97706;margin-top:16px;">Payment setup coming soon. Contact your admin to pay.</p>'}
-                ${hasCard ? '<p style="font-size:12px;color:#666;margin-top:16px;">✅ Card on file</p>' : '<p style="font-size:12px;color:#666;margin-top:16px;">When you pay, your card will be saved for future payments.</p>'}
-              </div>
-            </div>`)
+          paymentStatusHtml = `
+            <div style="padding:16px;background:#FEF3C7;border-radius:8px;margin-bottom:16px;">
+              <p style="font-weight:bold;color:#D97706;">💰 $${price} due for this lead</p>
+              ${payButtonHtml || '<p style="font-size:13px;color:#666;">Payment setup coming soon.</p>'}
+              ${creditMsg}
+            </div>`
         }
+
+        await sendEmail(gmailUser, gmailAppPassword, lead.assigned_contractor_email || '',
+          `${trade.emoji} Lead Details: ${lead.name} - ${lead.phone}`,
+          `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
+            <div style="background:${accentColor};padding:20px;text-align:center;border-radius:8px 8px 0 0;">
+              <h1 style="color:white;font-size:20px;margin:0;">${trade.emoji} Lead Details</h1>
+            </div>
+            <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+              ${paymentStatusHtml}
+              <p style="font-size:16px;"><strong>Name:</strong> ${lead.name}</p>
+              <p style="font-size:16px;"><strong>Phone:</strong> <a href="tel:${lead.phone}" style="color:${accentColor};font-weight:bold;">${lead.phone}</a></p>
+              <p style="font-size:16px;"><strong>Email:</strong> ${lead.email || 'N/A'}</p>
+              <p style="font-size:16px;"><strong>City:</strong> ${lead.city}</p>
+              <p style="font-size:16px;"><strong>Service:</strong> ${lead.damage_type || 'N/A'}</p>
+              <p style="font-size:16px;"><strong>Description:</strong> ${lead.description || 'N/A'}</p>
+              <hr style="margin:16px 0;border:none;border-top:1px solid #e5e7eb;">
+              <p style="color:${accentColor};font-weight:bold;font-size:16px;">⚠️ Call within 5 minutes!</p>
+            </div>
+          </div>`)
       }
 
     } else if (action === 'decline') {
@@ -547,6 +582,48 @@ async function countPendingCommissions(contractorEmail: string): Promise<number>
 async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
   const count = await countPendingCommissions(contractorEmail)
   return count >= MAX_PENDING_COMMISSIONS
+}
+
+// Attempt auto-pay charge (single attempt, no retries — failure = credit)
+async function attemptCharge(commissionId: string, leadId: string, contractorEmail: string, trade: string, amount: number, contractor: any): Promise<boolean> {
+  if (!STRIPE_SECRET_KEY || !contractor?.stripe_customer_id || !contractor?.stripe_payment_method_id) return false
+  // Create commission as pending first
+  await supFetch('/rest/v1/commissions', {
+    method: 'POST',
+    body: JSON.stringify({
+      id: commissionId,
+      lead_id: leadId,
+      contractor_email: contractorEmail,
+      trade,
+      amount,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    })
+  })
+  try {
+    const pi = await stripeFetch('/v1/payment_intents', {
+      amount: Math.round(amount * 100),
+      currency: 'usd',
+      customer: contractor.stripe_customer_id,
+      payment_method: contractor.stripe_payment_method_id,
+      off_session: true,
+      confirm: true,
+      description: `${trade} Lead`,
+      metadata: { lead_id: leadId, commission_id: commissionId, contractor_email: contractorEmail },
+    })
+
+    if (pi.status === 'succeeded' || pi.status === 'processing') {
+      await supFetch(`/rest/v1/commissions?id=eq.${commissionId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'completed', paid_at: new Date().toISOString(), stripe_payment_intent_id: pi.id })
+      })
+      return true
+    }
+  } catch (e) {
+    console.error('Auto-pay charge failed:', e)
+  }
+  // Charge failed — commission stays pending (credit used)
+  return false
 }
 
 // Fetch all pending commissions with amounts
