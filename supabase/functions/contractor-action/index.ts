@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
     const actionBaseUrl = `${SUPABASE_URL}/functions/v1/contractor-action`
+    const thankYouUrl = 'https://baloo8721.github.io/TampaRestore/thank-you.html'
 
     if (!leadId || !action) {
       return new Response(`
@@ -164,6 +165,107 @@ Deno.serve(async (req) => {
     const leadStatus = lead.status || 'new'
     const terminalStatuses = ['scheduled', 'closed', 'paid', 'junk']
 
+    // === SETUP PAYMENT: Generate Stripe Checkout link for contractor to save card ===
+    if (action === 'setup_payment') {
+      const contractorEmail = url.searchParams.get('email') || ''
+      const format = url.searchParams.get('format') || 'redirect'
+
+      if (!contractorEmail || !STRIPE_SECRET_KEY) {
+        if (format === 'json') {
+          return new Response(JSON.stringify({ error: !STRIPE_SECRET_KEY ? 'Stripe not configured' : 'Missing email' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+        return new Response('Stripe not configured', { status: 400, headers: corsHeaders })
+      }
+
+      // Get or create contractor
+      let contrRes = await fetch(`${SUPABASE_URL}/rest/v1/contractors?email=eq.${encodeURIComponent(contractorEmail)}&limit=1`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      })
+      let contrs = await contrRes.json()
+      let contractorRow = contrs?.[0] || null
+
+      let customerId = contractorRow?.stripe_customer_id || ''
+      if (!customerId) {
+        const customer = await stripeFetch('/v1/customers', {
+          email: contractorEmail,
+          name: contractorRow?.name || contractorEmail,
+          metadata: { contractor_email: contractorEmail }
+        })
+        customerId = customer?.id || ''
+        if (customerId) {
+          await supFetch(`/rest/v1/contractors?email=eq.${encodeURIComponent(contractorEmail)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ stripe_customer_id: customerId, updated_at: new Date().toISOString() })
+          })
+        }
+      }
+
+      // Create Checkout session (mode: setup — saves card, no charge)
+      const successUrl = thankYouUrl + '?action=card_saved'
+      const cancelUrl = thankYouUrl + '?action=setup_cancelled'
+
+      const session = await stripeFetch('/v1/checkout/sessions', {
+        mode: 'setup',
+        customer: customerId,
+        currency: 'usd',
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          contractor_email: contractorEmail,
+          action: 'setup_payment'
+        }
+      })
+
+      if (session?.url) {
+        if (format === 'json') {
+          return new Response(JSON.stringify({ url: session.url }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+        return new Response(null, { status: 302, headers: { 'Location': session.url } })
+      }
+
+      const errMsg = 'Failed to create setup session'
+      return format === 'json'
+        ? new Response(JSON.stringify({ error: errMsg }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        : new Response(errMsg, { status: 500, headers: corsHeaders })
+    }
+
+    // === EMAIL SETUP LINK: Send the setup link to the contractor via email ===
+    if (action === 'email_setup_link') {
+      const contractorEmail = url.searchParams.get('email') || ''
+      const setupUrl = url.searchParams.get('url') || ''
+
+      if (!contractorEmail || !setupUrl || !gmailAppPassword) {
+        return new Response(JSON.stringify({ error: 'Missing email, url, or email not configured' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      await sendEmail(gmailUser, gmailAppPassword, contractorEmail,
+        '💳 Set Up Auto-Pay - TampaRestore',
+        `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
+          <div style="background:#059669;padding:20px;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:white;font-size:20px;margin:0;">💳 Auto-Pay Setup</h1>
+          </div>
+          <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+            <p style="font-size:16px;">Save your payment method for automatic lead payments.</p>
+            <p>With auto-pay, you'll get lead details instantly — no payment delays.</p>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${setupUrl}" style="display:inline-block;background:#059669;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">💳 Save Your Card</a>
+            </div>
+            <hr>
+            <p style="font-size:13px;color:#666;">This link expires after use. No charges until you accept a lead.</p>
+          </div>
+        </div>`)
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     if (action === 'confirm') {
       // Validate: can confirm if sent (normal), declined (changed mind), or no_contractor (last resort)
       const confirmAllowed = ['sent', 'declined', 'no_contractor'].includes(leadStatus)
@@ -282,14 +384,18 @@ Deno.serve(async (req) => {
           }
 
           const creditMsg = count >= 3
-            ? `<p style="color:#DC2626;font-weight:bold;">You have ${count} unpaid leads — you're paused from receiving new leads until you pay.</p>`
-            : `<p style="color:#666;">Unpaid: ${count}/3. Pay to keep receiving leads.</p>`
+            ? `<p style="color:#DC2626;font-weight:bold;">🚫 You have ${count} unpaid leads — you are paused from receiving new leads until you pay.</p>`
+            : `<p style="color:#6B7280;font-size:13px;">Credits used: ${count}/3. Pay to keep receiving leads.</p>`
 
           paymentStatusHtml = `
-            <div style="padding:16px;background:#FEF3C7;border-radius:8px;margin-bottom:16px;">
-              <p style="font-weight:bold;color:#D97706;">💰 $${price} due for this lead</p>
+            <div style="padding:16px;background:#FEF3C7;border-radius:8px;margin-bottom:16px;border:1px solid #FDE68A;">
+              <p style="font-weight:bold;color:#D97706;">💰 $${price} for this lead${count > 1 ? ` <span style="font-weight:normal;color:#92400E;">(Total unpaid: $${totalOwed} — ${count} leads)</span>` : ''}</p>
               ${payButtonHtml || '<p style="font-size:13px;color:#666;">Payment setup coming soon.</p>'}
               ${creditMsg}
+              <hr style="margin:8px 0;border:none;border-top:1px solid #FDE68A;">
+              <p style="font-size:11px;color:#92400E;">
+                💳 <a href="${actionBaseUrl}?action=setup_payment&email=${encodeURIComponent(lead.assigned_contractor_email || '')}" style="color:#059669;">Save a card</a> for auto-pay on future leads — no more invoices.
+              </p>
             </div>`
         }
 
@@ -349,8 +455,8 @@ Deno.serve(async (req) => {
           const nextButtonsHtml = `
             <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
               <p style="margin-bottom: 15px; font-size: 16px;"><strong>Quick Actions:</strong></p>
-              <a href="${confirmUrl}" style="display: inline-block; background: ${accentColor}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPTED] I Will Call This Lead</a>
-              <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[DECLINE] Pass to Next Contractor</a>
+              <a href="${confirmUrl}" style="display: inline-block; background: ${accentColor}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPT] I Will Take This Lead</a>
+              <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[DECLINE] Not Available</a>
             </div>
           `
           const nextEmailBody = `
@@ -359,16 +465,14 @@ Deno.serve(async (req) => {
                 <h1 style="color: white; font-size: 20px; margin: 0;">${trade.emoji} LEAD PASSED TO YOU</h1>
               </div>
               <div style="padding: 24px; background: white; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
-                <p>The previous contractor declined this lead. It's now assigned to you.</p>
+                <p>A lead is available in <strong>${lead.city}</strong> — service: <strong>${lead.damage_type || 'N/A'}</strong></p>
                 <hr>
-                <p><strong>Name:</strong> ${lead.name}</p>
-                <p><strong>Phone:</strong> <a href="tel:${lead.phone}" style="color:${accentColor};font-weight:bold;">${lead.phone}</a></p>
-                <p><strong>City:</strong> ${lead.city}</p>
-                <p><strong>Service:</strong> ${lead.damage_type || 'N/A'}</p>
-                <p><strong>Description:</strong> ${lead.description || 'N/A'}</p>
-                <hr>
-                <p style="color:${accentColor};font-weight:bold;font-size:18px;">⚠️ CALL THIS LEAD WITHIN 5 MINUTES!</p>
+                <p style="color:${accentColor};font-weight:bold;font-size:18px;">⚠️ CALL WITHIN 5 MINUTES!</p>
                 ${nextButtonsHtml}
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                  💳 Want auto-pay? <a href="${actionBaseUrl}?action=setup_payment&email=${encodeURIComponent(nextAvailableContractor)}&apikey=${ANON_KEY}" style="color:${accentColor};">Save your card</a> for faster lead claiming.
+                </p>
               </div>
             </div>
           `
@@ -424,13 +528,11 @@ Deno.serve(async (req) => {
     const color = action === 'confirm' ? 'green' : action === 'decline' ? 'orange' : 'blue'
 
     // Thank you for contractor - redirect to thank you page
-    const thankYouUrl = 'https://baloo8721.github.io/TampaRestore/thank-you.html'
-    
     if (action === 'confirm') {
       return new Response(null, {
         status: 302,
         headers: {
-          'Location': thankYouUrl + '?name=' + encodeURIComponent(lead.name) + '&phone=' + encodeURIComponent(lead.phone) + '&city=' + encodeURIComponent(lead.city) + '&action=accept'
+          'Location': thankYouUrl + '?action=accept'
         }
       })
     }
@@ -439,7 +541,7 @@ Deno.serve(async (req) => {
       return new Response(null, {
         status: 302,
         headers: {
-          'Location': thankYouUrl + '?name=' + encodeURIComponent(lead.name) + '&action=pass'
+          'Location': thankYouUrl + '?action=decline'
         }
       })
     }

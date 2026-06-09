@@ -410,6 +410,7 @@
 </div>
 
 <script>
+const SUPABASE_URL = 'https://aqafvfzsybcqfxqklqsd.supabase.co';
 const PROXY_URL = 'https://candid-empanada-1cbbe5.netlify.app/.netlify/functions/admin-proxy';
 
 async function callApi(method, path, body) {
@@ -608,13 +609,15 @@ function renderContractors() {
           ${c.active ? 'ACTIVE' : 'INACTIVE'}
         </span>
       </td>
-      <td style="text-align:center;font-size:12px;">
-        ${c.auto_pay === true
-          ? '<span style="font-size:16px;cursor:default;" title="Auto-pay enabled">💳</span>'
-          : '<span style="font-size:14px;cursor:default;" title="Manual pay">💵</span>'}
-        ${c.stripe_customer_id
-          ? '<span style="font-size:14px;cursor:default;" title="Card on file">✅</span>'
-          : ''}
+      <td style="text-align:center;font-size:12px;cursor:pointer;" onclick="showPaymentSetup('${c.id}')" title="Click for payment setup">
+        ${(() => {
+          const hasCard = !!c.stripe_customer_id;
+          const autoPayOn = c.auto_pay === true;
+          if (autoPayOn && hasCard) return '<span style="font-size:16px;" title="Auto-pay enabled — charged on lead accept">💳</span>';
+          if (autoPayOn && !hasCard) return '<span style="font-size:14px;" title="⚠️ Auto-pay set but no card saved — click to send setup link">⚠️ 💵</span>';
+          if (!autoPayOn && hasCard) return '<span style="font-size:14px;" title="Card saved ✅ — enable auto-pay in edit form">💵 ✅</span>';
+          return '<span style="font-size:14px;" title="No card on file — click to send setup link">💵</span>';
+        })()}
         ${c.pending_count > 0 ? `<span style="display:inline-block;margin-left:4px;padding:1px 6px;border-radius:8px;font-size:11px;font-weight:700;background:${c.pending_count >= 3 ? '#FEE2E2' : '#FEF3C7'};color:${c.pending_count >= 3 ? '#DC2626' : '#D97706'};">${c.pending_count}/3</span>` : ''}
       </td>
       <td>
@@ -691,12 +694,15 @@ function showAddContractor(contractor = null) {
         <label style="font-weight:600;color:#059669;">💳 Auto-Pay</label>
         <div style="margin-top:8px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" id="contractor-autopay" ${(contractor && contractor.auto_pay === true) ? 'checked' : ''} />
+            <input type="checkbox" id="contractor-autopay" ${(contractor && contractor.auto_pay === true) ? 'checked' : ''} onchange="updateAutoPayWarning()" />
             <span style="font-size:13px;">Auto-charge card when a lead is sent (requires contractor approval)</span>
           </label>
         </div>
         <div id="payment-method-info" style="margin-top:8px;font-size:12px;color:#666;">
-          ${contractor?.stripe_customer_id ? '✓ Card on file — check Auto-Pay above to enable automatic charging' : 'No card saved yet. Contractor will be prompted to save on first payment.'}
+          ${contractor?.stripe_customer_id ? '✓ Card on file — check Auto-Pay above to enable automatic charging' : 'No card saved yet. Generate a setup link from the 💵 column to let the contractor save their card.'}
+        </div>
+        <div id="autopay-warning" style="display:none;margin-top:8px;padding:8px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:4px;font-size:12px;color:#92400E;">
+          ⚠️ Auto-pay is checked but no card is saved. The contractor won't be charged until they save a card via the setup link.
         </div>
       </div>
       <div class="form-group">
@@ -849,29 +855,117 @@ async function reorderContractor(movedId, newPosStr, totalCount) {
   loadContractors();
 }
 
+function updateAutoPayWarning() {
+  const checkbox = document.getElementById('contractor-autopay');
+  const warning = document.getElementById('autopay-warning');
+  const info = document.getElementById('payment-method-info');
+  const hasCard = info && info.textContent.includes('Card on file');
+  if (checkbox && warning) {
+    warning.style.display = checkbox.checked && !hasCard ? 'block' : 'none';
+  }
+}
+
 async function showPaymentHistory(contractorId) {
   const contractor = allContractors.find(c => c.id === contractorId);
   if (!contractor) return;
-
-  let commissions = [];
-  try {
-    const response = await callApi('GET', `/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractor.email)}&order=created_at.desc`);
-    commissions = await response.json();
-  } catch (e) {
-    // no commissions yet
-  }
 
   const modal = document.getElementById('lead-modal');
   const modalTitle = document.getElementById('modal-title');
   const modalBody = document.getElementById('modal-body');
   const modalFooter = document.getElementById('modal-footer');
 
-  modalTitle.textContent = `Payment History — ${contractor.name}`;
+  modalTitle.textContent = `📊 ${contractor.name} — Activity & Payments`;
 
-  if (commissions.length === 0) {
-    modalBody.innerHTML = `<div style="padding:20px;text-align:center;color:#666;">No payment history yet.</div>`;
-  } else {
-    modalBody.innerHTML = `
+  // Fetch commissions + leads for this contractor
+  let commissions = [];
+  let leads = [];
+  try {
+    const [commRes, leadsRes] = await Promise.all([
+      callApi('GET', `/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractor.email)}&order=created_at.desc`),
+      callApi('GET', `/rest/v1/leads?assigned_contractor_email=eq.${encodeURIComponent(contractor.email)}&order=created_at.desc&select=id,name,city,status,events,contractor_response_minutes,created_at`)
+    ]);
+    commissions = await commRes.json();
+    leads = await leadsRes.json();
+  } catch (e) {}
+
+  const totalPaid = Array.isArray(commissions) ? commissions.filter(c => c.status === 'paid' || c.status === 'completed').reduce((s, c) => s + (c.amount || 0), 0) : 0;
+  const pendingAmt = Array.isArray(commissions) ? commissions.filter(c => c.status === 'pending').reduce((s, c) => s + (c.amount || 0), 0) : 0;
+  const pendCount = Array.isArray(commissions) ? commissions.filter(c => c.status === 'pending').length : 0;
+
+  // Parse events from leads for accept/decline stats
+  let accepts = 0, declines = 0;
+  let allEvents = [];
+  let responseTimes = [];
+  if (Array.isArray(leads)) {
+    leads.forEach(lead => {
+      if (lead.contractor_response_minutes != null) responseTimes.push(lead.contractor_response_minutes);
+      if (Array.isArray(lead.events)) {
+        lead.events.forEach(ev => {
+          allEvents.push({ ...ev, lead_name: lead.name, lead_city: lead.city });
+          if (ev.type === 'confirmed') accepts++;
+          if (ev.type === 'declined') declines++;
+        });
+      }
+    });
+  }
+  const avgResponse = responseTimes.length > 0 ? Math.round(responseTimes.reduce((s, v) => s + v, 0) / responseTimes.length) : null;
+
+  let html = '';
+
+  // Stats card
+  html += `
+    <div style="padding:16px;background:var(--off-white);border-radius:8px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:16px;">
+      <div style="flex:1;min-width:120px;text-align:center;">
+        <div style="font-size:24px;font-weight:700;color:#059669;">${accepts}</div>
+        <div style="font-size:11px;color:#6B7280;">✅ Accepts</div>
+      </div>
+      <div style="flex:1;min-width:120px;text-align:center;">
+        <div style="font-size:24px;font-weight:700;color:#DC2626;">${declines}</div>
+        <div style="font-size:11px;color:#6B7280;">❌ Declines</div>
+      </div>
+      <div style="flex:1;min-width:120px;text-align:center;">
+        <div style="font-size:24px;font-weight:700;color:#2563EB;">${avgResponse !== null ? avgResponse + 'm' : '-'}</div>
+        <div style="font-size:11px;color:#6B7280;">⏱️ Avg Response</div>
+      </div>
+      <div style="flex:1;min-width:120px;text-align:center;">
+        <div style="font-size:24px;font-weight:700;color:${pendCount >= 3 ? '#DC2626' : '#D97706'};">${pendCount}/3</div>
+        <div style="font-size:11px;color:#6B7280;">💰 Credits Used</div>
+      </div>
+    </div>`;
+
+  // Credits status
+  html += `
+    <div style="padding:12px;background:${pendCount >= 3 ? '#FEF2F2' : pendCount > 0 ? '#FFFBEB' : '#F9FAFB'};border-radius:6px;margin-bottom:16px;font-size:13px;border:1px solid ${pendCount >= 3 ? '#FECACA' : pendCount > 0 ? '#FDE68A' : '#E5E7EB'};">
+      <strong>Credits:</strong> ${pendCount} of 3 used
+      ${pendCount > 0 ? ` — $${pendingAmt} total pending` : ''}
+      ${pendCount >= 3 ? '<br><span style="color:#DC2626;font-weight:bold;">🔴 Contractor is paused from receiving new leads until payment is made.</span>' : ''}
+      <br><span style="color:#6B7280;font-size:12px;">Total paid: <strong>$${totalPaid}</strong></span>
+    </div>`;
+
+  // Event timeline
+  if (allEvents.length > 0) {
+    const sortedEvents = allEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const eventIcons = { sent: '📤', confirmed: '✅', declined: '❌' };
+    html += `
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:600;font-size:14px;margin-bottom:8px;">📋 Activity Timeline</div>
+        <div style="max-height:200px;overflow-y:auto;font-size:12px;">
+          ${sortedEvents.slice(0, 30).map(ev => `
+            <div style="padding:4px 0;display:flex;align-items:center;gap:6px;border-bottom:1px solid #F3F4F6;">
+              <span>${eventIcons[ev.type] || '•'}</span>
+              <span style="font-weight:600;text-transform:capitalize;color:${ev.type === 'confirmed' ? '#059669' : ev.type === 'declined' ? '#DC2626' : '#3B82F6'};">${ev.type}</span>
+              <span style="color:#6B7280;">${ev.lead_name || ''} ${ev.lead_city ? '- ' + ev.lead_city : ''}</span>
+              <span style="color:#9CA3AF;font-size:10px;margin-left:auto;">${ev.timestamp ? new Date(ev.timestamp).toLocaleDateString() : ''}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }
+
+  // Commission table
+  if (Array.isArray(commissions) && commissions.length > 0) {
+    html += `<div style="font-weight:600;font-size:14px;margin-bottom:8px;">💳 Payment Records</div>`;
+    html += `
       <table class="leads-table" style="font-size:12px;">
         <thead>
           <tr>
@@ -888,9 +982,9 @@ async function showPaymentHistory(contractorId) {
               <td>$${c.amount}</td>
               <td>
                 <span style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;
-                  background:${c.status === 'paid' ? '#D1FAE5' : c.status === 'pending' ? '#FEF3C7' : '#FEE2E2'};
-                  color:${c.status === 'paid' ? '#059669' : c.status === 'pending' ? '#D97706' : '#991B1B'};">
-                  ${c.status.toUpperCase()}
+                  background:${c.status === 'paid' || c.status === 'completed' ? '#D1FAE5' : c.status === 'pending' ? '#FEF3C7' : '#FEE2E2'};
+                  color:${c.status === 'paid' || c.status === 'completed' ? '#059669' : c.status === 'pending' ? '#D97706' : '#991B1B'};">
+                  ${(c.status === 'paid' || c.status === 'completed') ? 'PAID' : c.status === 'pending' ? 'PENDING' : c.status.toUpperCase()}
                 </span>
               </td>
               <td style="font-family:monospace;font-size:10px;">${c.lead_id ? c.lead_id.slice(0, 8)+'...' : '-'}</td>
@@ -899,14 +993,131 @@ async function showPaymentHistory(contractorId) {
         </tbody>
       </table>
       <div style="margin-top:12px;padding:12px;background:var(--off-white);border-radius:6px;font-size:13px;">
-        <strong>Total Paid:</strong> $${commissions.filter(c => c.status === 'paid').reduce((s, c) => s + (c.amount || 0), 0)}
-        <span style="margin-left:16px;"><strong>Pending:</strong> $${commissions.filter(c => c.status === 'pending').reduce((s, c) => s + (c.amount || 0), 0)}</span>
-      </div>
-    `;
+        <strong>Total Paid:</strong> $${totalPaid}
+        <span style="margin-left:16px;"><strong>Pending:</strong> $${pendingAmt}</span>
+      </div>`;
+  } else {
+    html += `<div style="text-align:center;padding:20px;color:#6B7280;">No payment records yet.</div>`;
   }
+
+  modalBody.innerHTML = html;
+  modalFooter.innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+  modal.classList.add('active');
+}
+
+async function showPaymentSetup(contractorId) {
+  const contractor = allContractors.find(c => c.id === contractorId);
+  if (!contractor) return;
+
+  const modal = document.getElementById('lead-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const modalFooter = document.getElementById('modal-footer');
+
+  const hasCard = !!contractor.stripe_customer_id;
+  const autoPayOn = contractor.auto_pay === true;
+
+  let statusHtml = '';
+  if (hasCard && autoPayOn) {
+    statusHtml = '<span style="color:#059669;">💳 Auto-pay active — charged on lead accept</span>';
+  } else if (hasCard && !autoPayOn) {
+    statusHtml = '<span style="color:#D97706;">💵 Card saved ✅ — enable auto-pay in edit form</span>';
+  } else if (!hasCard && autoPayOn) {
+    statusHtml = '<span style="color:#DC2626;">⚠️ Auto-pay enabled but no card saved — send setup link below</span>';
+  } else {
+    statusHtml = '<span style="color:#6B7280;">💵 No card on file — send setup link below</span>';
+  }
+
+  modalTitle.textContent = `💳 Payment Setup — ${contractor.name}`;
+
+  modalBody.innerHTML = `
+    <div style="padding:16px;background:#F9FAFB;border-radius:8px;margin-bottom:16px;">
+      <p><strong>Status:</strong> ${statusHtml}</p>
+      ${contractor.pending_count > 0 ? `<p style="margin-top:8px;"><strong>Credits used:</strong> ${contractor.pending_count}/3</p>` : ''}
+    </div>
+    <div style="padding:16px;background:#EFF6FF;border-radius:8px;margin-bottom:16px;border:1px solid #BFDBFE;">
+      <p style="font-weight:600;color:#1E40AF;margin-bottom:8px;">📧 Setup Link</p>
+      <p style="font-size:13px;color:#6B7280;margin-bottom:12px;">
+        Generate a link the contractor can use to save their credit card. The link takes them to a secure Stripe page — no charges, just card setup.
+      </p>
+      <button class="btn btn-success" onclick="generateSetupLink('${contractor.id}')" id="setup-link-btn">🔗 Generate Setup Link</button>
+      <div id="setup-link-result" style="display:none;margin-top:12px;">
+        <input type="text" id="setup-link-url" readonly style="width:100%;padding:8px;border:1px solid #D1D5DB;border-radius:4px;font-size:12px;margin-bottom:8px;background:#F9FAFB;" />
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-small" onclick="copySetupLink()">📋 Copy</button>
+          <button class="btn btn-small btn-success" onclick="emailSetupLink('${contractor.id}')">📧 Email to Contractor</button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#9CA3AF;line-height:1.8;">
+      <p><strong>How auto-pay works:</strong></p>
+      <ol style="margin:8px 0 0 20px;">
+        <li>Send the setup link to the contractor — they save their card via Stripe</li>
+        <li>Enable auto-pay in the contractor edit form (✏️)</li>
+        <li>When the contractor accepts a lead, their card is charged automatically</li>
+        <li>No card? Contractor gets up to 3 leads on credit, then paused until they pay</li>
+      </ol>
+    </div>
+  `;
 
   modalFooter.innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
   modal.classList.add('active');
+}
+
+async function generateSetupLink(contractorId) {
+  const contractor = allContractors.find(c => c.id === contractorId);
+  if (!contractor) return;
+
+  const btn = document.getElementById('setup-link-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/contractor-action?action=setup_payment&email=${encodeURIComponent(contractor.email)}&format=json`);
+    const data = await res.json();
+
+    if (data.url) {
+      document.getElementById('setup-link-url').value = data.url;
+      document.getElementById('setup-link-result').style.display = 'block';
+      btn.textContent = '✅ Link Generated';
+    } else {
+      btn.textContent = '❌ Failed - ' + (data.error || 'Try Again');
+    }
+  } catch (e) {
+    btn.textContent = '❌ Error - Check Console';
+    console.error(e);
+  }
+
+  btn.disabled = false;
+}
+
+function copySetupLink() {
+  const input = document.getElementById('setup-link-url');
+  if (!input) return;
+  input.select();
+  document.execCommand('copy');
+  alert('Link copied to clipboard!');
+}
+
+async function emailSetupLink(contractorId) {
+  const contractor = allContractors.find(c => c.id === contractorId);
+  if (!contractor) return;
+
+  const url = document.getElementById('setup-link-url')?.value;
+  if (!url) return alert('Generate a link first');
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/contractor-action?action=email_setup_link&email=${encodeURIComponent(contractor.email)}&url=${encodeURIComponent(url)}&format=json`);
+    const data = await res.json();
+    if (data.success) {
+      alert('✅ Setup link emailed to ' + contractor.email);
+    } else {
+      alert('❌ Failed to send: ' + (data.error || 'unknown error'));
+    }
+  } catch (e) {
+    alert('❌ Error sending email');
+    console.error(e);
+  }
 }
 
 async function loadLeads() {

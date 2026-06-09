@@ -24,6 +24,59 @@ Deno.serve(async (req) => {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object
       const metadata = session.metadata || {}
+
+      // Handle mode:setup (card saving, no charge)
+      if (session.mode === 'setup') {
+        const contractorEmail = metadata.contractor_email
+        if (session.setup_intent && contractorEmail) {
+          const siRes = await fetch(`https://api.stripe.com/v1/setup_intents/${session.setup_intent}`, {
+            headers: { 'Authorization': 'Bearer ' + STRIPE_SECRET_KEY }
+          })
+          const si = await siRes.json()
+          const pmId = si.payment_method || ''
+          const customerId = session.customer || si.customer || ''
+
+          if (customerId) {
+            const updateData: Record<string, unknown> = {
+              stripe_customer_id: customerId,
+              updated_at: new Date().toISOString()
+            }
+            if (pmId) updateData.stripe_payment_method_id = pmId
+
+            await fetch(`${SUPABASE_URL}/rest/v1/contractors?email=eq.${encodeURIComponent(contractorEmail)}`, {
+              method: 'PATCH',
+              headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+              },
+              body: JSON.stringify(updateData)
+            })
+            console.log(`Setup: Contractor ${contractorEmail} saved card, customer=${customerId}, pm=${pmId || 'none'}`)
+          }
+
+          const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
+          const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
+          if (gmailAppPassword && contractorEmail) {
+            await sendEmail(gmailUser, gmailAppPassword, contractorEmail,
+              '✅ Card Saved - Auto-Pay Ready',
+              `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
+                <div style="background:#059669;padding:20px;text-align:center;border-radius:8px 8px 0 0;">
+                  <h1 style="color:white;font-size:20px;margin:0;">✅ Card Saved Successfully</h1>
+                </div>
+                <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+                  <p>Your credit card has been saved.</p>
+                  <p>Once the admin enables auto-pay, you'll be charged automatically on lead acceptance.</p>
+                  <p style="color:#666;font-size:13px;">No charges right now. You'll only be charged when you accept a lead.</p>
+                </div>
+              </div>`)
+          }
+        }
+        return new Response('ok', { status: 200 })
+      }
+
+      // Handle payment mode (existing logic)
       const commissionId = metadata.commission_id
       const commissionIds = metadata.commission_ids
       const contractorEmail = metadata.contractor_email

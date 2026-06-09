@@ -147,9 +147,13 @@ Deno.serve(async (req) => {
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
           <p style="color: ${accentColor}; font-weight: bold; font-size: 18px;">⚠️ CALL WITHIN 5 MINUTES!</p>
           <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px; text-align:center;">
-            <a href="${confirmUrl}" style="display: inline-block; background: ${accentColor}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[CLAIM] I Will Call This Lead</a>
-            <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[PASS] Not Interested</a>
+            <a href="${confirmUrl}" style="display: inline-block; background: ${accentColor}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; margin-right: 12px;">[ACCEPT] I Will Take This Lead</a>
+            <a href="${declineUrl}" style="display: inline-block; background: #DC2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">[DECLINE] Not Available</a>
           </div>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            💳 Want auto-pay? <a href="${actionBaseUrl}?action=setup_payment&email=${encodeURIComponent(contractorEmail)}&apikey=${ANON_KEY}" style="color:${accentColor};">Save your card</a> for faster lead claiming.
+          </p>
         </div>
       </div>
     `

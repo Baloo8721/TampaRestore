@@ -1,7 +1,8 @@
 -- Add Stripe payment fields to contractors
 ALTER TABLE contractors ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE contractors ADD COLUMN IF NOT EXISTS stripe_payment_method_id TEXT;
-ALTER TABLE contractors ADD COLUMN IF NOT EXISTS auto_pay BOOLEAN DEFAULT true;
+ALTER TABLE contractors ADD COLUMN IF NOT EXISTS auto_pay BOOLEAN DEFAULT false;
+UPDATE contractors SET auto_pay = false WHERE auto_pay IS NULL OR auto_pay = true;
 
 -- Commissions table for tracking payments
 CREATE TABLE IF NOT EXISTS commissions (

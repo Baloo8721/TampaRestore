@@ -24,22 +24,13 @@
       max-width: 420px;
       width: 100%;
     }
-    .icon {
-      font-size: 72px;
-      margin-bottom: 10px;
-    }
-    h1 {
-      color: #059669;
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
-    h1.declined {
-      color: #D97706;
-    }
+    .icon { font-size: 72px; margin-bottom: 10px; }
+    h1 { font-size: 28px; margin-bottom: 10px; }
+    h1.accepted { color: #059669; }
+    h1.declined { color: #D97706; }
+    h1.card-saved { color: #059669; }
     .status-badge {
       display: inline-block;
-      background: #ECFDF5;
-      color: #059669;
       padding: 8px 20px;
       border-radius: 20px;
       font-size: 14px;
@@ -47,49 +38,23 @@
       margin-bottom: 20px;
       text-transform: uppercase;
     }
-    .status-badge.declined {
-      background: #FEF3C7;
-      color: #D97706;
-    }
-    .lead-info {
-      background: #f9fafb;
-      padding: 20px;
-      border-radius: 12px;
-      margin: 20px 0;
-      text-align: left;
-    }
-    .lead-info p {
-      margin: 10px 0;
-      font-size: 16px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .lead-info strong {
-      color: #374151;
-    }
-    .lead-info span {
+    .status-badge.accepted { background: #ECFDF5; color: #059669; }
+    .status-badge.declined { background: #FEF3C7; color: #D97706; }
+    .status-badge.card-saved { background: #ECFDF5; color: #059669; }
+    .message {
       color: #6B7280;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 24px;
     }
     .contact-section {
       margin-top: 25px;
       padding-top: 20px;
       border-top: 1px solid #E5E7EB;
     }
-    .contact-section p {
-      color: #666;
-      font-size: 14px;
-      margin: 8px 0;
-    }
-    .contact-section a {
-      color: #D92B2B;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .contact-section .phone {
-      font-size: 18px;
-      color: #0A1628;
-      font-weight: 700;
-    }
+    .contact-section p { color: #666; font-size: 14px; margin: 8px 0; }
+    .contact-section a { color: #D92B2B; text-decoration: none; font-weight: 600; }
+    .contact-section .phone { font-size: 18px; color: #0A1628; font-weight: 700; }
     .close-btn {
       display: inline-block;
       margin-top: 25px;
@@ -101,55 +66,69 @@
       font-weight: 600;
       transition: background 0.2s;
     }
-    .close-btn:hover {
-      background: #D92B2B;
-    }
+    .close-btn:hover { background: #D92B2B; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="icon">✅</div>
-    <div class="status-badge">Accepted</div>
-    <h1>Thank You!</h1>
-    
-    <div class="lead-info">
-      <p><strong>Lead Name</strong> <span id="lead-name">--</span></p>
-      <p><strong>Phone</strong> <span id="lead-phone">--</span></p>
-      <p><strong>City</strong> <span id="lead-city">--</span></p>
+    <div class="icon" id="icon">✅</div>
+    <div class="status-badge accepted" id="badge">Accepted</div>
+    <h1 class="accepted" id="title">Thank You!</h1>
+    <div class="message" id="message">
+      Check your email for lead details and next steps.
     </div>
-    
     <div class="contact-section">
       <p>Questions? Contact Tyler:</p>
       <p class="phone">📞 (813) 482-8671</p>
       <p>📧 <a href="mailto:tylerbelislefl@gmail.com">tylerbelislefl@gmail.com</a></p>
     </div>
-    
     <a href="#" class="close-btn" onclick="window.close(); return false;">Close Window</a>
   </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const action = params.get('action');
-    const card = document.querySelector('.card');
-    const icon = document.querySelector('.icon');
-    const badge = document.querySelector('.status-badge');
-    const h1 = document.querySelector('h1');
-    
-    if (action === 'pass') {
-      // DECLINED / PASSED STATE
+    const icon = document.getElementById('icon');
+    const badge = document.getElementById('badge');
+    const title = document.getElementById('title');
+    const msg = document.getElementById('message');
+
+    if (action === 'decline' || action === 'pass') {
       icon.textContent = '➡️';
       badge.textContent = 'Passed On';
-      badge.classList.add('declined');
-      h1.textContent = 'Lead Passed On';
-      h1.classList.add('declined');
-      card.style.background = '#FFFBEB';
-      document.getElementById('lead-phone').parentElement.style.display = 'none';
-      document.getElementById('lead-city').parentElement.style.display = 'none';
+      badge.className = 'status-badge declined';
+      title.textContent = 'Lead Passed On';
+      title.className = 'declined';
+      msg.textContent = 'The next available contractor will be notified.';
+    } else if (action === 'card_saved') {
+      icon.textContent = '💳';
+      badge.textContent = 'Card Saved';
+      badge.className = 'status-badge card-saved';
+      title.textContent = 'Card Saved Successfully';
+      title.className = 'card-saved';
+      msg.textContent = 'Your card is saved. When the admin enables auto-pay, you\'ll be charged automatically on lead acceptance. No charges right now.';
+    } else if (action === 'setup_cancelled') {
+      icon.textContent = '💳';
+      badge.textContent = 'Setup Cancelled';
+      badge.className = 'status-badge declined';
+      title.textContent = 'Card Setup Cancelled';
+      title.className = 'declined';
+      msg.textContent = 'No changes were made. You can set up your card later from the link in your email.';
+    } else if (action === 'paid') {
+      icon.textContent = '💰';
+      badge.textContent = 'Payment Received';
+      badge.className = 'status-badge card-saved';
+      title.textContent = 'Payment Successful';
+      title.className = 'card-saved';
+      msg.textContent = 'Thank you! Your payment has been received and your invoices are marked as paid.';
+    } else {
+      icon.textContent = '✅';
+      badge.textContent = 'Accepted';
+      badge.className = 'status-badge accepted';
+      title.textContent = 'Thank You!';
+      title.className = 'accepted';
+      msg.textContent = 'Check your email for lead details and next steps.';
     }
-    
-    document.getElementById('lead-name').textContent = params.get('name') || 'Unknown';
-    document.getElementById('lead-phone').textContent = params.get('phone') || 'N/A';
-    document.getElementById('lead-city').textContent = params.get('city') || 'N/A';
   </script>
 </body>
 </html>
