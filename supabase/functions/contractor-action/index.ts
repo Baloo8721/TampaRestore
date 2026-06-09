@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
               payButtonHtml = `
                 <div style="margin-top:24px;text-align:center;">
                   <a href="${session.url}" style="display:inline-block;background:#059669;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">💳 Pay $${totalOwed} Now</a>
-                  <p style="font-size:12px;color:#666;margin-top:8px;">Your card will be saved for auto-pay on future leads</p>
+                  <p style="font-size:12px;color:#666;margin-top:8px;"></p>
                 </div>
               `
             }
@@ -269,7 +269,7 @@ Deno.serve(async (req) => {
                 <p style="font-size:16px;">Total outstanding: <strong>$${totalOwed}</strong></p>
                 <p style="color:#666;">Pay now to keep receiving leads. After 3 unpaid, you'll be paused.</p>
                 ${payButtonHtml || '<p style="color:#D97706;margin-top:16px;">Contact your admin to set up payment and enable auto-pay.</p>'}
-                ${hasCard ? '<p style="font-size:12px;color:#666;margin-top:16px;">✅ Card on file — future leads will be charged automatically.</p>' : '<p style="font-size:12px;color:#666;margin-top:16px;">💳 After paying, your card will be saved for auto-pay — future leads charged automatically.</p>'}
+                ${hasCard ? '<p style="font-size:12px;color:#666;margin-top:16px;">✅ Card on file</p>' : '<p style="font-size:12px;color:#666;margin-top:16px;">💳 Your card will be saved for future payments.</p>'}
               </div>
             </div>`)
         }

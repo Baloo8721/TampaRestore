@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
         // Try each available contractor until one pays or we run out
         for (const c of available) {
           const price = c.price_per_lead || PRICE_DEFAULTS[source] || 75
-          const autoPay = c.auto_pay !== false
+          const autoPay = c.auto_pay === true
           const hasCard = !!c.stripe_customer_id && !!c.stripe_payment_method_id
 
           console.log(`Trying contractor ${c.email}: autoPay=${autoPay}, hasCard=${hasCard}, price=$${price}`)

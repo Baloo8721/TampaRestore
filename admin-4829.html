@@ -595,7 +595,7 @@ function renderContractors() {
         </span>
       </td>
       <td style="text-align:center;">
-        ${c.auto_pay !== false
+        ${c.auto_pay === true
           ? '<span style="font-size:18px;cursor:default;" title="Auto-pay enabled">💳</span>'
           : '<span style="font-size:16px;cursor:default;" title="Manual pay only">💵</span>'}
         ${c.stripe_customer_id
@@ -676,12 +676,12 @@ function showAddContractor(contractor = null) {
         <label style="font-weight:600;color:#059669;">💳 Auto-Pay</label>
         <div style="margin-top:8px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" id="contractor-autopay" ${(!contractor || contractor.auto_pay !== false) ? 'checked' : ''} />
-            <span style="font-size:13px;">Auto-charge card when job is marked complete</span>
+            <input type="checkbox" id="contractor-autopay" ${(contractor && contractor.auto_pay === true) ? 'checked' : ''} />
+            <span style="font-size:13px;">Auto-charge card when a lead is sent (requires contractor approval)</span>
           </label>
         </div>
         <div id="payment-method-info" style="margin-top:8px;font-size:12px;color:#666;">
-          ${contractor?.stripe_customer_id ? '✓ Card on file' : 'No card saved yet. Contractor will be prompted to save on first payment.'}
+          ${contractor?.stripe_customer_id ? '✓ Card on file — check Auto-Pay above to enable automatic charging' : 'No card saved yet. Contractor will be prompted to save on first payment.'}
         </div>
       </div>
       <div class="form-group">

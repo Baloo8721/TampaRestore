@@ -63,7 +63,6 @@ Deno.serve(async (req) => {
 
         const updateData: Record<string, unknown> = {
           stripe_customer_id: stripeCustomerId,
-          auto_pay: true,
           updated_at: timestamp,
         }
         if (pmId) updateData.stripe_payment_method_id = pmId
@@ -95,7 +94,7 @@ Deno.serve(async (req) => {
               </div>
               <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
                 <p style="font-size:16px;">Your payment of <strong>$${amount}</strong> has been received.</p>
-                <p>Your card has been saved for auto-pay. Future leads will be charged automatically.</p>
+                <p>Your card is on file for future payments.</p>
                 <hr>
                 <p style="font-size:13px;color:#666;">${idsToMark.length} invoice${idsToMark.length !== 1 ? 's' : ''} paid</p>
               </div>
