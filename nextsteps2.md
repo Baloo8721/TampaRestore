@@ -49,4 +49,4 @@ In Stripe Dashboard → Developers → Webhooks → Add endpoint:
 - Events: checkout.session.completed, payment_intent.succeeded, payment_intent.payment_failed
 - Click Signing secret and copy the whsec_... value into the STRIPE_WEBHOOK_SECRET secret above
 Want me to show you the exact code for each function so you can copy-paste from here?
-▣  Build · DeepSeek V4 Flash Free · 44.0s
+▣  Build · DeepSeek V4 Flash Free · 44.0s   

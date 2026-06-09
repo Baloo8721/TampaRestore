@@ -462,11 +462,11 @@ Deno.serve(async (req) => {
           const nextEmailBody = `
             <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
               <div style="background: ${accentColor}; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; font-size: 20px; margin: 0;">${trade.emoji} LEAD PASSED TO YOU</h1>
+                <h1 style="color: white; font-size: 20px; margin: 0;">${trade.emoji} NEW LEAD AVAILABLE</h1>
               </div>
               <div style="padding: 24px; background: white; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
-                <p>A lead is available in <strong>${lead.city}</strong> — service: <strong>${lead.damage_type || 'N/A'}</strong></p>
-                <hr>
+                <p style="font-size: 16px;">A new <strong>${trade.name}</strong> service request is available in <strong>${lead.city}</strong>.</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
                 <p style="color:${accentColor};font-weight:bold;font-size:18px;">⚠️ CALL WITHIN 5 MINUTES!</p>
                 ${nextButtonsHtml}
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
@@ -476,7 +476,7 @@ Deno.serve(async (req) => {
               </div>
             </div>
           `
-          await sendEmail(gmailUser, gmailAppPassword, nextAvailableContractor, `${trade.emoji} Lead Passed: ${lead.name}`, nextEmailBody)
+          await sendEmail(gmailUser, gmailAppPassword, nextAvailableContractor, `${trade.emoji} New Lead Available - ${lead.city}`, nextEmailBody)
         }
       } else {
         updates.status = 'no_contractor'
