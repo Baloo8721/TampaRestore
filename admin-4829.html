@@ -540,6 +540,18 @@ async function loadContractors() {
     const response = await callApi('GET', '/rest/v1/contractors?order=priority.asc');
     const data = await response.json();
     allContractors = data || [];
+    
+    // Enrich with pending commission counts
+    for (const c of allContractors) {
+      try {
+        const commRes = await callApi('GET', `/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(c.email)}&status=eq.pending&select=id`);
+        const comms = await commRes.json();
+        c.pending_count = Array.isArray(comms) ? comms.length : 0;
+      } catch {
+        c.pending_count = 0;
+      }
+    }
+    
     renderContractors();
   } catch (err) {
     console.error('Error loading contractors:', err);
@@ -594,13 +606,14 @@ function renderContractors() {
           ${c.active ? 'ACTIVE' : 'INACTIVE'}
         </span>
       </td>
-      <td style="text-align:center;">
+      <td style="text-align:center;font-size:12px;">
         ${c.auto_pay === true
-          ? '<span style="font-size:18px;cursor:default;" title="Auto-pay enabled">💳</span>'
-          : '<span style="font-size:16px;cursor:default;" title="Manual pay only">💵</span>'}
+          ? '<span style="font-size:16px;cursor:default;" title="Auto-pay enabled">💳</span>'
+          : '<span style="font-size:14px;cursor:default;" title="Manual pay">💵</span>'}
         ${c.stripe_customer_id
-          ? '<span style="font-size:18px;cursor:default;" title="Card on file">✅</span>'
+          ? '<span style="font-size:14px;cursor:default;" title="Card on file">✅</span>'
           : ''}
+        ${c.pending_count > 0 ? `<span style="display:inline-block;margin-left:4px;padding:1px 6px;border-radius:8px;font-size:11px;font-weight:700;background:${c.pending_count >= 3 ? '#FEE2E2' : '#FEF3C7'};color:${c.pending_count >= 3 ? '#DC2626' : '#D97706'};">${c.pending_count}/3</span>` : ''}
       </td>
       <td>
         <button class="action-btn" onclick="editContractor('${c.id}')">✏️</button>
