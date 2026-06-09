@@ -199,19 +199,18 @@ Deno.serve(async (req) => {
            <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Response time:</strong> ${updates.contractor_response_minutes} minutes</p>`)
 
-        // Send payment reminder if contractor has pending invoices
-        const pendingCommissions = await getPendingCommissions(lead.assigned_contractor_email || '')
-        if (pendingCommissions.length > 0) {
+        // Always send payment info to non-auto-pay contractors
+        const contrRes = await fetch(`${SUPABASE_URL}/rest/v1/contractors?email=eq.${encodeURIComponent(lead.assigned_contractor_email || '')}&limit=1`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        })
+        const contrs = await contrRes.json()
+        const contractor = contrs && contrs.length > 0 ? contrs[0] : null
+        const hasAutoPay = contractor?.auto_pay === true && !!contractor?.stripe_customer_id && !!contractor?.stripe_payment_method_id
+
+        if (!hasAutoPay) {
+          const pendingCommissions = await getPendingCommissions(lead.assigned_contractor_email || '')
           const totalOwed = pendingCommissions.reduce((s: number, c: any) => s + (c.amount || 0), 0)
           const count = pendingCommissions.length
-
-          // Get contractor for stripe_customer_id
-          const contrRes = await fetch(`${SUPABASE_URL}/rest/v1/contractors?email=eq.${encodeURIComponent(lead.assigned_contractor_email || '')}&limit=1`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-          })
-          const contrs = await contrRes.json()
-          const contractor = contrs && contrs.length > 0 ? contrs[0] : null
-          const hasCard = !!contractor?.stripe_customer_id && !!contractor?.stripe_payment_method_id
 
           let payButtonHtml = ''
           if (STRIPE_SECRET_KEY && pendingCommissions.length > 0) {
@@ -233,10 +232,10 @@ Deno.serve(async (req) => {
                 price_data: {
                   currency: 'usd',
                   product_data: {
-                    name: `${count} ${trade.emoji} Unpaid Lead${count > 1 ? 's' : ''}`,
-                    description: `Total pending: $${totalOwed}`,
+                    name: `${count > 0 ? count + ' ' : ''}${trade.emoji} Unpaid Lead${count !== 1 ? 's' : ''}`,
+                    description: totalOwed > 0 ? `Total: $${totalOwed}` : `1 lead at $${contractor?.price_per_lead || 75}`,
                   },
-                  unit_amount: Math.round(totalOwed * 100),
+                  unit_amount: Math.round((totalOwed || contractor?.price_per_lead || 75) * 100),
                 },
                 quantity: 1,
               }],
@@ -251,25 +250,29 @@ Deno.serve(async (req) => {
             if (session?.url) {
               payButtonHtml = `
                 <div style="margin-top:24px;text-align:center;">
-                  <a href="${session.url}" style="display:inline-block;background:#059669;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">💳 Pay $${totalOwed} Now</a>
-                  <p style="font-size:12px;color:#666;margin-top:8px;"></p>
+                  <a href="${session.url}" style="display:inline-block;background:#059669;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">💳 Pay $${totalOwed || contractor?.price_per_lead || 75} Now</a>
                 </div>
               `
             }
           }
 
-          const reminderEmoji = trade.emoji || '💰'
+          const hasCard = !!contractor?.stripe_customer_id
+          const creditMsg = count >= 3
+            ? `<p style="color:#DC2626;font-weight:bold;">You have ${count} unpaid leads — you'll be paused from receiving new leads until you pay.</p>`
+            : `<p style="color:#666;">Unpaid leads: ${count}/3. Pay to keep receiving leads.</p>`
+
           await sendEmail(gmailUser, gmailAppPassword, lead.assigned_contractor_email || '',
-            `${reminderEmoji} Payment needed for leads (${count} unpaid)`,
+            `${trade.emoji} Payment for ${trade.name} lead - ${lead.name}`,
             `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
               <div style="background:#059669;padding:20px;text-align:center;border-radius:8px 8px 0 0;">
-                <h1 style="color:white;font-size:18px;margin:0;">${reminderEmoji} You have ${count} unpaid lead${count > 1 ? 's' : ''}</h1>
+                <h1 style="color:white;font-size:18px;margin:0;">${trade.emoji} Lead payment</h1>
               </div>
               <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
-                <p style="font-size:16px;">Total outstanding: <strong>$${totalOwed}</strong></p>
-                <p style="color:#666;">Pay now to keep receiving leads. After 3 unpaid, you'll be paused.</p>
-                ${payButtonHtml || '<p style="color:#D97706;margin-top:16px;">Contact your admin to set up payment and enable auto-pay.</p>'}
-                ${hasCard ? '<p style="font-size:12px;color:#666;margin-top:16px;">✅ Card on file</p>' : '<p style="font-size:12px;color:#666;margin-top:16px;">💳 Your card will be saved for future payments.</p>'}
+                <p>Thanks for accepting the lead for <strong>${lead.name}</strong> in ${lead.city}.</p>
+                ${count > 0 ? `<p>You have <strong>${count}</strong> unpaid lead${count > 1 ? 's' : ''} totaling <strong>$${totalOwed}</strong>.</p>` : '<p>A payment is needed for this lead.</p>'}
+                ${creditMsg}
+                ${payButtonHtml || '<p style="color:#D97706;margin-top:16px;">Payment setup coming soon. Contact your admin to pay.</p>'}
+                ${hasCard ? '<p style="font-size:12px;color:#666;margin-top:16px;">✅ Card on file</p>' : '<p style="font-size:12px;color:#666;margin-top:16px;">When you pay, your card will be saved for future payments.</p>'}
               </div>
             </div>`)
         }
