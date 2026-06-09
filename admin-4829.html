@@ -337,11 +337,12 @@
             <th>Status</th>
             <th>Response</th>
             <th>Date</th>
+            <th>Commission</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="leads-tbody">
-          <tr><td colspan="10" class="loading">Loading...</td></tr>
+          <tr><td colspan="11" class="loading">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -370,11 +371,12 @@
             <th>Price/Lead</th>
             <th>Trade</th>
             <th>Status</th>
+            <th>Payment</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="contractors-tbody">
-          <tr><td colspan="8" class="loading">Loading...</td></tr>
+          <tr><td colspan="9" class="loading">Loading...</td></tr>
         </tbody>
       </table>
       <p id="contractor-count" style="font-size:12px;color:var(--gray);margin-top:8px;"></p>
@@ -532,7 +534,7 @@ let allContractors = [];
 
 async function loadContractors() {
   const tbody = document.getElementById('contractors-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading...</td></tr>';
   
   try {
     const response = await callApi('GET', '/rest/v1/contractors?order=priority.asc');
@@ -562,7 +564,7 @@ function renderContractors() {
   const sorted = filtered.sort((a, b) => a.priority - b.priority);
   
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No contractors. Click "Add Contractor" to add one.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No contractors. Click "Add Contractor" to add one.</td></tr>';
     countEl.textContent = '';
     return;
   }
@@ -592,11 +594,20 @@ function renderContractors() {
           ${c.active ? 'ACTIVE' : 'INACTIVE'}
         </span>
       </td>
+      <td style="text-align:center;">
+        ${c.auto_pay !== false
+          ? '<span style="font-size:18px;cursor:default;" title="Auto-pay enabled">💳</span>'
+          : '<span style="font-size:16px;cursor:default;" title="Manual pay only">💵</span>'}
+        ${c.stripe_customer_id
+          ? '<span style="font-size:18px;cursor:default;" title="Card on file">✅</span>'
+          : ''}
+      </td>
       <td>
         <button class="action-btn" onclick="editContractor('${c.id}')">✏️</button>
         <button class="action-btn ${c.active ? 'delete' : 'call'}" onclick="toggleContractor('${c.id}', ${!c.active})">
           ${c.active ? '⏸️' : '▶️'}
         </button>
+        <button class="action-btn" onclick="showPaymentHistory('${c.id}')" title="Payment History">📊</button>
         <button class="action-btn delete" onclick="deleteContractor('${c.id}')">🗑️</button>
       </td>
     </tr>
@@ -661,6 +672,18 @@ function showAddContractor(contractor = null) {
         <label>Position (1 = first contacted)</label>
         <input type="number" id="contractor-priority" value="${contractor ? contractor.priority + 1 : allContractors.filter(c => (c.trade || '') === trade).length + 1}" min="1" max="10" />
       </div>
+      <div class="form-group" style="padding:12px;background:#F0FDF4;border-radius:6px;border:1px solid #BBF7D0;">
+        <label style="font-weight:600;color:#059669;">💳 Auto-Pay</label>
+        <div style="margin-top:8px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="contractor-autopay" ${(!contractor || contractor.auto_pay !== false) ? 'checked' : ''} />
+            <span style="font-size:13px;">Auto-charge card when job is marked complete</span>
+          </label>
+        </div>
+        <div id="payment-method-info" style="margin-top:8px;font-size:12px;color:#666;">
+          ${contractor?.stripe_customer_id ? '✓ Card on file' : 'No card saved yet. Contractor will be prompted to save on first payment.'}
+        </div>
+      </div>
       <div class="form-group">
         <label>
           <input type="checkbox" id="contractor-active" ${(!contractor || contractor.active) ? 'checked' : ''} />
@@ -699,6 +722,7 @@ async function saveContractor(id) {
   const trade = document.getElementById('contractor-trade').value;
   const pos = parseInt(document.getElementById('contractor-priority').value) || 1;
   const active = document.getElementById('contractor-active').checked;
+  const autoPay = document.getElementById('contractor-autopay').checked;
   const priority = Math.max(0, Math.min(9, pos - 1));
   
   if (!name || !email) {
@@ -714,6 +738,7 @@ async function saveContractor(id) {
     trade: trade || null,
     priority,
     active,
+    auto_pay: autoPay,
     updated_at: new Date().toISOString()
   };
   
@@ -809,10 +834,70 @@ async function reorderContractor(movedId, newPosStr, totalCount) {
   loadContractors();
 }
 
+async function showPaymentHistory(contractorId) {
+  const contractor = allContractors.find(c => c.id === contractorId);
+  if (!contractor) return;
+
+  let commissions = [];
+  try {
+    const response = await callApi('GET', `/rest/v1/commissions?contractor_id=eq.${contractorId}&order=created_at.desc`);
+    commissions = await response.json();
+  } catch (e) {
+    // no commissions yet
+  }
+
+  const modal = document.getElementById('lead-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const modalFooter = document.getElementById('modal-footer');
+
+  modalTitle.textContent = `Payment History — ${contractor.name}`;
+
+  if (commissions.length === 0) {
+    modalBody.innerHTML = `<div style="padding:20px;text-align:center;color:#666;">No payment history yet.</div>`;
+  } else {
+    modalBody.innerHTML = `
+      <table class="leads-table" style="font-size:12px;">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Lead ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${commissions.map(c => `
+            <tr>
+              <td>${new Date(c.created_at).toLocaleDateString()}</td>
+              <td>$${c.amount}</td>
+              <td>
+                <span style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;
+                  background:${c.status === 'paid' ? '#D1FAE5' : c.status === 'pending' ? '#FEF3C7' : '#FEE2E2'};
+                  color:${c.status === 'paid' ? '#059669' : c.status === 'pending' ? '#D97706' : '#991B1B'};">
+                  ${c.status.toUpperCase()}
+                </span>
+              </td>
+              <td style="font-family:monospace;font-size:10px;">${c.lead_id ? c.lead_id.slice(0, 8)+'...' : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:12px;background:var(--off-white);border-radius:6px;font-size:13px;">
+        <strong>Total Paid:</strong> $${commissions.filter(c => c.status === 'paid').reduce((s, c) => s + (c.amount || 0), 0)}
+        <span style="margin-left:16px;"><strong>Pending:</strong> $${commissions.filter(c => c.status === 'pending').reduce((s, c) => s + (c.amount || 0), 0)}</span>
+      </div>
+    `;
+  }
+
+  modalFooter.innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+  modal.classList.add('active');
+}
+
 async function loadLeads() {
   const tbody = document.getElementById('leads-tbody');
   const statusMsg = document.getElementById('status-msg');
-  tbody.innerHTML = '<tr><td colspan="10" class="loading">Fetching leads...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="11" class="loading">Fetching leads...</td></tr>';
   statusMsg.innerHTML = '';
   selectedLeads.clear();
   updateBulkBar();
@@ -856,7 +941,7 @@ async function loadLeads() {
     
   } catch (err) {
     console.error('Error:', err);
-    tbody.innerHTML = '<tr><td colspan="10" class="error-state">Error: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="error-state">Error: ' + err.message + '</td></tr>';
     statusMsg.innerHTML = '<p class="error-msg">Error loading leads: ' + err.message + '</p>';
   }
 }
@@ -865,7 +950,7 @@ function renderLeads() {
   const tbody = document.getElementById('leads-tbody');
   
   if (allLeads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No leads yet. Go get some!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-state">No leads yet. Go get some!</td></tr>';
     return;
   }
   
@@ -942,6 +1027,7 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
         </td>
         <td style="font-size:12px; ${responseColor}">${attemptLabel ? `<span style="font-weight:700;margin-right:3px;">${attemptLabel}</span>` : ''}${responseTime}</td>
         <td class="lead-date">${date}<br>${time}</td>
+        <td style="font-size:11px;text-align:center;">${renderCommissionStatus(lead)}</td>
         <td>
           <div class="status-btn-wrap">
             <button class="status-trigger" onclick="toggleStatusMenu('${lead.id}')">⚡</button>
@@ -963,6 +1049,12 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
       </tr>
     `;
   }).join('');
+}
+
+function renderCommissionStatus(lead) {
+  if (lead.status === 'paid') return '<span style="color:#059669;font-weight:600;">💰 Paid</span>';
+  if (lead.status === 'closed') return '<span style="color:#D97706;">⏳ Pending</span>';
+  return '<span style="color:#ccc;">—</span>';
 }
 
 function setFilter(filter) {

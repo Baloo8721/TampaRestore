@@ -146,6 +146,18 @@ Deno.serve(async (req) => {
       ? contractorList[currentIndex + 1] 
       : null
 
+    // Gate check: find next available contractor (skip those with unpaid commissions)
+    let nextAvailableContractor: string | null = null
+    if (currentIndex >= 0) {
+      for (let i = currentIndex + 1; i < contractorList.length; i++) {
+        const blocked = await hasUnpaidCommissions(contractorList[i])
+        if (!blocked) {
+          nextAvailableContractor = contractorList[i]
+          break
+        }
+      }
+    }
+
     // === STATE VALIDATION ===
     const isAssignedToThem = lead.assigned_contractor_email === contractorEmail
     const leadStatus = lead.status || 'new'
@@ -185,6 +197,25 @@ Deno.serve(async (req) => {
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
            <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Response time:</strong> ${updates.contractor_response_minutes} minutes</p>`)
+
+        // Send follow-up to contractor with "Mark Complete" button
+        const completeUrl = `${SUPABASE_URL}/functions/v1/complete-job?lead_id=${leadId}&email=${encodeURIComponent(lead.assigned_contractor_email || '')}`
+        await sendEmail(gmailUser, gmailAppPassword, lead.assigned_contractor_email || '',
+          `${trade.emoji} Job Complete? Mark it done for ${lead.name}`,
+          `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
+            <div style="background:${accentColor};padding:20px;text-align:center;border-radius:8px 8px 0 0;">
+              <h1 style="color:white;font-size:18px;margin:0;">${trade.emoji} Job Complete?</h1>
+            </div>
+            <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+              <p>Did you complete the job for <strong>${lead.name}</strong> in ${lead.city}?</p>
+              <p style="font-size:14px;color:#666;">Mark it complete to close out this lead and receive future leads.</p>
+              <div style="margin-top:24px;text-align:center;">
+                <a href="${completeUrl}" style="display:inline-block;background:${accentColor};color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">📋 Mark Complete</a>
+              </div>
+              <hr style="margin:20px 0;">
+              <p style="font-size:12px;color:#999;">Only mark complete when the job is actually finished.</p>
+            </div>
+          </div>`)
       }
 
     } else if (action === 'decline') {
@@ -210,16 +241,16 @@ Deno.serve(async (req) => {
         notes: (lead.notes || '') + `\n[${timestamp}] Declined by ${lead.assigned_contractor_email}`
       }
 
-      if (nextContractor) {
-        updates.assigned_contractor_email = nextContractor
+      if (nextAvailableContractor) {
+        updates.assigned_contractor_email = nextAvailableContractor
         updates.status = 'sent'
         updates.sent_to_contractor_at = timestamp
 
-        recordEvent(leadId, 'sent', nextContractor)
+        recordEvent(leadId, 'sent', nextAvailableContractor)
 
         if (gmailAppPassword) {
-          const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
-          const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(nextContractor)}&apikey=${ANON_KEY}`
+          const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(nextAvailableContractor)}&apikey=${ANON_KEY}`
+          const declineUrl = `${actionBaseUrl}?action=decline&lead_id=${leadId}&email=${encodeURIComponent(nextAvailableContractor)}&apikey=${ANON_KEY}`
           const nextButtonsHtml = `
             <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
               <p style="margin-bottom: 15px; font-size: 16px;"><strong>Quick Actions:</strong></p>
@@ -246,17 +277,17 @@ Deno.serve(async (req) => {
               </div>
             </div>
           `
-          await sendEmail(gmailUser, gmailAppPassword, nextContractor, `${trade.emoji} Lead Passed: ${lead.name}`, nextEmailBody)
+          await sendEmail(gmailUser, gmailAppPassword, nextAvailableContractor, `${trade.emoji} Lead Passed: ${lead.name}`, nextEmailBody)
         }
       } else {
         updates.status = 'no_contractor'
         if (gmailAppPassword) {
-          await sendEmail(gmailUser, gmailAppPassword, adminEmail, `⚠️ ${trade.emoji} NO CONTRACTORS AVAILABLE: ${lead.name}`,
+          await sendEmail(gmailUser, gmailAppPassword, adminEmail, `⚠️ ${trade.emoji} ALL CONTRACTORS BLOCKED: ${lead.name}`,
             `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
-             <p>This lead was declined but there are no other contractors in the rotation.</p>
+             <p>No available contractors — all have unpaid commissions or none in rotation.</p>
              <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
              <p><strong>City:</strong> ${lead.city}</p>
-             <p>Please add more contractors in the admin dashboard.</p>`)
+             <p>Resolve outstanding payments or add more contractors.</p>`)
         }
       }
 
@@ -266,7 +297,7 @@ Deno.serve(async (req) => {
            <p><strong>Contractor:</strong> ${lead.assigned_contractor_email}</p>
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
            <p><strong>City:</strong> ${lead.city}</p>
-           <p><strong>Next contractor:</strong> ${nextContractor || 'None available'}</p>`)
+           <p><strong>Next contractor:</strong> ${nextAvailableContractor || 'None available (all blocked or none left)'}</p>`)
       }
 
     } else if (action === 'undo') {
@@ -427,6 +458,26 @@ async function sendEmail(user: string, password: string, to: string, subject: st
     return true
   } catch (e) {
     console.error('sendEmail failed:', e)
+    return false
+  }
+}
+
+async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
+  try {
+    if (!SUPABASE_KEY) return false
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractorEmail)}&status=eq.pending&select=id&limit=1`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+        }
+      }
+    )
+    const data = await res.json()
+    return Array.isArray(data) && data.length > 0
+  } catch (e) {
+    console.error('Gate check failed:', e)
     return false
   }
 }

@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     if (!contractorEmail && SUPABASE_KEY) {
       // Try trade-specific contractors first
       let contractorRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&trade=eq.${source}&order=priority.asc&limit=1`,
+        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&trade=eq.${source}&order=priority.asc`,
         {
           headers: {
             'apikey': SUPABASE_KEY,
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       // Fallback to all-trade contractors (trade = '' or null)
       if (!contractors || contractors.length === 0) {
         contractorRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&or=(trade.eq.,trade.is.null)&order=priority.asc&limit=1`,
+          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&or=(trade.eq.,trade.is.null)&order=priority.asc`,
           {
             headers: {
               'apikey': SUPABASE_KEY,
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       // Final fallback to any active contractor
       if (!contractors || contractors.length === 0) {
         contractorRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc&limit=1`,
+          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`,
           {
             headers: {
               'apikey': SUPABASE_KEY,
@@ -121,9 +121,23 @@ Deno.serve(async (req) => {
         contractors = await contractorRes.json()
       }
 
+      // Gate check: skip contractors with unpaid commissions
       if (contractors && contractors.length > 0) {
-        contractorEmail = contractors[0].email
-        console.log('Got contractor from DB:', contractorEmail, 'for trade:', source)
+        const available = await getAvailableContractors(contractors)
+        if (available.length > 0) {
+          contractorEmail = available[0].email
+          console.log('Got contractor from DB:', contractorEmail, 'for trade:', source)
+        } else {
+          // All have unpaid commissions — notify admin
+          console.log('All contractors blocked by unpaid commissions for trade:', source)
+          await sendEmailGmailSmtp(
+            gmailUser, gmailAppPassword, adminEmail,
+            `⚠️ All ${source} contractors blocked by unpaid commissions`,
+            `<p>All active contractors for ${source} have unpaid commissions and cannot receive new leads.</p>
+             <p>Lead: ${name} - ${phone}</p>
+             <p>Please resolve outstanding payments or assign manually.</p>`
+          )
+        }
       }
     }
 
@@ -344,4 +358,34 @@ async function sendEmailGmailSmtp(user: string, password: string, to: string, su
   tlsConn.close()
 
   return 235
+}
+
+// Gate check helpers
+async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
+  try {
+    if (!SUPABASE_KEY) return false
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractorEmail)}&status=eq.pending&select=id&limit=1`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+        }
+      }
+    )
+    const data = await res.json()
+    return Array.isArray(data) && data.length > 0
+  } catch (e) {
+    console.error('Gate check failed:', e)
+    return false
+  }
+}
+
+async function getAvailableContractors(contractors: any[]): Promise<any[]> {
+  const available: any[] = []
+  for (const c of contractors) {
+    const blocked = await hasUnpaidCommissions(c.email)
+    if (!blocked) available.push(c)
+  }
+  return available.length > 0 ? available : contractors
 }
