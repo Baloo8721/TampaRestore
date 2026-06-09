@@ -197,25 +197,6 @@ Deno.serve(async (req) => {
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
            <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Response time:</strong> ${updates.contractor_response_minutes} minutes</p>`)
-
-        // Send follow-up to contractor with "Mark Complete" button
-        const completeUrl = `${SUPABASE_URL}/functions/v1/complete-job?lead_id=${leadId}&email=${encodeURIComponent(lead.assigned_contractor_email || '')}`
-        await sendEmail(gmailUser, gmailAppPassword, lead.assigned_contractor_email || '',
-          `${trade.emoji} Job Complete? Mark it done for ${lead.name}`,
-          `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
-            <div style="background:${accentColor};padding:20px;text-align:center;border-radius:8px 8px 0 0;">
-              <h1 style="color:white;font-size:18px;margin:0;">${trade.emoji} Job Complete?</h1>
-            </div>
-            <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
-              <p>Did you complete the job for <strong>${lead.name}</strong> in ${lead.city}?</p>
-              <p style="font-size:14px;color:#666;">Mark it complete to close out this lead and receive future leads.</p>
-              <div style="margin-top:24px;text-align:center;">
-                <a href="${completeUrl}" style="display:inline-block;background:${accentColor};color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">📋 Mark Complete</a>
-              </div>
-              <hr style="margin:20px 0;">
-              <p style="font-size:12px;color:#999;">Only mark complete when the job is actually finished.</p>
-            </div>
-          </div>`)
       }
 
     } else if (action === 'decline') {
@@ -284,7 +265,7 @@ Deno.serve(async (req) => {
         if (gmailAppPassword) {
           await sendEmail(gmailUser, gmailAppPassword, adminEmail, `⚠️ ${trade.emoji} ALL CONTRACTORS BLOCKED: ${lead.name}`,
             `<p><strong>Trade:</strong> ${trade.emoji} ${trade.name}</p>
-             <p>No available contractors — all have unpaid commissions or none in rotation.</p>
+             <p>No available contractors — all have 3+ unpaid invoices or none in rotation.</p>
              <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
              <p><strong>City:</strong> ${lead.city}</p>
              <p>Resolve outstanding payments or add more contractors.</p>`)
@@ -462,11 +443,13 @@ async function sendEmail(user: string, password: string, to: string, subject: st
   }
 }
 
-async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
+const MAX_PENDING_COMMISSIONS = 3
+
+async function countPendingCommissions(contractorEmail: string): Promise<number> {
   try {
-    if (!SUPABASE_KEY) return false
+    if (!SUPABASE_KEY) return 0
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractorEmail)}&status=eq.pending&select=id&limit=1`,
+      `${SUPABASE_URL}/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractorEmail)}&status=eq.pending&select=id`,
       {
         headers: {
           'apikey': SUPABASE_KEY,
@@ -475,9 +458,14 @@ async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
       }
     )
     const data = await res.json()
-    return Array.isArray(data) && data.length > 0
+    return Array.isArray(data) ? data.length : 0
   } catch (e) {
-    console.error('Gate check failed:', e)
-    return false
+    console.error('Count pending failed:', e)
+    return 0
   }
+}
+
+async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
+  const count = await countPendingCommissions(contractorEmail)
+  return count >= MAX_PENDING_COMMISSIONS
 }

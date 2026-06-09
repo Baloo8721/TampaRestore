@@ -1052,8 +1052,8 @@ const statusOptions = ['new', 'sent', 'contacted', 'scheduled', 'closed', 'paid'
 }
 
 function renderCommissionStatus(lead) {
+  if (lead.status === 'sent' || lead.status === 'contacted' || lead.status === 'scheduled') return '<span style="color:#D97706;">⏳ Pending</span>';
   if (lead.status === 'paid') return '<span style="color:#059669;font-weight:600;">💰 Paid</span>';
-  if (lead.status === 'closed') return '<span style="color:#D97706;">⏳ Pending</span>';
   return '<span style="color:#ccc;">—</span>';
 }
 

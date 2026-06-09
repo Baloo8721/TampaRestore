@@ -1,6 +1,6 @@
 // TampaRestore - Send Email Edge Function
-// Sends emails to contractor with Confirm/Decline buttons
-// Uses Gmail SMTP with App Password
+// Charge-per-lead: auto-pay charges card, manual creates pending invoice
+// Gate: max 3 unpaid pending commissions before blocking
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +11,16 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
 const SUPABASE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 const ANON_KEY = Deno.env.get('ANON_KEY') || ''
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || ''
+
+const MAX_PENDING_COMMISSIONS = 3
+const PRICE_DEFAULTS: Record<string, number> = {
+  'website': 100,
+  'handyman': 35,
+  'electrician': 65,
+  'hvac': 75,
+  'plumber': 55,
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -33,7 +43,7 @@ Deno.serve(async (req) => {
     const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
     const actionBaseUrl = `${SUPABASE_URL}/functions/v1/contractor-action`
 
-    console.log('send-email: password set:', !!gmailAppPassword, 'source:', source)
+    console.log('send-email: source:', source, 'gmail:', !!gmailAppPassword, 'stripe:', !!STRIPE_SECRET_KEY)
 
     if (!gmailAppPassword) {
       return new Response(JSON.stringify({ error: 'GMAIL_APP_PASSWORD not configured' }), {
@@ -42,7 +52,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Trade-specific config
     const TRADE_CONFIG: Record<string, { name: string; emoji: string; color: string; header: string; subject: string }> = {
       'website':  { name: 'Tampa Restore', emoji: '💧', color: '#D92B2B', header: 'NEW WATER DAMAGE LEAD', subject: 'New Lead' },
       'handyman': { name: 'Handyman', emoji: '🔧', color: '#059669', header: 'NEW HANDYMAN SERVICE REQUEST', subject: 'Handyman Lead' },
@@ -56,6 +65,7 @@ Deno.serve(async (req) => {
     // Get lead_id from DB - find most recent lead matching name + phone
     let leadId = ''
     let contractorEmail = ''
+    let usedContractor: any = null
     
     if (SUPABASE_KEY) {
       const leadRes = await fetch(
@@ -76,66 +86,87 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If no contractor assigned, get from contractors table (filtered by trade)
+    // If no contractor assigned, find one with payment
     if (!contractorEmail && SUPABASE_KEY) {
-      // Try trade-specific contractors first
-      let contractorRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&trade=eq.${source}&order=priority.asc`,
-        {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': 'application/json'
+      let contractors: any[] = await fetchContractors(source)
+
+      if (contractors && contractors.length > 0) {
+        // Gate check: filter out those with 3+ unpaid commissions
+        const available = await getAvailableContractors(contractors)
+        console.log(`Available contractors after gate: ${available.length}/${contractors.length}`)
+
+        // Try each available contractor until one pays or we run out
+        for (const c of available) {
+          const price = c.price_per_lead || PRICE_DEFAULTS[source] || 75
+          const autoPay = c.auto_pay !== false
+          const hasCard = !!c.stripe_customer_id && !!c.stripe_payment_method_id
+
+          console.log(`Trying contractor ${c.email}: autoPay=${autoPay}, hasCard=${hasCard}, price=$${price}`)
+
+          if (autoPay && hasCard && STRIPE_SECRET_KEY) {
+            // Auto-pay: attempt charge (retry up to 3 times)
+            const charged = await attemptAutoPay(c, leadId, source, price, trade)
+            if (charged) {
+              contractorEmail = c.email
+              usedContractor = c
+              console.log('Auto-pay succeeded for:', contractorEmail)
+              break
+            } else {
+              console.log('Auto-pay failed for:', c.email, '- trying next contractor')
+              // Notify contractor their card declined
+              if (gmailAppPassword) {
+                await sendEmailGmailSmtp(gmailUser, gmailAppPassword, c.email,
+                  `❌ Payment Declined - Update Your Card`,
+                  `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
+                    <div style="background:#DC2626;padding:20px;text-align:center;border-radius:8px 8px 0 0;">
+                      <h1 style="color:white;font-size:18px;margin:0;">❌ Card Declined</h1>
+                    </div>
+                    <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+                      <p>We tried to charge <strong>$${price}</strong> for a new ${trade.emoji} lead but your card was declined.</p>
+                      <p>Update your payment method to keep receiving leads.</p>
+                      <p>This lead has been passed to the next available contractor.</p>
+                    </div>
+                  </div>`)
+              }
+              continue
+            }
+          } else {
+            // Manual: create pending commission, send lead immediately
+            const commissionId = crypto.randomUUID()
+            const created = await supFetch('/rest/v1/commissions', {
+              method: 'POST',
+              body: JSON.stringify({
+                id: commissionId,
+                lead_id: leadId,
+                contractor_email: c.email,
+                trade: source,
+                amount: price,
+                status: 'pending',
+                created_at: new Date().toISOString(),
+              })
+            })
+            if (created.ok) {
+              contractorEmail = c.email
+              usedContractor = c
+              console.log('Manual: pending commission created for:', contractorEmail)
+              break
+            }
           }
         }
-      )
-      let contractors = await contractorRes.json()
 
-      // Fallback to all-trade contractors (trade = '' or null)
-      if (!contractors || contractors.length === 0) {
-        contractorRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&or=(trade.eq.,trade.is.null)&order=priority.asc`,
-          {
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': 'Bearer ' + SUPABASE_KEY,
-              'Content-Type': 'application/json'
-            }
-          }
-        )
-        contractors = await contractorRes.json()
-      }
-
-      // Final fallback to any active contractor
-      if (!contractors || contractors.length === 0) {
-        contractorRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`,
-          {
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': 'Bearer ' + SUPABASE_KEY,
-              'Content-Type': 'application/json'
-            }
-          }
-        )
-        contractors = await contractorRes.json()
-      }
-
-      // Gate check: skip contractors with unpaid commissions
-      if (contractors && contractors.length > 0) {
-        const available = await getAvailableContractors(contractors)
-        if (available.length > 0) {
-          contractorEmail = available[0].email
-          console.log('Got contractor from DB:', contractorEmail, 'for trade:', source)
-        } else {
-          // All have unpaid commissions — notify admin
-          console.log('All contractors blocked by unpaid commissions for trade:', source)
+        if (!contractorEmail) {
+          console.log('All contractors failed payment or blocked by gate for trade:', source)
           await sendEmailGmailSmtp(
             gmailUser, gmailAppPassword, adminEmail,
-            `⚠️ All ${source} contractors blocked by unpaid commissions`,
-            `<p>All active contractors for ${source} have unpaid commissions and cannot receive new leads.</p>
-             <p>Lead: ${name} - ${phone}</p>
-             <p>Please resolve outstanding payments or assign manually.</p>`
+            `⚠️ All ${source} contractors unavailable for ${name}`,
+            `<p>No contractor could be assigned:</p>
+             <ul>
+               <li>Some have 3+ unpaid invoices (gate blocked)</li>
+               <li>Others had payment failures (card declined)</li>
+             </ul>
+             <p><strong>Lead:</strong> ${name} - ${phone}</p>
+             <p><strong>City:</strong> ${city}</p>
+             <p>Resolve outstanding payments or add more contractors.</p>`
           )
         }
       }
@@ -147,11 +178,23 @@ Deno.serve(async (req) => {
       console.log('Using default contractor:', contractorEmail)
     }
 
+    // Assign lead to contractor in DB
+    if (leadId && SUPABASE_KEY && usedContractor) {
+      await supFetch(`/rest/v1/leads?id=eq.${leadId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          assigned_contractor_email: contractorEmail,
+          sent_to_contractor_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          status: 'sent',
+        })
+      })
+    }
+
     // Record events on the lead
     if (leadId && SUPABASE_KEY) {
       try {
         const events = [{ type: 'sent', contractor: contractorEmail, timestamp: new Date().toISOString() }]
-        // Read existing events and append
         const getRes = await fetch(
           `${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}&select=events`,
           {
@@ -181,7 +224,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Build confirm/decline buttons if we have lead_id
+    // Build confirm/decline buttons
     let buttonsHtml = ''
     if (leadId) {
       const confirmUrl = `${actionBaseUrl}?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(contractorEmail)}&apikey=${ANON_KEY}`
@@ -243,7 +286,7 @@ Deno.serve(async (req) => {
       contractorSubject,
       leadHtml
     )
-    console.log('Contractor email result:', contractorStatus, 'to:', contractorEmail, 'subject:', contractorSubject)
+    console.log('Contractor email result:', contractorStatus, 'to:', contractorEmail)
 
     // Send to admin
     const adminSubject = `${trade.emoji} New ${trade.name} Lead: ${name}`
@@ -274,6 +317,192 @@ Deno.serve(async (req) => {
   }
 })
 
+// Fetch active contractors by trade (with fallbacks)
+async function fetchContractors(source: string): Promise<any[]> {
+  if (!SUPABASE_KEY) return []
+
+  // Try trade-specific first
+  let res = await fetch(
+    `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&trade=eq.${source}&order=priority.asc`,
+    {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    }
+  )
+  let contractors = await res.json()
+
+  if (!contractors || contractors.length === 0) {
+    res = await fetch(
+      `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&or=(trade.eq.,trade.is.null)&order=priority.asc`,
+      {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      }
+    )
+    contractors = await res.json()
+  }
+
+  if (!contractors || contractors.length === 0) {
+    res = await fetch(
+      `${SUPABASE_URL}/rest/v1/contractors?active=eq.true&order=priority.asc`,
+      {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      }
+    )
+    contractors = await res.json()
+  }
+
+  return contractors || []
+}
+
+// Count pending commissions for a contractor
+async function countPendingCommissions(contractorEmail: string): Promise<number> {
+  try {
+    if (!SUPABASE_KEY) return 0
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractorEmail)}&status=eq.pending&select=id`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+        }
+      }
+    )
+    const data = await res.json()
+    return Array.isArray(data) ? data.length : 0
+  } catch (e) {
+    console.error('Count pending failed:', e)
+    return 0
+  }
+}
+
+// Gate: only allow contractors with < MAX_PENDING_COMMISSIONS unpaid
+async function getAvailableContractors(contractors: any[]): Promise<any[]> {
+  const available: any[] = []
+  for (const c of contractors) {
+    const pending = await countPendingCommissions(c.email)
+    if (pending < MAX_PENDING_COMMISSIONS) {
+      available.push(c)
+    } else {
+      console.log(`Gate blocked ${c.email}: ${pending} pending commissions`)
+    }
+  }
+  return available.length > 0 ? available : contractors
+}
+
+// Attempt auto-pay charge (up to 3 retries)
+async function attemptAutoPay(contractor: any, leadId: string, source: string, amount: number, trade: any): Promise<boolean> {
+  if (!STRIPE_SECRET_KEY || !contractor.stripe_customer_id || !contractor.stripe_payment_method_id) return false
+
+  // Create commission record first (so webhook can reference it)
+  const commissionId = crypto.randomUUID()
+  const timestamp = new Date().toISOString()
+  await supFetch('/rest/v1/commissions', {
+    method: 'POST',
+    body: JSON.stringify({
+      id: commissionId,
+      lead_id: leadId,
+      contractor_email: contractor.email,
+      trade: source,
+      amount,
+      status: 'pending',
+      created_at: timestamp,
+    })
+  })
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const pi = await stripeFetch('/v1/payment_intents', {
+        amount: Math.round(amount * 100),
+        currency: 'usd',
+        customer: contractor.stripe_customer_id,
+        payment_method: contractor.stripe_payment_method_id,
+        off_session: true,
+        confirm: true,
+        description: `${trade.emoji} ${trade.name} Lead`,
+        metadata: { lead_id: leadId, commission_id: commissionId, contractor_email: contractor.email },
+      })
+
+      if (pi.status === 'succeeded' || pi.status === 'processing') {
+        await supFetch(`/rest/v1/commissions?id=eq.${commissionId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status: 'completed',
+            paid_at: timestamp,
+            stripe_payment_intent_id: pi.id,
+          })
+        })
+        console.log(`Auto-pay success (attempt ${attempt}): $${amount} from ${contractor.email}`)
+        return true
+      } else {
+        console.log(`Auto-pay attempt ${attempt} failed: status=${pi.status}`)
+        // Try again
+      }
+    } catch (e) {
+      console.error(`Auto-pay attempt ${attempt} error:`, e)
+    }
+  }
+
+  // All attempts failed — mark commission as failed
+  await supFetch(`/rest/v1/commissions?id=eq.${commissionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'failed' })
+  })
+  return false
+}
+
+// Supabase fetch helper
+async function supFetch(path: string, options?: RequestInit): Promise<Response> {
+  const opts: RequestInit = {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+    },
+    ...options,
+  }
+  if (opts.body && typeof opts.body === 'string') {
+    // already stringified
+  } else if (opts.body && typeof opts.body === 'object') {
+    opts.body = JSON.stringify(opts.body)
+  }
+  return fetch(SUPABASE_URL + path, opts)
+}
+
+// Stripe helpers (copied from complete-job)
+function encodeStripeParams(data: Record<string, unknown>, prefix = ''): string {
+  const parts: string[] = []
+  for (const [key, val] of Object.entries(data)) {
+    const fullKey = prefix ? `${prefix}[${key}]` : key
+    if (val === null || val === undefined) continue
+    if (Array.isArray(val)) {
+      val.forEach((item, i) => {
+        if (typeof item === 'object' && item !== null) {
+          parts.push(encodeStripeParams(item as Record<string, unknown>, `${fullKey}[${i}]`))
+        } else {
+          parts.push(`${fullKey}[${i}]=${encodeURIComponent(String(item))}`)
+        }
+      })
+    } else if (typeof val === 'object') {
+      parts.push(encodeStripeParams(val as Record<string, unknown>, fullKey))
+    } else {
+      parts.push(`${fullKey}=${encodeURIComponent(String(val))}`)
+    }
+  }
+  return parts.join('&')
+}
+
+async function stripeFetch(path: string, data: Record<string, unknown>): Promise<any> {
+  const formBody = encodeStripeParams(data)
+  const res = await fetch('https://api.stripe.com' + path, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + STRIPE_SECRET_KEY,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formBody,
+  })
+  return res.json()
+}
+
 async function sendEmailGmailSmtp(user: string, password: string, to: string, subject: string, html: string) {
   const conn = await Deno.connect({ hostname: 'smtp.gmail.com', port: 587 })
   
@@ -290,18 +519,12 @@ async function sendEmailGmailSmtp(user: string, password: string, to: string, su
     await conn.write(encoder.encode(data))
   }
 
-  // Read greeting
   await readResponse()
-
-  // EHLO
   await send('EHLO localhost\r\n')
   await readResponse()
-
-  // STARTTLS
   await send('STARTTLS\r\n')
   await readResponse()
 
-  // Upgrade to TLS
   const tlsConn = await Deno.startTls(conn, { hostname: 'smtp.gmail.com' })
 
   const tlsEncoder = new TextEncoder()
@@ -317,19 +540,12 @@ async function sendEmailGmailSmtp(user: string, password: string, to: string, su
     return tlsDecoder.decode(buffer.slice(0, n))
   }
 
-  // EHLO again after TLS
   await tlsSend('EHLO localhost\r\n')
   await tlsRead()
-
-  // AUTH LOGIN
   await tlsSend('AUTH LOGIN\r\n')
   await tlsRead()
-
-  // Username (base64)
   await tlsSend(btoa(user) + '\r\n')
   await tlsRead()
-
-  // Password (base64)
   await tlsSend(btoa(password) + '\r\n')
   const authResponse = await tlsRead()
 
@@ -338,54 +554,17 @@ async function sendEmailGmailSmtp(user: string, password: string, to: string, su
     throw new Error('SMTP auth failed: ' + authResponse)
   }
 
-  // MAIL FROM
   await tlsSend('MAIL FROM:<' + user + '>\r\n')
   await tlsRead()
-
-  // RCPT TO
   await tlsSend('RCPT TO:<' + to + '>\r\n')
   await tlsRead()
-
-  // DATA
   await tlsSend('DATA\r\n')
   
   const message = `From: <${user}>\r\nTo: <${to}>\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n${html}\r\n.`
   await tlsSend(message + '\r\n')
   await tlsRead()
-
-  // QUIT
   await tlsSend('QUIT\r\n')
   tlsConn.close()
 
   return 235
-}
-
-// Gate check helpers
-async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
-  try {
-    if (!SUPABASE_KEY) return false
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractorEmail)}&status=eq.pending&select=id&limit=1`,
-      {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-        }
-      }
-    )
-    const data = await res.json()
-    return Array.isArray(data) && data.length > 0
-  } catch (e) {
-    console.error('Gate check failed:', e)
-    return false
-  }
-}
-
-async function getAvailableContractors(contractors: any[]): Promise<any[]> {
-  const available: any[] = []
-  for (const c of contractors) {
-    const blocked = await hasUnpaidCommissions(c.email)
-    if (!blocked) available.push(c)
-  }
-  return available.length > 0 ? available : contractors
 }
