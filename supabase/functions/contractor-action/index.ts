@@ -10,6 +10,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
 const SUPABASE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 const ANON_KEY = Deno.env.get('ANON_KEY') || ''
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || ''
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -197,6 +198,81 @@ Deno.serve(async (req) => {
            <p><strong>Lead:</strong> ${lead.name} - ${lead.phone}</p>
            <p><strong>City:</strong> ${lead.city}</p>
            <p><strong>Response time:</strong> ${updates.contractor_response_minutes} minutes</p>`)
+
+        // Send payment reminder if contractor has pending invoices
+        const pendingCommissions = await getPendingCommissions(lead.assigned_contractor_email || '')
+        if (pendingCommissions.length > 0) {
+          const totalOwed = pendingCommissions.reduce((s: number, c: any) => s + (c.amount || 0), 0)
+          const count = pendingCommissions.length
+
+          // Get contractor for stripe_customer_id
+          const contrRes = await fetch(`${SUPABASE_URL}/rest/v1/contractors?email=eq.${encodeURIComponent(lead.assigned_contractor_email || '')}&limit=1`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+          })
+          const contrs = await contrRes.json()
+          const contractor = contrs && contrs.length > 0 ? contrs[0] : null
+          const hasCard = !!contractor?.stripe_customer_id && !!contractor?.stripe_payment_method_id
+
+          let payButtonHtml = ''
+          if (STRIPE_SECRET_KEY && pendingCommissions.length > 0) {
+            const commissionIds = pendingCommissions.map((c: any) => c.id).join(',')
+            const successUrl = `https://baloo8721.github.io/TampaRestore/thank-you.html?action=paid`
+            const cancelUrl = `${SUPABASE_URL}/functions/v1/contractor-action?action=confirm&lead_id=${leadId}&email=${encodeURIComponent(lead.assigned_contractor_email || '')}`
+
+            const session = await stripeFetch('/v1/checkout/sessions', {
+              mode: 'payment',
+              customer: contractor?.stripe_customer_id || undefined,
+              payment_intent_data: {
+                setup_future_usage: 'off_session',
+                metadata: {
+                  commission_ids: commissionIds,
+                  contractor_email: lead.assigned_contractor_email || '',
+                },
+              },
+              line_items: [{
+                price_data: {
+                  currency: 'usd',
+                  product_data: {
+                    name: `${count} ${trade.emoji} Unpaid Lead${count > 1 ? 's' : ''}`,
+                    description: `Total pending: $${totalOwed}`,
+                  },
+                  unit_amount: Math.round(totalOwed * 100),
+                },
+                quantity: 1,
+              }],
+              metadata: {
+                commission_ids: commissionIds,
+                contractor_email: lead.assigned_contractor_email || '',
+              },
+              success_url: successUrl,
+              cancel_url: cancelUrl,
+            })
+
+            if (session?.url) {
+              payButtonHtml = `
+                <div style="margin-top:24px;text-align:center;">
+                  <a href="${session.url}" style="display:inline-block;background:#059669;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">💳 Pay $${totalOwed} Now</a>
+                  <p style="font-size:12px;color:#666;margin-top:8px;">Your card will be saved for auto-pay on future leads</p>
+                </div>
+              `
+            }
+          }
+
+          const reminderEmoji = trade.emoji || '💰'
+          await sendEmail(gmailUser, gmailAppPassword, lead.assigned_contractor_email || '',
+            `${reminderEmoji} Payment needed for leads (${count} unpaid)`,
+            `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
+              <div style="background:#059669;padding:20px;text-align:center;border-radius:8px 8px 0 0;">
+                <h1 style="color:white;font-size:18px;margin:0;">${reminderEmoji} You have ${count} unpaid lead${count > 1 ? 's' : ''}</h1>
+              </div>
+              <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+                <p style="font-size:16px;">Total outstanding: <strong>$${totalOwed}</strong></p>
+                <p style="color:#666;">Pay now to keep receiving leads. After 3 unpaid, you'll be paused.</p>
+                ${payButtonHtml || '<p style="color:#D97706;margin-top:16px;">Contact your admin to set up payment and enable auto-pay.</p>'}
+                ${hasCard ? '<p style="font-size:12px;color:#666;margin-top:16px;">✅ Card on file — future leads will be charged automatically.</p>' : '<p style="font-size:12px;color:#666;margin-top:16px;">💳 After paying, your card will be saved for auto-pay — future leads charged automatically.</p>'}
+              </div>
+            </div>`)
+        }
       }
 
     } else if (action === 'decline') {
@@ -468,4 +544,76 @@ async function countPendingCommissions(contractorEmail: string): Promise<number>
 async function hasUnpaidCommissions(contractorEmail: string): Promise<boolean> {
   const count = await countPendingCommissions(contractorEmail)
   return count >= MAX_PENDING_COMMISSIONS
+}
+
+// Fetch all pending commissions with amounts
+async function getPendingCommissions(contractorEmail: string): Promise<any[]> {
+  try {
+    if (!SUPABASE_KEY) return []
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/commissions?contractor_email=eq.${encodeURIComponent(contractorEmail)}&status=eq.pending&order=created_at.asc`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+        }
+      }
+    )
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
+  } catch (e) {
+    console.error('Get pending failed:', e)
+    return []
+  }
+}
+
+// Stripe helpers
+function encodeStripeParams(data: Record<string, unknown>, prefix = ''): string {
+  const parts: string[] = []
+  for (const [key, val] of Object.entries(data)) {
+    const fullKey = prefix ? `${prefix}[${key}]` : key
+    if (val === null || val === undefined) continue
+    if (Array.isArray(val)) {
+      val.forEach((item, i) => {
+        if (typeof item === 'object' && item !== null) {
+          parts.push(encodeStripeParams(item as Record<string, unknown>, `${fullKey}[${i}]`))
+        } else {
+          parts.push(`${fullKey}[${i}]=${encodeURIComponent(String(item))}`)
+        }
+      })
+    } else if (typeof val === 'object') {
+      parts.push(encodeStripeParams(val as Record<string, unknown>, fullKey))
+    } else {
+      parts.push(`${fullKey}=${encodeURIComponent(String(val))}`)
+    }
+  }
+  return parts.join('&')
+}
+
+async function stripeFetch(path: string, data: Record<string, unknown>): Promise<any> {
+  const formBody = encodeStripeParams(data)
+  const res = await fetch('https://api.stripe.com' + path, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + STRIPE_SECRET_KEY,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formBody,
+  })
+  return res.json()
+}
+
+async function supFetch(path: string, options?: RequestInit): Promise<Response> {
+  const opts: RequestInit = {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+    },
+    ...options,
+  }
+  if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
+    opts.body = JSON.stringify(opts.body)
+  }
+  return fetch(SUPABASE_URL + path, opts)
 }

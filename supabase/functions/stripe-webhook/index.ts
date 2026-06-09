@@ -4,6 +4,7 @@
 const SUPABASE_URL = Deno.env.get('DB_URL') || 'https://aqafvfzsybcqfxqklqsd.supabase.co'
 const SUPABASE_KEY = Deno.env.get('SERVICE_ROLE_KEY') || ''
 const STRIPE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || ''
 
 Deno.serve(async (req) => {
   try {
@@ -24,12 +25,16 @@ Deno.serve(async (req) => {
       const session = event.data.object
       const metadata = session.metadata || {}
       const commissionId = metadata.commission_id
-      const leadId = metadata.lead_id
+      const commissionIds = metadata.commission_ids
       const contractorEmail = metadata.contractor_email
+      const timestamp = new Date().toISOString()
 
-      if (commissionId) {
-        const timestamp = new Date().toISOString()
-        await fetch(`${SUPABASE_URL}/rest/v1/commissions?id=eq.${commissionId}`, {
+      // Handle bulk commission IDs (comma-separated) or single
+      const idsToMark = commissionIds ? commissionIds.split(',').filter(Boolean) : commissionId ? [commissionId] : []
+      const paymentIntentId = session.payment_intent || session.id
+
+      for (const cid of idsToMark) {
+        await fetch(`${SUPABASE_URL}/rest/v1/commissions?id=eq.${cid}`, {
           method: 'PATCH',
           headers: {
             'apikey': SUPABASE_KEY,
@@ -40,29 +45,59 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             status: 'completed',
             paid_at: timestamp,
-            stripe_payment_intent_id: session.payment_intent || session.id,
+            stripe_payment_intent_id: paymentIntentId,
           })
         })
-        console.log(`Commission ${commissionId} marked as paid`)
+        console.log(`Commission ${cid} marked as paid (Checkout ${session.id})`)
       }
 
+      // Save Stripe customer ID to contractor record for future auto-pay
+      if (session.customer && contractorEmail) {
+        const stripeCustomerId = session.customer
+        // Get default payment method for the customer
+        const pmRes = await fetch(`https://api.stripe.com/v1/payment_methods?customer=${stripeCustomerId}&type=card&limit=1`, {
+          headers: { 'Authorization': 'Bearer ' + STRIPE_SECRET_KEY }
+        })
+        const pmData = await pmRes.json()
+        const pmId = pmData?.data?.[0]?.id || ''
+
+        const updateData: Record<string, unknown> = {
+          stripe_customer_id: stripeCustomerId,
+          auto_pay: true,
+          updated_at: timestamp,
+        }
+        if (pmId) updateData.stripe_payment_method_id = pmId
+
+        await fetch(`${SUPABASE_URL}/rest/v1/contractors?email=eq.${encodeURIComponent(contractorEmail)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(updateData)
+        })
+        console.log(`Contractor ${contractorEmail} updated: stripe_customer_id=${stripeCustomerId}, pm=${pmId || 'none'}`)
+      }
+
+      // Send receipt confirmation
       if (contractorEmail) {
-        // Send receipt confirmation
         const gmailUser = Deno.env.get('GMAIL_USER') || 'tylerbelislefl@gmail.com'
         const gmailAppPassword = Deno.env.get('GMAIL_APP_PASSWORD') || ''
         if (gmailAppPassword) {
           const amount = (session.amount_total || 0) / 100
           await sendEmail(gmailUser, gmailAppPassword, contractorEmail,
-            '💰 Payment Received - TampaRestore Pro Leads',
+            '💰 Payment Received - Auto-pay Active',
             `<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;">
               <div style="background:#059669;padding:20px;text-align:center;border-radius:8px 8px 0 0;">
                 <h1 style="color:white;font-size:20px;margin:0;">💰 Payment Successful</h1>
               </div>
               <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
                 <p style="font-size:16px;">Your payment of <strong>$${amount}</strong> has been received.</p>
-                <p>You can now receive new leads.</p>
+                <p>Your card has been saved for auto-pay. Future leads will be charged automatically.</p>
                 <hr>
-                <p style="font-size:13px;color:#666;">Lead ID: ${leadId || 'N/A'}</p>
+                <p style="font-size:13px;color:#666;">${idsToMark.length} invoice${idsToMark.length !== 1 ? 's' : ''} paid</p>
               </div>
             </div>`)
         }
@@ -73,9 +108,12 @@ Deno.serve(async (req) => {
       const pi = event.data.object
       const metadata = pi.metadata || {}
       const commissionId = metadata.commission_id
-      if (commissionId) {
-        const timestamp = new Date().toISOString()
-        await fetch(`${SUPABASE_URL}/rest/v1/commissions?id=eq.${commissionId}`, {
+      const commissionIds = metadata.commission_ids
+      const idsToMark = commissionIds ? commissionIds.split(',').filter(Boolean) : commissionId ? [commissionId] : []
+      const timestamp = new Date().toISOString()
+
+      for (const cid of idsToMark) {
+        await fetch(`${SUPABASE_URL}/rest/v1/commissions?id=eq.${cid}`, {
           method: 'PATCH',
           headers: {
             'apikey': SUPABASE_KEY,
@@ -89,7 +127,7 @@ Deno.serve(async (req) => {
             stripe_payment_intent_id: pi.id,
           })
         })
-        console.log(`PaymentIntent ${pi.id} - commission ${commissionId} marked as paid`)
+        console.log(`PaymentIntent ${pi.id} - commission ${cid} marked as paid`)
       }
     }
 
